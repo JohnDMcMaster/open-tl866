@@ -1,0 +1,3 @@
+[submodule "extern/m-stack"]
+	path = extern/m-stack
+	url = https://github.com/signal11/m-stack.git
