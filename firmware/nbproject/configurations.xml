@@ -9,7 +9,9 @@
         <itemPath>../extern/m-stack/usb/include/usb_cdc.h</itemPath>
         <itemPath>../extern/m-stack/usb/include/usb_ch9.h</itemPath>
       </logicalFolder>
-      <itemPath>usb/usb_config.h</itemPath>
+      <logicalFolder name="f2" displayName="usb" projectFiles="true">
+        <itemPath>usb/usb_config.h</itemPath>
+      </logicalFolder>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -25,9 +27,11 @@
         <itemPath>../extern/m-stack/usb/src/usb_cdc.c</itemPath>
         <itemPath>../extern/m-stack/usb/src/usb.c</itemPath>
       </logicalFolder>
+      <logicalFolder name="f2" displayName="usb" projectFiles="true">
+        <itemPath>usb/usb_descriptors.c</itemPath>
+      </logicalFolder>
       <itemPath>main.c</itemPath>
       <itemPath>configuration_bits.c</itemPath>
-      <itemPath>usb/usb_descriptors.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
