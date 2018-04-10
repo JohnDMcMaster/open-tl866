@@ -1,9 +1,12 @@
 #include <xc.h>
 
+#include "usb.h"
+#include <xc.h>
+#include <string.h>
+#include "usb_config.h"
+#include "usb_ch9.h"
+#include "usb_cdc.h"
 
-// Default bootloader needs this constant, otherwise application won't be
-// recognized.
-const unsigned char sigbytes[] @ 0x1FBFC = {0x55, 0xAA, 0xA5, 0x5A} ;
 
 void interrupt inthi(void)
 {
@@ -15,8 +18,9 @@ void interrupt low_priority intlo(void)
     
 }
 
+
 int main(void)
-{
+{    
     PORTC = 0x00;
     TRISCbits.RC0 = 0;
     PORTCbits.RC0 = 0;
