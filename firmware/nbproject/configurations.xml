@@ -4,6 +4,11 @@
     <logicalFolder name="HeaderFiles"
                    displayName="Header Files"
                    projectFiles="true">
+      <logicalFolder name="f1" displayName="m-stack" projectFiles="true">
+        <itemPath>../extern/m-stack/usb/include/usb.h</itemPath>
+        <itemPath>../extern/m-stack/usb/include/usb_cdc.h</itemPath>
+        <itemPath>../extern/m-stack/usb/include/usb_ch9.h</itemPath>
+      </logicalFolder>
       <itemPath>usb/usb_config.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
@@ -16,11 +21,13 @@
     <logicalFolder name="SourceFiles"
                    displayName="Source Files"
                    projectFiles="true">
+      <logicalFolder name="f1" displayName="m-stack" projectFiles="true">
+        <itemPath>../extern/m-stack/usb/src/usb_cdc.c</itemPath>
+        <itemPath>../extern/m-stack/usb/src/usb.c</itemPath>
+      </logicalFolder>
       <itemPath>main.c</itemPath>
       <itemPath>configuration_bits.c</itemPath>
       <itemPath>usb/usb_descriptors.c</itemPath>
-      <itemPath>../extern/m-stack/usb/src/usb.c</itemPath>
-      <itemPath>../extern/m-stack/usb/src/usb_cdc.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -33,6 +40,7 @@
     <Elem>../scripts</Elem>
     <Elem>usb</Elem>
     <Elem>../extern/m-stack/usb/src</Elem>
+    <Elem>../extern/m-stack/usb/include</Elem>
   </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
