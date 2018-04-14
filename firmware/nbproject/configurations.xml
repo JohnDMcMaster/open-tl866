@@ -32,6 +32,7 @@
       </logicalFolder>
       <itemPath>main.c</itemPath>
       <itemPath>configuration_bits.c</itemPath>
+      <itemPath>io.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -40,11 +41,10 @@
     </logicalFolder>
   </logicalFolder>
   <sourceRootList>
-    <Elem>dist/default/production</Elem>
     <Elem>../scripts</Elem>
-    <Elem>usb</Elem>
     <Elem>../extern/m-stack/usb/src</Elem>
     <Elem>../extern/m-stack/usb/include</Elem>
+    <Elem>.</Elem>
   </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>

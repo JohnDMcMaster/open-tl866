@@ -1,0 +1,139 @@
+typedef struct port_info {
+    unsigned char * addr;
+    unsigned char offset;
+} port_info_t;
+
+/* ZIF pin assignments are scattered all over the PIC18's I/O banks.
+ * This array provides a mapping from a ZIF pin to the corresponding PIC18
+ * I/O location.
+ * __bit data type exists, but can't take address of it,
+ *  so use char data type. */
+const port_info_t zif2port[2] = {
+    {&PORTC, 5},
+    {&PORTC, 4},
+};
+
+
+typedef struct latch_info {
+    int number; /* Translates to LE signal write within case statement in write_latch() */
+    int offset; /* Offset within the latch of the current bit.
+                 *  -1 reserved for "no connection". */
+} latch_info_t;
+
+/* LE signal number is based off radioman schematic. They are scattered
+ * between banks unfortunately. */
+const latch_info_t zif2vdd[2] = {
+    {3, 5},
+    {3, 6},
+};
+
+const latch_info_t zif2vpp[2] = {
+    {0, 2},
+    {0, 3},
+};
+
+const latch_info_t zif2gnd[2] = {
+    {6, 0},
+    {6, 1},
+};
+
+static unsigned char latch_mirror[8]; /* Read mirror of the current latch state. */
+
+/* Currently I don't know whether it's faster to just eat the full port
+ * read every time we want to set/clear current bits, or programmatically
+ * determine a sequence of |=/&= that can be optimized to bitset/clr insns.
+ 
+ A mask at one at a given location does the action:
+ 0 : Clear
+ 1 : Set
+ 2 : Toggle
+ Else : Read bits are echoed back to ports. */
+void zif_modify(unsigned char (* zif_bits)[5], const int action)
+{
+    unsigned char port_bits[8];
+    
+    port_read_all(&port_bits);
+    
+    for(int i = 0; i < 5; i++)
+    {
+        for(int j = 0; j < 8; j++)
+        {
+            unsigned char mask = 1 << j;
+            
+            if(zif_bits[i] & mask)
+            {
+                //port_bits
+            }
+        }
+    }
+    
+    port_write_all(&port_bits);
+}
+
+
+/* Internal functions- we read/write all I/O ports at once. */
+static void port_read_all(unsigned char (* port_bits)[8])
+{
+    (* port_bits)[0] = PORTA;
+    (* port_bits)[1] = PORTB;
+    (* port_bits)[2] = PORTC;
+    (* port_bits)[3] = PORTD;
+    (* port_bits)[4] = PORTE;
+    (* port_bits)[5] = PORTF;
+    (* port_bits)[6] = PORTG;
+    (* port_bits)[7] = PORTH;
+}
+
+static void port_write_all(unsigned char (*port_bits)[8])
+{
+    PORTA = (* port_bits)[0];
+    PORTB = (* port_bits)[1];
+    PORTC = (* port_bits)[2];
+    PORTD = (* port_bits)[3];
+    PORTE = (* port_bits)[4];
+    PORTF = (* port_bits)[5];
+    PORTG = (* port_bits)[6];
+    PORTH = (* port_bits)[7];
+}
+
+
+
+/* Read mask of I/O pin dir (TRIS) into array in ZIF order. */
+void zifdir_mask(unsigned char (*)[5])
+{
+    
+}
+
+
+/* Write one of the 8 pin driver latches */
+void write_latch(int, unsigned char)
+{
+    
+}
+
+/* Write the shift reg which connects to pin driver latches */
+void write_shreg(unsigned char)
+{
+    
+}
+
+/* Read mirror of one of the 8 pin driver latches */
+unsigned char read_latch(int)
+{
+    
+}
+
+void set_vpp(unsigned char)
+{
+
+}
+
+void set_vdd(unsigned char)
+{
+
+}
+
+void set_iov(unsigned char)
+{
+    
+}
