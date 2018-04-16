@@ -1,5 +1,10 @@
+#include <xc.h>
+
+static void port_read_all(unsigned char (*)[8]);
+static void port_write_all(unsigned char (*)[8]);
+
 typedef struct port_info {
-    unsigned char * addr;
+    volatile unsigned char * addr;
     unsigned char offset;
 } port_info_t;
 
@@ -12,6 +17,8 @@ const port_info_t zif2port[2] = {
     {&PORTC, 5},
     {&PORTC, 4},
 };
+
+#define PORT_ADDR_TO_ARRAY_INDEX(_x)
 
 
 typedef struct latch_info {
@@ -54,16 +61,35 @@ void zif_modify(unsigned char (* zif_bits)[5], const int action)
     
     port_read_all(&port_bits);
     
-    for(int i = 0; i < 5; i++)
+    int pin_no = 0;
+    
+    for(unsigned int i = 0; i < 5; i++)
     {
-        for(int j = 0; j < 8; j++)
+        for(unsigned int j = 0; j < 8; j++)
         {
-            unsigned char mask = 1 << j;
+            unsigned char mask = 1u << j;
             
-            if(zif_bits[i] & mask)
+            if((* zif_bits)[i] & mask)
             {
-                //port_bits
+                port_info_t curr = zif2port[pin_no];
+                
+                switch(action)
+                {
+                    case 0:
+                        break;
+                        
+                    case 1:
+                        break;
+                        
+                    case 2:
+                        break;
+                        
+                    default:
+                        break;
+                }
             }
+            
+            pin_no++;
         }
     }
     
@@ -118,10 +144,10 @@ void write_shreg(unsigned char)
 }
 
 /* Read mirror of one of the 8 pin driver latches */
-unsigned char read_latch(int)
+/* unsigned char read_latch(int)
 {
     
-}
+} */
 
 void set_vpp(unsigned char)
 {
