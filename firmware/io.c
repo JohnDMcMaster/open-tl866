@@ -1,5 +1,6 @@
 #include <xc.h>
 
+#include "system.h"
 #include "io.h"
 
 static void port_read_all(port_bits_t *);
@@ -120,15 +121,85 @@ void zifdir_mask(unsigned char (*)[5])
 
 
 /* Write one of the 8 pin driver latches */
-void write_latch(int, unsigned char)
+void write_latch(int latch_no, unsigned char val)
 {
+    write_shreg(val);
     
+    //74hc373's setup time: 15ns hold time: 5ns
+    //LE == 0 to preserve output, 1 is "transparent mode".
+    
+    switch(latch_no)
+    {
+        case 0:
+            LE0 = 1;
+            __delay_us(1);
+            LE0 = 0;
+            __delay_us(1);
+            break;
+        case 1:
+            LE1 = 1;
+            __delay_us(1);
+            LE1 = 0;
+            __delay_us(1);
+            break;
+        case 2:
+            LE2 = 1;
+            __delay_us(1);
+            LE2 = 0;
+            __delay_us(1);
+            break;
+        case 3:
+            LE3 = 1;
+            __delay_us(1);
+            LE3 = 0;
+            __delay_us(1);
+            break;
+        case 4:
+            LE4 = 1;
+            __delay_us(1);
+            LE4 = 0;
+            __delay_us(1);
+            break;
+        case 5:
+            LE5 = 1;
+            __delay_us(1);
+            LE5 = 0;
+            __delay_us(1);
+            break;
+        case 6:
+            LE6 = 1;
+            __delay_us(1);
+            LE6 = 0;
+            __delay_us(1);
+            break;
+        case 7:
+            LE7 = 1;
+            __delay_us(1);
+            LE7 = 0;
+            __delay_us(1);
+            break;
+        default:
+            break;
+        
+    }
 }
 
 /* Write the shift reg which connects to pin driver latches */
-void write_shreg(unsigned char)
+void write_shreg(unsigned char in)
 {
-    
+    for(int i = 0; i < 8; i++)
+    {
+        unsigned char curr_bit = (in & 0x80) ? 1 : 0;
+        
+        SR_DAT = curr_bit;
+        // 74hc164's data setup time: 20-100ns Hold time: 5ns
+        __delay_us(1);
+        SR_CLK = 1;
+        __delay_us(1);
+        SR_CLK = 0;
+        
+        in = in << 1;
+    }
 }
 
 /* Read mirror of one of the 8 pin driver latches */

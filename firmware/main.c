@@ -26,6 +26,8 @@
 #include "usb_ch9.h"
 #include "usb_cdc.h"
 
+#include "io.h"
+
 const char * led_status[2] = {
     "LED is off.\n",
     "LED is on.\n"
@@ -56,9 +58,23 @@ int main(void)
 
     PORTC = 0x00;
     TRISCbits.RC0 = 0;
-    PORTCbits.RC0 = 0;
-    
+    TRISC = 0;
+    PORTCbits.RC0 = 1;
 
+    PORTH = 0x00;
+    TRISHbits.RH3 = 0; // SR_DAT
+    TRISHbits.RH2 = 0; // SR_CLK
+    
+    PORTA = 0x00;
+    TRISAbits.RA4 = 0; // OE_VDD
+    TRISGbits.RG4 = 0; // OE_VPP
+
+    OE_VPP = 0;
+    OE_VDD = 0;
+    
+    TRISCbits.RC5 = 0;
+    PORTCbits.RC5 = 1;
+    
 	usb_init();
 
 	uint8_t char_to_send = 'A';

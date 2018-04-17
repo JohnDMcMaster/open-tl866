@@ -30,6 +30,27 @@ typedef struct latch_info {
 
 #define PORT_ADDR_TO_ARRAY_INDEX(_x)
 
+// Static pin defines (uses radioman's identifiers)
+#define SR_CLK PORTHbits.RH3
+#define SR_DAT PORTHbits.RH2
+
+#define OE_VPP PORTGbits.RG4
+#define OE_VDD PORTAbits.RA4
+
+#define LE0 PORTHbits.RH0
+#define LE1 PORTHbits.RH1
+#define LE2 PORTAbits.RA2
+#define LE3 PORTAbits.RA0
+#define LE4 PORTAbits.RA5
+#define LE5 PORTAbits.RA3
+#define LE6 PORTHbits.RH4
+#define LE7 PORTAbits.RA1
+
+// Prototypes
+void write_latch(int latch_no, unsigned char val);
+void write_shreg(unsigned char in);
+
+
 #ifdef	__cplusplus
 }
 #endif
