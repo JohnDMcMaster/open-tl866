@@ -12,6 +12,7 @@
       <logicalFolder name="f2" displayName="usb" projectFiles="true">
         <itemPath>usb/usb_config.h</itemPath>
       </logicalFolder>
+      <itemPath>io.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"

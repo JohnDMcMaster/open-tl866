@@ -1,12 +1,9 @@
 #include <xc.h>
 
-static void port_read_all(unsigned char (*)[8]);
-static void port_write_all(unsigned char (*)[8]);
+#include "io.h"
 
-typedef struct port_info {
-    volatile unsigned char * addr;
-    unsigned char offset;
-} port_info_t;
+static void port_read_all(port_bits_t *);
+static void port_write_all(port_bits_t *);
 
 /* ZIF pin assignments are scattered all over the PIC18's I/O banks.
  * This array provides a mapping from a ZIF pin to the corresponding PIC18
@@ -17,15 +14,6 @@ const port_info_t zif2port[2] = {
     {&PORTC, 5},
     {&PORTC, 4},
 };
-
-#define PORT_ADDR_TO_ARRAY_INDEX(_x)
-
-
-typedef struct latch_info {
-    int number; /* Translates to LE signal write within case statement in write_latch() */
-    int offset; /* Offset within the latch of the current bit.
-                 *  -1 reserved for "no connection". */
-} latch_info_t;
 
 /* LE signal number is based off radioman schematic. They are scattered
  * between banks unfortunately. */
@@ -55,11 +43,11 @@ static unsigned char latch_mirror[8]; /* Read mirror of the current latch state.
  1 : Set
  2 : Toggle
  Else : Read bits are echoed back to ports. */
-void zif_modify(unsigned char (* zif_bits)[5], const int action)
+void zif_modify(zif_bits_t * zif_val, const int action)
 {
-    unsigned char port_bits[8];
+    port_bits_t port_val;
     
-    port_read_all(&port_bits);
+    port_read_all(&port_val);
     
     int pin_no = 0;
     
@@ -69,7 +57,7 @@ void zif_modify(unsigned char (* zif_bits)[5], const int action)
         {
             unsigned char mask = 1u << j;
             
-            if((* zif_bits)[i] & mask)
+            if((* zif_val)[i] & mask)
             {
                 port_info_t curr = zif2port[pin_no];
                 
@@ -93,33 +81,33 @@ void zif_modify(unsigned char (* zif_bits)[5], const int action)
         }
     }
     
-    port_write_all(&port_bits);
+    port_write_all(&port_val);
 }
 
 
 /* Internal functions- we read/write all I/O ports at once. */
-static void port_read_all(unsigned char (* port_bits)[8])
+static void port_read_all(port_bits_t * p_bits)
 {
-    (* port_bits)[0] = PORTA;
-    (* port_bits)[1] = PORTB;
-    (* port_bits)[2] = PORTC;
-    (* port_bits)[3] = PORTD;
-    (* port_bits)[4] = PORTE;
-    (* port_bits)[5] = PORTF;
-    (* port_bits)[6] = PORTG;
-    (* port_bits)[7] = PORTH;
+    (* p_bits)[0] = PORTA;
+    (* p_bits)[1] = PORTB;
+    (* p_bits)[2] = PORTC;
+    (* p_bits)[3] = PORTD;
+    (* p_bits)[4] = PORTE;
+    (* p_bits)[5] = PORTF;
+    (* p_bits)[6] = PORTG;
+    (* p_bits)[7] = PORTH;
 }
 
-static void port_write_all(unsigned char (*port_bits)[8])
+static void port_write_all(port_bits_t * p_bits)
 {
-    PORTA = (* port_bits)[0];
-    PORTB = (* port_bits)[1];
-    PORTC = (* port_bits)[2];
-    PORTD = (* port_bits)[3];
-    PORTE = (* port_bits)[4];
-    PORTF = (* port_bits)[5];
-    PORTG = (* port_bits)[6];
-    PORTH = (* port_bits)[7];
+    PORTA = (* p_bits)[0];
+    PORTB = (* p_bits)[1];
+    PORTC = (* p_bits)[2];
+    PORTD = (* p_bits)[3];
+    PORTE = (* p_bits)[4];
+    PORTF = (* p_bits)[5];
+    PORTG = (* p_bits)[6];
+    PORTH = (* p_bits)[7];
 }
 
 
