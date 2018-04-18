@@ -55,25 +55,56 @@ int main(void)
     
     INTCONbits.PEIE = 1;
 	INTCONbits.GIE = 1;
-
-    PORTC = 0x00;
-    TRISCbits.RC0 = 0;
-    TRISC = 0;
-    PORTCbits.RC0 = 1;
-
-    PORTH = 0x00;
-    TRISHbits.RH3 = 0; // SR_DAT
-    TRISHbits.RH2 = 0; // SR_CLK
     
     PORTA = 0x00;
-    TRISAbits.RA4 = 0; // OE_VDD
-    TRISGbits.RG4 = 0; // OE_VPP
+    TRISA = 0x00; // RA5-RA0: LE4, OE_VDD, LE5, LE2, LE7, LE3
+    
+    PORTB = 0x00;
+    TRISB = 0xc1; // By default, keep RB7/RB6 as input/shared w/ ICSP header.
+                  // RB1: Controls resistors on P15-P24. P16/P21 act especially weird.
+                  // RB0: Input that detects that Vpp/Vdd voltage is okay.
+    
+    PORTC = 0x00;
+    TRISC = 0x00; // RC1-RC0: ZIF Pin 20 GND driver enable, LED
+    
+    PORTD = 0x00; // All attached to ZIF
+    
+    PORTE = 0x00; // All attached to ZIF
+    
+    PORTF = 0x00;
+    TRISF = 0x00; // RF7-RF5: VID_02-00, RF2: VID_12
+    
+    PORTG = 0x00;
+    TRISG = 0x00; // RG4: OE_VPP, 
+ 
+    PORTH = 0x00;
+    TRISH = 0x00; // RH7-6: VID_11-10
+                  // RH5: MCU power rail shift?
+                  // RH4: LE6
+                  // RH3: SR_DAT
+                  // RH2: SR_CLK
+                  // RH1: LE1
+                  // RH0: LE0
+    
+    PORTJ = 0x00; // All attached to ZIF
+
+    
+    for(int i = 0; i < 2; i++)
+    {
+        write_latch(i, 0xff);
+    }
+
+    // Disable all pin drivers for initial "known" state.
+    OE_VPP = 1;
+    OE_VDD = 1;
+    
+    for(int i = 0; i < 8; i++)
+    {
+        write_latch(i, 0x00);
+    }
 
     OE_VPP = 0;
     OE_VDD = 0;
-    
-    TRISCbits.RC5 = 0;
-    PORTCbits.RC5 = 1;
     
 	usb_init();
 

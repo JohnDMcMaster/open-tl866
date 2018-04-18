@@ -46,6 +46,16 @@ typedef struct latch_info {
 #define LE6 PORTHbits.RH4
 #define LE7 PORTAbits.RA1
 
+#define VID_00 PORTFbits.RF5
+#define VID_01 PORTFbits.RF6
+#define VID_02 PORTFbits.RF7
+#define VID_10 PORTHbits.RH6
+#define VID_11 PORTHbits.RH7
+#define VID_12 PORTFbits.RF2
+
+#define GND20 PORTCbits.RC1
+#define OVC PORTBbits.RB0
+
 // Prototypes
 void write_latch(int latch_no, unsigned char val);
 void write_shreg(unsigned char in);
