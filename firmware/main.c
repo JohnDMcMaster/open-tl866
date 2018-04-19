@@ -68,8 +68,10 @@ int main(void)
     TRISC = 0x00; // RC1-RC0: ZIF Pin 20 GND driver enable, LED
     
     PORTD = 0x00; // All attached to ZIF
+    TRISD = 0x00;
     
     PORTE = 0x00; // All attached to ZIF
+    TRISE = 0x00;
     
     PORTF = 0x00;
     TRISF = 0x00; // RF7-RF5: VID_02-00, RF2: VID_12
@@ -87,18 +89,24 @@ int main(void)
                   // RH0: LE0
     
     PORTJ = 0x00; // All attached to ZIF
-
-    
-    for(int i = 0; i < 2; i++)
-    {
-        write_latch(i, 0xff);
-    }
+    TRISJ = 0x00;
 
     // Disable all pin drivers for initial "known" state.
     OE_VPP = 1;
     OE_VDD = 1;
     
-    for(int i = 0; i < 8; i++)
+    for(int i = 0; i < 2; i++)
+    {
+        write_latch(i, 0x00);
+    }
+    
+    // PNPs- Logic 1 is off state.
+    for(int i = 2; i < 5; i++)
+    {
+        write_latch(i, 0xff);
+    }
+    
+    for(int i = 5; i < 8; i++)
     {
         write_latch(i, 0x00);
     }
