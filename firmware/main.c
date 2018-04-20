@@ -120,29 +120,51 @@ int main(void)
 	bool send = true;
 	bool loopback = false;
 
+    unsigned char cmd_buf[64];
+    int cmd_ptr = 0;
+
 	while (1) {
 		/* Handle data received from the host */
 		if (usb_is_configured() &&
 		    !usb_out_endpoint_halted(2) &&
 		    usb_out_endpoint_has_data(2)) {
+            
 			const unsigned char *out_buf;
 			size_t out_buf_len;
-			int i;
+            int newline_found = 0;
 
 			/* Check for an empty transaction. */
 			out_buf_len = usb_get_out_buffer(2, &out_buf);
 			if (out_buf_len <= 0)
 				goto empty;
+            
+            /* If copying would overflow, discard whole command and error. */
+            if(cmd_ptr + out_buf_len > 63)
+            {
+                send_string_sync(2, "Err 1\r\n");
+                cmd_ptr = 0;
+                goto empty;
+            }
+            
+            /* Look for a full line. */
+            memcpy(cmd_buf + cmd_ptr, out_buf, out_buf_len);
+            for(int i = 0; i < out_buf_len; i++)
+            {
+                if(cmd_buf[cmd_ptr + i] == '\n')
+                {
+                    newline_found = 1;
+                    cmd_ptr = 0;
+                    break;
+                }
+            }
+            
+            if(!newline_found)
+            {
+                cmd_ptr += out_buf_len;
+                goto empty;
+            }
+            
 
-            /* Scan for commands if not in loopback or
-             * send mode.
-             *
-             * This is a hack. One should really scan the
-             * entire string. In this case, since this
-             * is a demo, assume that the user is using
-             * a terminal program and typing the input,
-             * all but ensuring the data will come in
-             * single-character transactions. */
             if (out_buf[0] == 'h' || out_buf[0] == '?') {
                 /* Show help.
                  * Make sure to not try to send more
