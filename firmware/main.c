@@ -27,6 +27,7 @@
 #include "usb_cdc.h"
 
 #include "io.h"
+#include "parse.h"
 
 const char * led_status[2] = {
     "LED is off.\n",
@@ -132,6 +133,7 @@ int main(void)
 			const unsigned char *out_buf;
 			size_t out_buf_len;
             int newline_found = 0;
+            parse_result_t res;
 
 			/* Check for an empty transaction. */
 			out_buf_len = usb_get_out_buffer(2, &out_buf);
@@ -164,30 +166,20 @@ int main(void)
                 goto empty;
             }
             
-
-            if (out_buf[0] == 'h' || out_buf[0] == '?') {
-                /* Show help.
-                 * Make sure to not try to send more
-                 * than 63 bytes of data in one
-                 * transaction */
-                send_string_sync(2,
-                    "\r\nHelp:\r\n"
-                    "\to: Turn LED off\r\n"
-                    "\tl: Turn LED on\r\n");
-                send_string_sync(2,
-                    "\tq: Query LED status\r\n"
-                    "\th: help\r\n");
+            parse_ascii(cmd_buf, &res);
+            
+            switch(res.cmd)
+            {
+                
+                case INVALID:
+                default:
+                    send_string_sync(2, "Err 2\r\n");
+                    break;
+                    
             }
-            else if (out_buf[0] == 'o') {
-                PORTCbits.RC0 = 0;
-            }
-            else if (out_buf[0] == 'l') {
-                PORTCbits.RC0 = 1;
-            }
-            else if (out_buf[0] == 'q') {
-                int val = PORTCbits.RC0;         
-                send_string_sync(2, led_status[val]);
-            }
+            
+            cmd_ptr = 0;
+            
 empty:
 			usb_arm_out_endpoint(2);
 		}

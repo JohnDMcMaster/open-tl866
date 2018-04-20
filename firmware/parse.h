@@ -16,12 +16,16 @@ extern "C" {
   
 typedef union tl866_bits {
     unsigned char voltage;
+    unsigned char led;
     zif_bits_t zif;
     port_bits_t port;
     latch_bits_t latch;
 } tl866_bits_t;
 
 typedef enum cmd {
+    LED_ON,
+    LED_OFF,
+    LED_QUERY,
     WRITE_ZIF,
     READ_ZIF,
     CONTINUE, // Not used right now, meant to represent "need more input"
@@ -30,7 +34,7 @@ typedef enum cmd {
 
 typedef struct parse_result {
     cmd_t cmd;
-    tl866_bits_t arg;
+    unsigned char arg[8];
 } parse_result_t;
 
 void parse_ascii(unsigned char * buf, parse_result_t * res);
