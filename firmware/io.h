@@ -14,18 +14,18 @@ extern "C" {
 
 
 typedef unsigned char zif_bits_t[5];
-typedef unsigned char port_bits_t[8];
+typedef unsigned char port_bits_t[9]; /* PORTs A B C D E F G H J */
 typedef unsigned char latch_bits_t[8];
 
 typedef struct port_info {
-    volatile unsigned char * addr;
+    unsigned char bank;
     unsigned char offset;
 } port_info_t;
 
 typedef struct latch_info {
-    int number; /* Translates to LE signal write within case statement in write_latch() */
-    int offset; /* Offset within the latch of the current bit.
-                 *  -1 reserved for "no connection". */
+    unsigned char number; /* Translates to LE signal write within case statement in write_latch() */
+    signed char offset; /* Offset within the latch of the current bit.
+                         *  -1 reserved for "no connection". */
 } latch_info_t;
 
 #define PORT_ADDR_TO_ARRAY_INDEX(_x)
@@ -59,6 +59,7 @@ typedef struct latch_info {
 #define LED PORTCbits.RC0
 
 // Prototypes
+void zif_write(zif_bits_t zif_val);
 void write_latch(int latch_no, unsigned char val);
 void write_shreg(unsigned char in);
 

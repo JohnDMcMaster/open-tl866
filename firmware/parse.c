@@ -14,6 +14,7 @@ static cmd_map_t valid_cmds[] = {
     { "ll", LED_ON },
     { "lo", LED_OFF },
     { "lq", LED_QUERY },
+    { "zw", ZIF_WRITE },
 };
 
 typedef enum fsm_state {

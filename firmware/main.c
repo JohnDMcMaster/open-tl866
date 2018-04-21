@@ -178,6 +178,10 @@ int main(void)
             
             switch(res.cmd)
             {
+                case ZIF_WRITE:
+                    zif_write(res.arg);
+                    send_string_sync(2, "Ok 0\r\n");
+                    break;
                 case ECHO_ON:
                     echo = 1;
                     send_string_sync(2, "Ok 1\r\n");
