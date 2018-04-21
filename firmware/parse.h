@@ -23,6 +23,8 @@ typedef union tl866_bits {
 } tl866_bits_t;
 
 typedef enum cmd {
+    ECHO_ON,
+    ECHO_OFF,
     LED_ON,
     LED_OFF,
     LED_QUERY,

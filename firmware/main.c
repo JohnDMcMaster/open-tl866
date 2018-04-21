@@ -34,7 +34,6 @@ const char * led_status[2] = {
     "LED is on.\n"
 };
 
-
 static void send_string_sync(uint8_t endpoint, const char *str)
 {
 	char *in_buf = (char*) usb_get_in_buffer(endpoint);
@@ -125,6 +124,7 @@ int main(void)
 
     unsigned char cmd_buf[64];
     int cmd_ptr = 0;
+    int echo = 0;
 
 	while (1) {
 		/* Handle data received from the host */
@@ -162,9 +162,11 @@ int main(void)
                 }
             }
             
-#if 0
-            send_string_sync(2, out_buf);
-#endif
+            if(echo)
+            {
+                send_string_sync(2, out_buf);
+            }
+
             if(!newline_found)
             {
                 cmd_ptr += out_buf_len;
@@ -176,6 +178,16 @@ int main(void)
             
             switch(res.cmd)
             {
+                case ECHO_ON:
+                    echo = 1;
+                    send_string_sync(2, "Ok 1\r\n");
+                    break;
+                    
+                case ECHO_OFF:
+                    echo = 0;
+                    send_string_sync(2, "Ok 0\r\n");
+                    break;
+                    
                 case LED_ON:
                     LED = 1;
                     send_string_sync(2, "Ok 0\r\n");

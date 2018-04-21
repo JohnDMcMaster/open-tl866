@@ -9,8 +9,10 @@ typedef struct cmd_map
 } cmd_map_t;
 
 static cmd_map_t valid_cmds[] = {
-    { "lo", LED_OFF },
+    { "ee", ECHO_ON },
+    { "eo", ECHO_OFF },
     { "ll", LED_ON },
+    { "lo", LED_OFF },
     { "lq", LED_QUERY },
 };
 
