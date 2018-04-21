@@ -56,6 +56,8 @@ typedef struct latch_info {
 #define GND20 PORTCbits.RC1
 #define OVC PORTBbits.RB0
 
+#define LED PORTCbits.RC0
+
 // Prototypes
 void write_latch(int latch_no, unsigned char val);
 void write_shreg(unsigned char in);

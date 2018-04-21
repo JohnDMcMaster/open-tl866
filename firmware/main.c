@@ -176,6 +176,22 @@ int main(void)
             
             switch(res.cmd)
             {
+                case LED_ON:
+                    LED = 1;
+                    send_string_sync(2, "Ok 0\r\n");
+                    break;
+
+                case LED_OFF:
+                    LED = 0;
+                    send_string_sync(2, "Ok 0\r\n");
+                    break;
+
+                case LED_QUERY:
+                    {
+                        const char * msg = LED ? "Ok 1\r\n" : "Ok 0\r\n";
+                        send_string_sync(2, msg);
+                    }
+                    break;
                 
                 case INVALID:
                 default:
