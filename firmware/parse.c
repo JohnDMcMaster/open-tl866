@@ -33,7 +33,7 @@ void parse_ascii(unsigned char * buf, parse_result_t * res)
     fsm_state_t state = IN_CMD;
     int buf_ptr = 0;
     cmd_t prelim_cmd = INVALID;
-    
+
     unsigned char * hex_start;
 
     while((state != ACCEPT) && (state != REJECT))
@@ -43,10 +43,10 @@ void parse_ascii(unsigned char * buf, parse_result_t * res)
             case IN_CMD:
                 if(buf[buf_ptr] < 'a' || buf[buf_ptr] > 'z')
                 {
-                    if(buf_ptr == 2 && 
+                    if(buf_ptr == 2 &&
                        buf[buf_ptr] == ' ' &&
                        get_cmd(buf, &res->cmd) == 0)
-                    { 
+                    {
                         state = IN_WHITE_1;
                     }
                     else
@@ -64,6 +64,7 @@ void parse_ascii(unsigned char * buf, parse_result_t * res)
                     {
                         hex_start = buf + buf_ptr;
                         state = IN_HEX;
+                        continue; // We actually need this value, so don't inc ptr.
                     }
                     else
                     {
@@ -71,30 +72,55 @@ void parse_ascii(unsigned char * buf, parse_result_t * res)
                     }
                 }
                 break;
-                
+
             case IN_HEX:
                 if(buf[buf_ptr] < '0' ||
                     (buf[buf_ptr] > '9' && buf[buf_ptr] < 'A') ||
                     buf[buf_ptr] > 'F')
                 {
-                    if(buf[buf_ptr] == ' ')
+                    if(buf[buf_ptr] == ' ' || buf[buf_ptr] == '\n')
                     {
                         size_t hex_len = (buf + buf_ptr) - hex_start;
-                        int i = 0;
 
-                        for(i = 0; i < hex_len; i++)
-                        {
-                            // Store in little endian, but parse in "MSB first" format.
-                            res->arg[i] = buf[buf_ptr - i] - '0';
-                        }
-
-                        // Zero fill remaining.
-                        while(i < sizeof(res->arg))
+                        // Clear previous value so masking works.
+                        for(int i = 0; i < sizeof(res->arg); i++)
                         {
                             res->arg[i] = 0x00;
-                            i++;
                         }
+
+                        for(int j = 0; j < hex_len; j++)
+                        {
+                            // Store in little endian, but parse as if
+                            // the user wrote "left-to-right" format.
+
+                            unsigned char char_val = buf[buf_ptr - j - 1];
+                            unsigned char hex_val;
+
+                            if(char_val <= '9')
+                            {
+                                hex_val = char_val - '0';
+                            }
+                            else
+                            {
+                                hex_val = (char_val - 'A') + 10;
+                            }
+
+                            if(j & 0x01)
+                            {
+
+                                // Top nibble
+                                res->arg[j >> 1] |= (hex_val << 4);
+                            }
+                            else
+                            {
+                                // Bottom nibble.
+                                res->arg[j >> 1] |= (hex_val);
+                            }
+                        }
+
+
                         state = IN_WHITE_2;
+                        continue; // Don't skip over possible \n!
                     }
                     else
                     {
@@ -102,7 +128,7 @@ void parse_ascii(unsigned char * buf, parse_result_t * res)
                     }
                 }
                 break;
-                
+
             case IN_WHITE_2:
                 if(buf[buf_ptr] == ' ')
                 {
@@ -118,17 +144,17 @@ void parse_ascii(unsigned char * buf, parse_result_t * res)
                 }
                 break;
         }
-        
+
 
         // Nuclear fail conditions
         if(buf_ptr >= 63)
         {
             state = REJECT;
         }
-        
+
         buf_ptr++;
     }
-    
+
 
     if(state == REJECT)
     {
@@ -151,7 +177,7 @@ static int get_cmd(unsigned char * buf, cmd_t * cmd)
             return 0;
         }
     }
-    
+
     return -1;
 }
 
@@ -172,6 +198,6 @@ int ascii_to_hex(unsigned char * dst, unsigned char * src, int limit)
             dst[i] = src[i] - '0';
         }
     }
-    
+
     return 0;
 }

@@ -116,6 +116,8 @@ int main(void)
     OE_VDD = 0;
     
 	usb_init();
+    
+    PORTCbits.RC0 = 1;
 
 	uint8_t char_to_send = 'A';
 	bool send = true;
@@ -160,11 +162,15 @@ int main(void)
                 }
             }
             
+#if 0
+            send_string_sync(2, out_buf);
+#endif
             if(!newline_found)
             {
                 cmd_ptr += out_buf_len;
                 goto empty;
             }
+            
             
             parse_ascii(cmd_buf, &res);
             
