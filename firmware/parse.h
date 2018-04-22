@@ -28,6 +28,7 @@ typedef enum cmd {
     LED_ON,
     LED_OFF,
     LED_QUERY,
+    ZIF_DIR,
     ZIF_WRITE,
     ZIF_READ,
     CONTINUE, // Not used right now, meant to represent "need more input"

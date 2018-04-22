@@ -59,6 +59,7 @@ typedef struct latch_info {
 #define LED PORTCbits.RC0
 
 // Prototypes
+void dir_write(zif_bits_t zif_val);
 void zif_write(zif_bits_t zif_val);
 void write_latch(int latch_no, unsigned char val);
 void write_shreg(unsigned char in);

@@ -6,6 +6,7 @@
 static void zif_pins_to_ports(zif_bits_t zif, port_bits_t port);
 static void port_read_all(port_bits_t);
 static void port_write_all(port_bits_t);
+static void dir_write_all(port_bits_t p_bits);
 
 #define OFFS_A 0
 #define OFFS_B 1
@@ -87,6 +88,16 @@ const latch_info_t zif2gnd[2] = {
 static unsigned char latch_mirror[8]; /* Read mirror of the current latch state. */
 
 
+void dir_write(zif_bits_t zif_val)
+{
+    port_bits_t port_val = {0};
+    
+    zif_pins_to_ports(zif_val, port_val);
+    
+    dir_write_all(port_val);
+}
+
+
 void zif_write(zif_bits_t zif_val)
 {
     port_bits_t port_val = {0};
@@ -140,6 +151,18 @@ static void port_write_all(port_bits_t p_bits)
     PORTJ = p_bits[8];
 }
 
+static void dir_write_all(port_bits_t p_bits)
+{
+    TRISA = p_bits[0];
+    TRISB = p_bits[1];
+    TRISC = p_bits[2];
+    TRISD = p_bits[3];
+    TRISE = p_bits[4];
+    TRISF = p_bits[5];
+    TRISG = p_bits[6];
+    TRISH = p_bits[7];
+    TRISJ = p_bits[8];
+}
 
 
 /* Read mask of I/O pin dir (TRIS) into array in ZIF order. */

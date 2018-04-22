@@ -177,6 +177,10 @@ int main(void)
             
             switch(res.cmd)
             {
+                case ZIF_DIR:
+                    dir_write(res.arg);
+                    send_string_sync(2, "Ok 0\r\n");
+                    break;
                 case ZIF_WRITE:
                     zif_write(res.arg);
                     send_string_sync(2, "Ok 0\r\n");
