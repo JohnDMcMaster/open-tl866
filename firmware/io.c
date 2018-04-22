@@ -3,6 +3,7 @@
 #include "system.h"
 #include "io.h"
 
+static void zif_pins_to_ports(zif_bits_t zif, port_bits_t port);
 static void port_read_all(port_bits_t);
 static void port_write_all(port_bits_t);
 
@@ -90,6 +91,13 @@ void zif_write(zif_bits_t zif_val)
 {
     port_bits_t port_val = {0};
     
+    zif_pins_to_ports(zif_val, port_val);
+    
+    port_write_all(port_val);
+}
+
+static void zif_pins_to_ports(zif_bits_t zif, port_bits_t port)
+{
     for(unsigned int pin_no = 0; pin_no < (sizeof(zif2port)/sizeof(port_info_t)); pin_no++)
     {
         /* It would be nice to assume the compiler can divide by 8 using
@@ -97,13 +105,11 @@ void zif_write(zif_bits_t zif_val)
         unsigned char set_of_8 = (pin_no >> 3);
         unsigned char bit_offset = 1 << (pin_no & 0x07);
         
-        unsigned char pin_val = (zif_val[set_of_8] & bit_offset) ? 1 : 0;
+        unsigned char pin_val = (zif[set_of_8] & bit_offset) ? 1 : 0;
         
         port_info_t curr = zif2port[pin_no];      
-        port_val[curr.bank] |= (pin_val << curr.offset);
-    }
-    
-    port_write_all(port_val);
+        port[curr.bank] |= (pin_val << curr.offset);
+    } 
 }
 
 
