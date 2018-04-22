@@ -60,8 +60,7 @@ int main(void)
     TRISA = 0x00; // RA5-RA0: LE4, OE_VDD, LE5, LE2, LE7, LE3
     
     PORTB = 0x00;
-    TRISB = 0xc1; // By default, keep RB7/RB6 as input/shared w/ ICSP header.
-                  // RB1: Controls resistors on P15-P24. P16/P21 act especially weird.
+    TRISB = 0x01; // RB1: Controls resistors on P15-P24. P16/P21 act especially weird.
                   // RB0: Input that detects that Vpp/Vdd voltage is okay.
     
     PORTC = 0x00;

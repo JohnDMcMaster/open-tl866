@@ -6,12 +6,64 @@
 static void port_read_all(port_bits_t);
 static void port_write_all(port_bits_t);
 
+#define OFFS_A 0
+#define OFFS_B 1
+#define OFFS_C 2
+#define OFFS_D 3
+#define OFFS_E 4
+#define OFFS_F 5
+#define OFFS_G 6
+#define OFFS_H 7
+#define OFFS_J 8
+
 /* ZIF pin assignments are scattered all over the PIC18's I/O banks.
  * This array provides a mapping from a ZIF pin to the corresponding PIC18
  * I/O location (0-based port bank addressing, and bit offset). */
-const port_info_t zif2port[2] = {
-    {2, 5},
-    {2, 4},
+const port_info_t zif2port[40] = {
+    {OFFS_C, 5},
+    {OFFS_C, 4},
+    {OFFS_C, 3},
+    {OFFS_C, 2},
+    {OFFS_J, 7},
+    {OFFS_J, 6},
+    {OFFS_C, 6},
+    {OFFS_C, 7},
+    
+    {OFFS_J, 4},
+    {OFFS_J, 5},
+    {OFFS_G, 3},
+    {OFFS_G, 2},
+    {OFFS_D, 0},
+    {OFFS_D, 1},
+    {OFFS_D, 2},
+    {OFFS_G, 1},
+    
+    {OFFS_E, 0},
+    {OFFS_E, 7},
+    {OFFS_E, 2},
+    {OFFS_E, 3},
+    {OFFS_E, 4},
+    {OFFS_E, 5},
+    {OFFS_E, 6},
+    {OFFS_E, 1},
+    
+    {OFFS_D, 3},
+    {OFFS_D, 4},
+    {OFFS_D, 5},
+    {OFFS_D, 6},
+    {OFFS_D, 7},
+    {OFFS_G, 0},
+    {OFFS_J, 0},
+    {OFFS_J, 1},
+    
+    {OFFS_J, 2},
+    {OFFS_J, 3},
+    {OFFS_B, 2},
+    {OFFS_B, 3},
+    {OFFS_B, 4},
+    {OFFS_B, 5},
+    {OFFS_B, 6},
+    {OFFS_B, 7},
 };
 
 /* LE signal number is based off radioman schematic. They are scattered
@@ -38,7 +90,7 @@ void zif_write(zif_bits_t zif_val)
 {
     port_bits_t port_val = {0};
     
-    for(unsigned int pin_no = 0; pin_no < 2; pin_no++)
+    for(unsigned int pin_no = 0; pin_no < (sizeof(zif2port)/sizeof(port_info_t)); pin_no++)
     {
         /* It would be nice to assume the compiler can divide by 8 using
         shifts, but XC8 is broken in free mode. */
