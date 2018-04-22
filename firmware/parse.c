@@ -87,43 +87,7 @@ void parse_ascii(unsigned char * buf, parse_result_t * res)
                     {
                         if(buf[buf_ptr] == ' ' || buf[buf_ptr] == '\n')
                         {
-                            // Clear previous value so masking works.
-                            for(int i = 0; i < sizeof(res->arg); i++)
-                            {
-                                res->arg[i] = 0x00;
-                            }
-
-                            for(int j = 0; j < hex_len; j++)
-                            {
-                                // Store in little endian, but parse as if
-                                // the user wrote "left-to-right" format.
-
-                                unsigned char char_val = buf[buf_ptr - j - 1];
-                                unsigned char hex_val;
-
-                                if(char_val <= '9')
-                                {
-                                    hex_val = char_val - '0';
-                                }
-                                else
-                                {
-                                    hex_val = (char_val - 'A') + 10;
-                                }
-
-                                if(j & 0x01)
-                                {
-
-                                    // Top nibble
-                                    res->arg[j >> 1] |= (hex_val << 4);
-                                }
-                                else
-                                {
-                                    // Bottom nibble.
-                                    res->arg[j >> 1] |= (hex_val);
-                                }
-                            }
-
-
+                            ascii_to_hex(res->arg, hex_start, sizeof(res->arg), hex_len);
                             state = IN_WHITE_2;
                             continue; // Don't skip over possible \n!
                         }
@@ -189,21 +153,41 @@ static int get_cmd(unsigned char * buf, cmd_t * cmd)
 
 
 
-int ascii_to_hex(unsigned char * dst, unsigned char * src, int limit)
+void ascii_to_hex(unsigned char * dst, unsigned char * src, size_t dst_len, size_t src_len)
 {
-    int i;
-
-    for(i = 0; i < limit; i++)
+    // Clear previous value so masking works.
+    for(int i = 0; i < dst_len; i++)
     {
-        if(src[i] < '0' || (src[i] > '9' && src[i] < 'A') || src[i] > 'F')
+        dst[i] = 0x00;
+    }
+
+    for(int j = 0; j < src_len; j++)
+    {
+        // Store in little endian, but parse as if
+        // the user wrote "left-to-right" format.
+
+        unsigned char char_val = src[src_len - j - 1];
+        unsigned char hex_val;
+
+        if(char_val <= '9')
         {
-            return -1;
+            hex_val = char_val - '0';
         }
         else
         {
-            dst[i] = src[i] - '0';
+            hex_val = (char_val - 'A') + 10;
+        }
+
+        if(j & 0x01)
+        {
+
+            // Top nibble
+            dst[j >> 1] |= (hex_val << 4);
+        }
+        else
+        {
+            // Bottom nibble.
+            dst[j >> 1] |= (hex_val);
         }
     }
-
-    return 0;
 }

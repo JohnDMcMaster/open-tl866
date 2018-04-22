@@ -40,6 +40,7 @@ typedef struct parse_result {
 } parse_result_t;
 
 void parse_ascii(unsigned char * buf, parse_result_t * res);
+void ascii_to_hex(unsigned char * dst, unsigned char * src, size_t dst_len, size_t src_len);
 
 
 
