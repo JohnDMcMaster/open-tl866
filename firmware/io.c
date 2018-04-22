@@ -66,6 +66,7 @@ static void port_read_all(port_bits_t p_bits)
     p_bits[5] = PORTF;
     p_bits[6] = PORTG;
     p_bits[7] = PORTH;
+    p_bits[8] = PORTJ;
 }
 
 static void port_write_all(port_bits_t p_bits)
@@ -78,6 +79,7 @@ static void port_write_all(port_bits_t p_bits)
     PORTF = p_bits[5];
     PORTG = p_bits[6];
     PORTH = p_bits[7];
+    PORTJ = p_bits[8];
 }
 
 

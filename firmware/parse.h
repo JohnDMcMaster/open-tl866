@@ -36,7 +36,7 @@ typedef enum cmd {
 
 typedef struct parse_result {
     cmd_t cmd;
-    unsigned char arg[8];
+    unsigned char arg[10];
 } parse_result_t;
 
 void parse_ascii(unsigned char * buf, parse_result_t * res);
