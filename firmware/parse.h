@@ -29,6 +29,7 @@ typedef enum cmd {
     LED_ON,
     LED_OFF,
     LED_QUERY,
+    VDD_SET,
     VDD_WRITE,
     VPP_SET,
     VPP_WRITE,

@@ -196,6 +196,10 @@ int main(void)
                     zif_write(res.arg);
                     send_string_sync(2, "Ok 0\r\n");
                     break;
+                case VDD_SET:
+                    vdd_val(res.arg[0]);
+                    send_string_sync(2, "Ok 0\r\n");
+                    break;
                 case VPP_SET:
                     vpp_val(res.arg[0]);
                     send_string_sync(2, "Ok 0\r\n");
