@@ -9,6 +9,8 @@ typedef struct cmd_map
 } cmd_map_t;
 
 static cmd_map_t valid_cmds[] = {
+    { "dd", VDD_DISABLE },
+    { "de", VDD_ENABLE },
     { "ds", VDD_SET },
     { "dw", VDD_WRITE },
     { "ee", ECHO_ON },
@@ -17,6 +19,8 @@ static cmd_map_t valid_cmds[] = {
     { "ll", LED_ON },
     { "lo", LED_OFF },
     { "lq", LED_QUERY },
+    { "pd", VPP_DISABLE },
+    { "pe", VPP_ENABLE },
     { "ps", VPP_SET },
     { "pw", VPP_WRITE },
     { "zd", ZIF_DIR },

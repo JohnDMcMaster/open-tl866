@@ -336,22 +336,22 @@ void write_shreg(unsigned char in)
 
 void vpp_en(void)
 {
-    OE_VPP = 1;
+    OE_VPP = 0;
 }
 
 void vpp_dis(void)
 {
-    OE_VPP = 0;
+    OE_VPP = 1;
 }
 
 void vdd_en(void)
 {
-    OE_VDD = 1;
+    OE_VDD = 0;
 }
 
 void vdd_dis(void)
 {
-    OE_VDD = 0;
+    OE_VDD = 1;
 }
 
 
