@@ -18,6 +18,8 @@ static cmd_map_t valid_cmds[] = {
     { "gw", GND_WRITE },
     { "ll", LED_ON },
     { "lo", LED_OFF },
+    { "mm", MYSTERY_ON},
+    { "mo", MYSTERY_OFF},
     { "lq", LED_QUERY },
     { "pd", VPP_DISABLE },
     { "pe", VPP_ENABLE },

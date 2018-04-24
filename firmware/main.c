@@ -258,6 +258,16 @@ int main(void)
                         send_string_sync(2, msg);
                     }
                     break;
+                    
+                case MYSTERY_ON:
+                    MYSTERY = 1;
+                    send_string_sync(2, "Ok 1\r\n");
+                    break;
+
+                case MYSTERY_OFF:
+                    MYSTERY = 0;
+                    send_string_sync(2, "Ok 0\r\n");
+                    break;    
                 
                 case INVALID:
                 default:

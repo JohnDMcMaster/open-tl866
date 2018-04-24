@@ -58,6 +58,8 @@ typedef struct latch_info {
 
 #define LED PORTCbits.RC0
 
+#define MYSTERY PORTBbits.RB1
+
 // Prototypes
 void dir_write(zif_bits_t zif_val);
 void zif_write(zif_bits_t zif_val);

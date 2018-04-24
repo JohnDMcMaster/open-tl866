@@ -26,6 +26,8 @@ typedef enum cmd {
     ECHO_ON,
     ECHO_OFF,
     GND_WRITE,
+    MYSTERY_ON,
+    MYSTERY_OFF,
     LED_ON,
     LED_OFF,
     LED_QUERY,
