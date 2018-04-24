@@ -3,6 +3,7 @@
 #include "system.h"
 #include "io.h"
 
+static void ports_to_zif_pins(port_bits_t port, zif_bits_t zif);
 static void zif_pins_to_ports(zif_bits_t zif, port_bits_t port);
 static void port_read_all(port_bits_t);
 static void port_write_all(port_bits_t);
@@ -107,6 +108,14 @@ void zif_write(zif_bits_t zif_val)
     port_write_all(port_val);
 }
 
+void zif_read(zif_bits_t zif_val)
+{
+    port_bits_t port_val = {0};
+    
+    port_read_all(port_val);
+    ports_to_zif_pins(port_val, zif_val);
+}
+
 static void zif_pins_to_ports(zif_bits_t zif, port_bits_t port)
 {
     for(unsigned int pin_no = 0; pin_no < (sizeof(zif2port)/sizeof(port_info_t)); pin_no++)
@@ -121,6 +130,23 @@ static void zif_pins_to_ports(zif_bits_t zif, port_bits_t port)
         port_info_t curr = zif2port[pin_no];      
         port[curr.bank] |= (pin_val << curr.offset);
     } 
+}
+
+
+static void ports_to_zif_pins(port_bits_t port, zif_bits_t zif)
+{
+    for(unsigned int pin_no = 0; pin_no < (sizeof(zif2port)/sizeof(port_info_t)); pin_no++)
+    {
+        port_info_t curr = zif2port[pin_no];
+
+        unsigned char set_of_8 = (pin_no >> 3);
+        unsigned char bit_offset = 1 << (pin_no & 0x07);
+        unsigned char port_offset = (1 << curr.offset);
+        
+        unsigned char pin_val = (port[curr.bank] & port_offset) ? 1 : 0;
+   
+        zif[set_of_8] |= (pin_val << bit_offset);
+    }
 }
 
 
@@ -260,17 +286,38 @@ void write_shreg(unsigned char in)
     
 } */
 
-void set_vpp(unsigned char)
+void vpp_en(void)
+{
+    OE_VPP = 1;
+}
+
+void vpp_dis(void)
+{
+    OE_VPP = 0;
+}
+
+void vdd_en(void)
+{
+    OE_VDD = 1;
+}
+
+void vdd_dis(void)
+{
+    OE_VDD = 0;
+}
+
+
+void set_vpp(zif_bits_t zif)
 {
 
 }
 
-void set_vdd(unsigned char)
+void set_vdd(zif_bits_t zif)
 {
 
 }
 
-void set_iov(unsigned char)
+void set_iov(zif_bits_t zif)
 {
     
 }

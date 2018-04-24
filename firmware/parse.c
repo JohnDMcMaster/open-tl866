@@ -192,3 +192,52 @@ void ascii_to_hex(unsigned char * dst, unsigned char * src, size_t dst_len, size
         }
     }
 }
+
+
+void hex_to_ascii(unsigned char * dst, unsigned char * src, size_t dst_len, size_t src_len)
+{
+    // Clear previous value so masking works.
+    for(int i = 0; i < dst_len; i++)
+    {
+        dst[i] = 0x00;
+    }
+
+    for(int j = 0; j < src_len; j++)
+    {
+        // Store in little endian, but parse as if
+        // the user wrote "left-to-right" format.
+
+        unsigned char hex_val = src[j];
+        unsigned char nibble_lo, nibble_hi;
+        unsigned char char_lo, char_hi;
+        
+        nibble_lo = hex_val & 0x0F;
+        nibble_hi = (hex_val >> 4) & 0x0F; // Sign bit shifted right?
+        
+        if(nibble_lo <= 0x09)
+        {
+            char_lo = nibble_lo + '0';
+        }
+        else
+        {
+            char_lo = nibble_lo + ('A' - 10);
+        }
+        
+        if(nibble_hi <= 0x09)
+        {
+            char_hi = nibble_hi + '0';
+        }
+        else
+        {
+            char_hi = nibble_hi + ('A' - 10);
+        }
+        
+        {
+            // Write result backwards- as if user entered value in ASCII.
+            unsigned char base = dst_len - (j << 1) - 1;
+            
+            dst[base] |= char_lo;
+            dst[base - 1] |= char_hi;
+        }
+    }
+}
