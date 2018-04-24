@@ -68,6 +68,7 @@ void vpp_en(void);
 void vpp_dis(void);
 void vdd_en(void);
 void vdd_dis(void);
+void set_vpp(zif_bits_t zif);
 
 
 #ifdef	__cplusplus

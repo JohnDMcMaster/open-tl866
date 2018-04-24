@@ -309,7 +309,31 @@ void vdd_dis(void)
 
 void set_vpp(zif_bits_t zif)
 {
+    unsigned char le_vpp_masks[2] = { 0 };
+    
+    for(unsigned int pin_no = 0; pin_no < (sizeof(zif2vpp)/sizeof(latch_info_t)); pin_no++)
+    {
+        latch_info_t curr = zif2vpp[pin_no];
 
+        // Commands are zif-based; don't bother assigning a voltage to a zif
+        // pin which doesn't have any (offset == -1 or less).
+        if(curr.offset < 0)
+        {
+            continue;
+        }
+        else
+        {
+            unsigned char set_of_8 = (pin_no >> 3);
+            unsigned char bit_offset = 1 << (pin_no & 0x07);
+        
+            unsigned char mask = (zif[set_of_8] & bit_offset) ? 1 : 0;
+      
+            le_vpp_masks[curr.number] |= (mask << (unsigned char) curr.offset);
+        }
+    }
+    
+    write_latch(0, le_vpp_masks[0]);
+    write_latch(1, le_vpp_masks[1]);
 }
 
 void set_vdd(zif_bits_t zif)
