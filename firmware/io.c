@@ -309,7 +309,7 @@ void vdd_dis(void)
 
 void set_vpp(zif_bits_t zif)
 {
-    unsigned char le_vpp_masks[2] = { 0 };
+    unsigned char latch_vpp_masks[2] = { 0 };
     
     for(unsigned int pin_no = 0; pin_no < (sizeof(zif2vpp)/sizeof(latch_info_t)); pin_no++)
     {
@@ -328,12 +328,12 @@ void set_vpp(zif_bits_t zif)
         
             unsigned char mask = (zif[set_of_8] & bit_offset) ? 1 : 0;
       
-            le_vpp_masks[curr.number] |= (mask << (unsigned char) curr.offset);
+            latch_vpp_masks[curr.number] |= (mask << (unsigned char) curr.offset);
         }
     }
     
-    write_latch(0, le_vpp_masks[0]);
-    write_latch(1, le_vpp_masks[1]);
+    write_latch(0, latch_vpp_masks[0]);
+    write_latch(1, latch_vpp_masks[1]);
 }
 
 void set_vdd(zif_bits_t zif)
@@ -344,4 +344,26 @@ void set_vdd(zif_bits_t zif)
 void set_iov(zif_bits_t zif)
 {
     
+}
+
+void vpp_val(unsigned char setting)
+{
+    setting &= 0x07;
+    
+    VID_10 = (setting & 0x01) ? 1 : 0;
+    VID_11 = (setting & 0x02) ? 1 : 0;
+    VID_12 = (setting & 0x04) ? 1 : 0;
+    
+    __delay_ms(2);
+}
+
+void vdd_val(unsigned char setting)
+{
+    setting &= 0x07;
+    
+    VID_00 = (setting & 0x01) ? 1 : 0;
+    VID_01 = (setting & 0x02) ? 1 : 0;
+    VID_02 = (setting & 0x04) ? 1 : 0;
+    
+    __delay_ms(2);
 }

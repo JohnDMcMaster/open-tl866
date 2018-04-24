@@ -14,6 +14,7 @@ static cmd_map_t valid_cmds[] = {
     { "ll", LED_ON },
     { "lo", LED_OFF },
     { "lq", LED_QUERY },
+    { "ps", VPP_SET },
     { "pw", VPP_WRITE },
     { "zd", ZIF_DIR },
     { "zr", ZIF_READ },
