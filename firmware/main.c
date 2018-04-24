@@ -181,6 +181,17 @@ int main(void)
                     dir_write(res.arg);
                     send_string_sync(2, "Ok 0\r\n");
                     break;
+                case ZIF_READ:
+                    {
+                        char str_ret[16] = {'O', 'k', ' ', '0', '0', '0',
+                                            '0', '0', '0', '0', '0', '0',
+                                            '0', '\r', '\n', '\0'};
+                        zif_bits_t zif = { 0x00 };
+                        zif_read(zif);
+                        hex_to_ascii(&str_ret[3], zif, 10, 5);
+                        send_string_sync(2, str_ret);
+                    }
+                    break;
                 case ZIF_WRITE:
                     zif_write(res.arg);
                     send_string_sync(2, "Ok 0\r\n");

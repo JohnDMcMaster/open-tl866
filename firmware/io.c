@@ -140,7 +140,7 @@ static void ports_to_zif_pins(port_bits_t port, zif_bits_t zif)
         port_info_t curr = zif2port[pin_no];
 
         unsigned char set_of_8 = (pin_no >> 3);
-        unsigned char bit_offset = 1 << (pin_no & 0x07);
+        unsigned char bit_offset = (pin_no & 0x07);
         unsigned char port_offset = (1 << curr.offset);
         
         unsigned char pin_val = (port[curr.bank] & port_offset) ? 1 : 0;
