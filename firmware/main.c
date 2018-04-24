@@ -200,6 +200,14 @@ int main(void)
                     vpp_val(res.arg[0]);
                     send_string_sync(2, "Ok 0\r\n");
                     break;
+                case GND_WRITE:
+                    set_gnd(res.arg);
+                    send_string_sync(2, "Ok 0\r\n");
+                    break;
+                case VDD_WRITE:
+                    set_vdd(res.arg);
+                    send_string_sync(2, "Ok 0\r\n");
+                    break;
                 case VPP_WRITE:
                     set_vpp(res.arg);
                     send_string_sync(2, "Ok 0\r\n");

@@ -386,12 +386,60 @@ void set_vpp(zif_bits_t zif)
 
 void set_vdd(zif_bits_t zif)
 {
+    unsigned char latch_vdd_masks[3] = { 0 };
+    
+    for(unsigned int pin_no = 0; pin_no < (sizeof(zif2vdd)/sizeof(latch_info_t)); pin_no++)
+    {
+        latch_info_t curr = zif2vdd[pin_no];
 
+        if(curr.offset < 0)
+        {
+            continue;
+        }
+        else
+        {
+            unsigned char set_of_8 = (pin_no >> 3);
+            unsigned char bit_offset = 1 << (pin_no & 0x07);
+        
+            // Drivers are PNPs, so a logic 0 enables Vdd line for I/O pin.
+            unsigned char mask = (zif[set_of_8] & bit_offset) ? 1 : 0;
+      
+            latch_vdd_masks[curr.number - 2] |= (mask << (unsigned char) curr.offset);
+        }
+    }
+    
+    write_latch(2, latch_vdd_masks[0]);
+    write_latch(3, latch_vdd_masks[1]);
+    write_latch(4, latch_vdd_masks[2]);
 }
 
-void set_iov(zif_bits_t zif)
+void set_gnd(zif_bits_t zif)
 {
+    unsigned char latch_gnd_masks[3] = { 0 };
     
+    for(unsigned int pin_no = 0; pin_no < (sizeof(zif2gnd)/sizeof(latch_info_t)); pin_no++)
+    {
+        latch_info_t curr = zif2gnd[pin_no];
+
+        if(curr.offset < 0)
+        {
+            continue;
+        }
+        else
+        {
+            unsigned char set_of_8 = (pin_no >> 3);
+            unsigned char bit_offset = 1 << (pin_no & 0x07);
+        
+            // Drivers are PNPs, so a logic 0 enables Vdd line for I/O pin.
+            unsigned char mask = (zif[set_of_8] & bit_offset) ? 1 : 0;
+      
+            latch_gnd_masks[curr.number - 5] |= (mask << (unsigned char) curr.offset);
+        }
+    }
+    
+    write_latch(5, latch_gnd_masks[0]);
+    write_latch(6, latch_gnd_masks[1]);
+    write_latch(7, latch_gnd_masks[2]);
 }
 
 void vpp_val(unsigned char setting)

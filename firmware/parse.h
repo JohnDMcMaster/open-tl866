@@ -25,9 +25,11 @@ typedef union tl866_bits {
 typedef enum cmd {
     ECHO_ON,
     ECHO_OFF,
+    GND_WRITE,
     LED_ON,
     LED_OFF,
     LED_QUERY,
+    VDD_WRITE,
     VPP_SET,
     VPP_WRITE,
     ZIF_DIR,

@@ -69,7 +69,10 @@ void vpp_dis(void);
 void vdd_en(void);
 void vdd_dis(void);
 void set_vpp(zif_bits_t zif);
+void set_vdd(zif_bits_t zif);
+void set_gnd(zif_bits_t zif);
 void vpp_val(unsigned char setting);
+void vdd_val(unsigned char setting);
 
 
 #ifdef	__cplusplus
