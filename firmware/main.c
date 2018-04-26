@@ -56,6 +56,11 @@ int main(void)
     INTCONbits.PEIE = 1;
 	INTCONbits.GIE = 1;
     
+    WDTCONbits.ADSHR = 1;
+    ANCON0 |= 0x9F; // Disable analog functionality on Ports A, F, and H.
+    ANCON1 |= 0xFC;
+    WDTCONbits.ADSHR = 0;
+
     PORTA = 0x00;
     TRISA = 0x00; // RA5-RA0: LE4, OE_VDD, LE5, LE2, LE7, LE3
     
@@ -71,7 +76,7 @@ int main(void)
     
     PORTE = 0x00; // All attached to ZIF
     TRISE = 0x00;
-    
+
     PORTF = 0x00;
     TRISF = 0x00; // RF7-RF5: VID_02-00, RF2: VID_12
     
@@ -114,7 +119,7 @@ int main(void)
     OE_VDD = 0;
     
 	usb_init();
-    
+
     PORTCbits.RC0 = 1;
 
 	uint8_t char_to_send = 'A';
