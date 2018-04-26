@@ -71,10 +71,56 @@ const port_info_t zif2port[40] = {
 
 /* LE signal number is based off radioman schematic. They are scattered
  * between banks unfortunately. */
-const latch_info_t zif2vdd[2] = {
+const latch_info_t zif2vdd[40] = {
+    {3, 7},
+    {3, 4},
     {3, 5},
-    {3, 6},
+    {4, 0},
+
+    {3, 2},
+    {4, 2},
+    {2, 6},
+    {2, 1},
+
+    {2, 2},
+    {2, 3},
+    {2, 0},
+    {2, 7},
+
+    {2, 4},
+    {0, -1},
+    {0, -1},
+    {0, -1},
     
+    {0, -1},
+    {0, -1},
+    {0, -1},
+    {0, -1},
+
+    {2, 5},
+    {0, -1},
+    {0, -1},
+    {0, -1},
+
+    {0, -1},
+    {0, -1},
+    {0, -1},
+    {0, -1},
+
+    {0, -1},
+    {4, 6},
+    {0, -1},
+    {4, 1},
+
+    {4, 5},
+    {4, 3},
+    {4, 4},
+    {4, 7},
+
+    {3, 3},
+    {3, 6},
+    {3, 0},
+    {3, 1},
 };
 
 const latch_info_t zif2vpp[40] = {
@@ -407,10 +453,10 @@ void set_vdd(zif_bits_t zif)
             latch_vdd_masks[curr.number - 2] |= (mask << (unsigned char) curr.offset);
         }
     }
-    
-    write_latch(2, latch_vdd_masks[0]);
-    write_latch(3, latch_vdd_masks[1]);
-    write_latch(4, latch_vdd_masks[2]);
+
+    write_latch(2, ~latch_vdd_masks[0]);
+    write_latch(3, ~latch_vdd_masks[1]);
+    write_latch(4, ~latch_vdd_masks[2]);
 }
 
 void set_gnd(zif_bits_t zif)
