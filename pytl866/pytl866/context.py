@@ -9,5 +9,5 @@ class Tl866Context():
         self.drv = Tl866Driver(self.device, self.baud_rate)
         return self.drv
 
-    def __exit__(self):
+    def __exit__(self, exc_type, exc_val, exc_tb):
         self.drv.handle.close()
