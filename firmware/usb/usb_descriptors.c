@@ -91,8 +91,8 @@ const ROMPTR struct device_descriptor this_device_descriptor =
 	         Association Descriptor Device Class Code and Use Model" */
 	0x01, // Protocol. See document referenced above.
 	EP_0_LEN, // bMaxPacketSize0
-	0xA0A0, // Vendor
-	0x0004, // Product
+	0x1209, // Vendor
+	0x8661, // Product
 	0x0001, // device release (1.0)
 	1, // Manufacturer
 	2, // Product
