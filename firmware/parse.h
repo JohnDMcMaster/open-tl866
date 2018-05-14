@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   parse.h
  * Author: William
  *
@@ -11,9 +11,9 @@
 #ifdef	__cplusplus
 extern "C" {
 #endif
-    
+
 #include "io.h"
-  
+
 typedef union tl866_bits {
     unsigned char voltage;
     unsigned char led;
@@ -40,6 +40,7 @@ typedef enum cmd {
     VPP_SET,
     VPP_WRITE,
     ZIF_DIR,
+    ZIF_DIR_READ,
     ZIF_WRITE,
     ZIF_READ,
     CONTINUE, // Not used right now, meant to represent "need more input"
@@ -62,4 +63,3 @@ void hex_to_ascii(unsigned char * dst, unsigned char * src, size_t dst_len, size
 #endif
 
 #endif	/* PARSE_H */
-

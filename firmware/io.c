@@ -241,6 +241,13 @@ void dir_write(zif_bits_t zif_val)
     dir_write_all(port_val);
 }
 
+void dir_read(zif_bits_t zif_val)
+{
+    port_bits_t port_val = {0};
+
+    dir_read_all(port_val);
+    ports_to_zif_pins(port_val, zif_val);
+}
 
 void zif_write(zif_bits_t zif_val)
 {

@@ -84,6 +84,9 @@ class Tl866Driver():
     def zd(self, val):
         return self.mk_and_send_cmd("zd", val)
 
+    def ze(self):
+        return self.mk_and_send_cmd("ze", 0)
+
     def zr(self):
         return self.mk_and_send_cmd("zr", 0)
 

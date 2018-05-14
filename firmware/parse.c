@@ -26,6 +26,7 @@ static cmd_map_t valid_cmds[] = {
     { "ps", VPP_SET },
     { "pw", VPP_WRITE },
     { "zd", ZIF_DIR },
+    { "ze", ZIF_DIR_READ },
     { "zr", ZIF_READ },
     { "zw", ZIF_WRITE },
 };
@@ -222,10 +223,10 @@ void hex_to_ascii(unsigned char * dst, unsigned char * src, size_t dst_len, size
         unsigned char hex_val = src[j];
         unsigned char nibble_lo, nibble_hi;
         unsigned char char_lo, char_hi;
-        
+
         nibble_lo = hex_val & 0x0F;
         nibble_hi = (hex_val >> 4) & 0x0F; // Sign bit shifted right?
-        
+
         if(nibble_lo <= 0x09)
         {
             char_lo = nibble_lo + '0';
@@ -234,7 +235,7 @@ void hex_to_ascii(unsigned char * dst, unsigned char * src, size_t dst_len, size
         {
             char_lo = nibble_lo + ('A' - 10);
         }
-        
+
         if(nibble_hi <= 0x09)
         {
             char_hi = nibble_hi + '0';
@@ -243,11 +244,11 @@ void hex_to_ascii(unsigned char * dst, unsigned char * src, size_t dst_len, size
         {
             char_hi = nibble_hi + ('A' - 10);
         }
-        
+
         {
             // Write result backwards- as if user entered value in ASCII.
             unsigned char base = dst_len - (j << 1) - 1;
-            
+
             dst[base] |= char_lo;
             dst[base - 1] |= char_hi;
         }

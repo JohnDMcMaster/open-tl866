@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   io.h
  * Author: William
  *
@@ -62,6 +62,7 @@ typedef struct latch_info {
 
 // Prototypes
 void dir_write(zif_bits_t zif_val);
+void dir_read(zif_bits_t zif_val);
 void zif_write(zif_bits_t zif_val);
 void zif_read(zif_bits_t zif_val);
 void write_latch(int latch_no, unsigned char val);
@@ -82,4 +83,3 @@ void vdd_val(unsigned char setting);
 #endif
 
 #endif	/* IO_H */
-
