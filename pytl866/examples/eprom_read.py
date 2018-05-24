@@ -65,27 +65,27 @@ def print_zif(v):
 
 
 with pytl866.Tl866Context(sys.argv[1]) as tl:
-    tl.eo()
+    tl.cmd_echo_off()
 
     # Default direction (all output).
-    tl.zd(0)
+    tl.cmd_zif_dir(0)
 
     # Set voltages
-    tl.pw(0)
-    tl.gw(0x0000002000)
-    tl.dw(1 << 39)
-    tl.ds(3)
+    tl.cmd_vpp_write(0)
+    tl.cmd_gnd_write(0x0000002000)
+    tl.cmd_vdd_write(1 << 39)
+    tl.cmd_vdd_set(3)
 
     # Set data lines as input.
-    tl.zd(eprom_to_int(d_lines))
+    tl.cmd_zif_dir(eprom_to_int(d_lines))
     res = bytearray()
     print("Initialization done. Starting read loop...")
 
     start = timer()
     for i in range(8192):
-        tl.zw(addr_bits(i) | eprom_to_int([pgm, ce, oe])) # Set up addr
-        tl.zw(addr_bits(i) | eprom_to_int([pgm, oe])) # CE low
-        tl.zw((addr_bits(i) & ~eprom_to_int([oe, ce])) | eprom_to_int([pgm])) # OE low
+        tl.cmd_zif_write(addr_bits(i) | eprom_to_int([pgm, ce, oe])) # Set up addr
+        tl.cmd_zif_write(addr_bits(i) | eprom_to_int([pgm, oe])) # CE low
+        tl.cmd_zif_write((addr_bits(i) & ~eprom_to_int([oe, ce])) | eprom_to_int([pgm])) # OE low
 
         res += get_data(tl.zr()).to_bytes(1, byteorder="little")
     end = timer()

@@ -275,7 +275,7 @@ int main(void)
             memcpy(cmd_buf + cmd_ptr, out_buf, out_buf_len);
             for(int i = 0; i < out_buf_len; i++)
             {
-                if(cmd_buf[cmd_ptr + i] == '\n')
+                if(cmd_buf[cmd_ptr + i] == '\n' || cmd_buf[cmd_ptr + i] == '\r')
                 {
                     newline_found = 1;
                     cmd_ptr = 0;

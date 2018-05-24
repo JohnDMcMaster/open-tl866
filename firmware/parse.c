@@ -99,7 +99,7 @@ void parse_ascii(unsigned char * buf, parse_result_t * res)
                         buf[buf_ptr] > 'F') &&
                        hex_len <= sizeof(res->arg))
                     {
-                        if(buf[buf_ptr] == ' ' || buf[buf_ptr] == '\n')
+                        if(buf[buf_ptr] == ' ' || buf[buf_ptr] == '\n' || buf[buf_ptr] == '\r')
                         {
                             ascii_to_hex(res->arg, hex_start, sizeof(res->arg), hex_len);
                             state = IN_WHITE_2;
@@ -118,7 +118,7 @@ void parse_ascii(unsigned char * buf, parse_result_t * res)
                 {
                     // Continue
                 }
-                else if(buf[buf_ptr] == '\n')
+                else if(buf[buf_ptr] == '\n' || buf[buf_ptr] == '\r')
                 {
                     state = ACCEPT;
                 }
