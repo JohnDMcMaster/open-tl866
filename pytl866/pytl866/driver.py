@@ -1,5 +1,6 @@
 import re
 import serial
+from time import sleep
 
 (VPP_98, VPP_126, VPP_140, VPP_166, VPP_144, VPP_171, VPP_185, VPP_212) = range(8)
 # My measurements: 9.83, 12.57, 14.00, 16.68, 14.46, 17.17, 18.56, 21.2
@@ -33,64 +34,64 @@ class Tl866Driver():
         return self.get_retval()
 
     # Thin command wrappers
-    def dd(self):
+    def cmd_vdd_disable(self):
         return self.mk_and_send_cmd("dd", 0)
 
-    def de(self):
+    def cmd_vdd_enable(self):
         return self.mk_and_send_cmd("de", 0)
 
-    def ds(self, val):
+    def cmd_vdd_set(self, val):
         return self.mk_and_send_cmd("ds", val)
 
-    def dw(self, val):
+    def cmd_vdd_write(self, val):
         return self.mk_and_send_cmd("dw", val)
 
-    def ee(self):
+    def cmd_echo_on(self):
         return self.mk_and_send_cmd("ee", 0)
 
-    def eo(self):
+    def cmd_echo_off(self):
         return self.mk_and_send_cmd("eo", 0)
 
-    def gw(self, val):
+    def cmd_gnd_write(self, val):
         return self.mk_and_send_cmd("gw", val)
 
-    def ll(self):
+    def cmd_led_on(self):
         return self.mk_and_send_cmd("ll", 0)
 
-    def lo(self):
+    def cmd_led_off(self):
         return self.mk_and_send_cmd("lo", 0)
 
-    def lq(self):
+    def cmd_led_query(self):
         return self.mk_and_send_cmd("lq", 0)
 
-    def mm(self):
+    def cmd_mystery_on(self):
         return self.mk_and_send_cmd("mm", 0)
 
-    def mo(self):
+    def cmd_mystery_off(self):
         return self.mk_and_send_cmd("mo", 0)
 
-    def pd(self):
+    def cmd_vpp_disable(self):
         return self.mk_and_send_cmd("pd", 0)
 
-    def pe(self):
+    def cmd_vpp_enable(self):
         return self.mk_and_send_cmd("pe", 0)
 
-    def ps(self, val):
+    def cmd_vpp_set(self, val):
         return self.mk_and_send_cmd("ps", val)
 
-    def pw(self, val):
+    def cmd_vpp_write(self, val):
         return self.mk_and_send_cmd("pw", val)
 
-    def zd(self, val):
+    def cmd_zif_dir(self, val):
         return self.mk_and_send_cmd("zd", val)
 
-    def ze(self):
+    def cmd_zif_dir_read(self):
         return self.mk_and_send_cmd("ze", 0)
 
-    def zr(self):
+    def cmd_zif_read(self):
         return self.mk_and_send_cmd("zr", 0)
 
-    def zw(self, val):
+    def cmd_zif_write(self, val):
         return self.mk_and_send_cmd("zw", val)
 
 
