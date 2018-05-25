@@ -1,22 +1,6 @@
 /*
- * USB CDC-ACM Demo
- *
- * This file may be used by anyone for any purpose and may be used as a
- * starting point making your own application using M-Stack.
- *
- * It is worth noting that M-Stack itself is not under the same license as
- * this file.
- *
- * M-Stack is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  For details, see sections 7, 8, and 9
- * of the Apache License, version 2.0 which apply to this file.  If you have
- * purchased a commercial license for this software from Signal 11 Software,
- * your commerical license superceeds the information in this header.
- *
- * Alan Ott
- * Signal 11 Software
- * 2014-05-12
+ * open-tl866 firmware
+ * TODO: Add description
  */
 
 #include "usb.h"

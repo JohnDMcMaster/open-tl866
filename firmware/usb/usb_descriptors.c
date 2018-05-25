@@ -1,5 +1,5 @@
 /*
- * USB Descriptors file
+ * USB Descriptors file for open-tl866
  *
  * This file may be used by anyone for any purpose and may be used as a
  * starting point making your own application using M-Stack.
