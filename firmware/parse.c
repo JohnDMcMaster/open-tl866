@@ -1,6 +1,7 @@
 #include <string.h>
 
 #include "parse.h"
+#include "comlib.h"
 
 typedef struct cmd_map
 {
@@ -142,6 +143,7 @@ void parse_ascii(unsigned char * buf, parse_result_t * res)
 
     if(state == REJECT)
     {
+        com_print(buf);
         res->cmd = INVALID;
     }
 }
