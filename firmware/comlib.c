@@ -1,6 +1,4 @@
 #include "comlib.h"
-#include "system.h"
-#include <xc.h>
 
 int echo = 0;
 

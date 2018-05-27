@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "modes/bitbang/bitbang.h"
+//#include "modes/glitch/glitch.h"
 
 static inline void init(void) {
         unsigned int pll_startup = 600;

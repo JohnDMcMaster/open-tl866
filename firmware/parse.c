@@ -143,7 +143,6 @@ void parse_ascii(unsigned char * buf, parse_result_t * res)
 
     if(state == REJECT)
     {
-        com_print(buf);
         res->cmd = INVALID;
     }
 }

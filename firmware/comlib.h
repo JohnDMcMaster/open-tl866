@@ -2,7 +2,6 @@
 #define COMLIB_H
 
 #include <string.h>
-
 #include "usb.h"
 
 static inline void send_string_sync(uint8_t endpoint, const char *str);
