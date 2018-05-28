@@ -42,9 +42,6 @@ static inline bool usb_ready()
 }
 
 // Read a line from USB input. Blocking.
-//
-// This comes from the m-stack demo here:
-// https://github.com/signal11/m-stack/blob/master/apps/cdc_acm/main.c
 unsigned char * com_readline()
 {
     // TODO: Might be good to make a global struct to handle the command buffer
