@@ -10,8 +10,8 @@
 #include <string.h>
 #include "io.h"
 
-//#include "modes/bitbang/bitbang.h"
-#include "modes/glitch/glitch.h"
+#include "modes/bitbang/bitbang.h"
+//#include "modes/glitch/glitch.h"
 
 static inline void init(void) {
         unsigned int pll_startup = 600;
@@ -93,8 +93,8 @@ int main(void)
     init();
     
     // MODE SELECT. Only one can be uncommented. TODO: Implement a config.h
-    //bitbang(); // Bitbang mode
-    glitch(); // future glitch mode
+    bitbang(); // Bitbang mode
+    //glitch(); // future glitch mode
     // MODE SELECT END.
     
     return 0;
