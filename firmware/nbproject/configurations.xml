@@ -13,6 +13,9 @@
         <logicalFolder name="f1" displayName="bitbang" projectFiles="true">
           <itemPath>modes/bitbang/bitbang.h</itemPath>
         </logicalFolder>
+        <logicalFolder name="f2" displayName="glitch" projectFiles="true">
+          <itemPath>modes/glitch/glitch.h</itemPath>
+        </logicalFolder>
       </logicalFolder>
       <logicalFolder name="f2" displayName="usb" projectFiles="true">
         <itemPath>usb/usb_config.h</itemPath>
@@ -39,6 +42,9 @@
       <logicalFolder name="f3" displayName="modes" projectFiles="true">
         <logicalFolder name="f1" displayName="bitbang" projectFiles="true">
           <itemPath>modes/bitbang/bitbang.c</itemPath>
+        </logicalFolder>
+        <logicalFolder name="f2" displayName="glitch" projectFiles="true">
+          <itemPath>modes/glitch/glitch.c</itemPath>
         </logicalFolder>
       </logicalFolder>
       <logicalFolder name="f2" displayName="usb" projectFiles="true">
