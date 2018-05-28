@@ -33,29 +33,29 @@
 
 inline void print_banner(void)
 {
-com_print("        ,/\r\n");
-com_print("      ,'/\r\n");
-com_print("    ,' /\r\n");
-com_print("  ,'  /_____,\r\n");
-com_print(".'____    ,'  open-tl866 Glitch Mode\r\n");
-com_print("     /  ,'\r\n");
-com_print("    / ,'\r\n");
-com_print("   /,'\r\n");
-com_print("  /'\r\n");
+com_println("        ,/");
+com_println("      ,'/");
+com_println("    ,' /");
+com_println("  ,'  /_____,");
+com_println(".'____    ,'  open-tl866 Glitch Mode");
+com_println("     /  ,'");
+com_println("    / ,'");
+com_println("   /,'");
+com_println("  /'");
 }
 inline void print_help(void)
 {
-    com_print("\r\nCommands:\r\n  p\tPrint loaded parameters\r\n");
-    com_print("  s\tStart programming + glitch routine\r\n  h\tPrint help\r\n");
-    com_print("  v\tPrint version(s)\r\n");
+    com_println("\r\nCommands:\r\n  p\tPrint loaded parameters");
+    com_println("  s\tStart programming + glitch routine\r\n  h\tPrint help");
+    com_println("  v\tPrint version(s)\r\n");
 }
 
 inline void print_version()
 {
     // All these should be defined in some config header files. TODO
-    com_print("\r\nGlitch mode version: 0.0.1");
-    com_print("\r\n open-tl866 lib version: UNIMPLEMENTED");
-    com_print("\r\n");
+    com_println("Glitch mode version: 0.0.1");
+    com_println("open-tl866 lib version: UNIMPLEMENTED");
+    com_println("");
 }
 
 inline void print_params()
@@ -87,7 +87,7 @@ inline void eval_command(unsigned char * cmd)
             print_version();
             break;
         default:
-            com_print("\r\nError: Unknown command.");
+            com_println("\r\nError: Unknown command.");
     }
 }
 
@@ -102,7 +102,7 @@ int glitch(void)
 
     unsigned char * cmd;
     while(1) {
-        com_print("\r\nCMD> ");
+        com_print("CMD> ");
         cmd = com_readline();
         eval_command(cmd);
     }
