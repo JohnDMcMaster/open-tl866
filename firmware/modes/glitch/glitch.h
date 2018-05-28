@@ -1,7 +1,7 @@
 /* 
  * open-tl866 firmware -- Glitch mode
  * 
- * Copyright (c) 2018 Inachis LLC. All rights reserved.
+ * Copyright (c) 2018 Inachis LLC and contributors. All rights reserved.
  * 
  * BSD 2-Clause "Simplified" License
  * 
