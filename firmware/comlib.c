@@ -103,6 +103,7 @@ unsigned char * com_readline()
 
             // Jump here when encountering empty string
             empty:
+                memset(out_buf, 0, 64);
                 usb_arm_out_endpoint(2);
         }
     }
