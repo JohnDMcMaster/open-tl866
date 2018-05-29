@@ -20,6 +20,7 @@
       <itemPath>io.h</itemPath>
       <itemPath>system.h</itemPath>
       <itemPath>parse.h</itemPath>
+      <itemPath>comlib.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -47,6 +48,7 @@
       <itemPath>configuration_bits.c</itemPath>
       <itemPath>io.c</itemPath>
       <itemPath>parse.c</itemPath>
+      <itemPath>comlib.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"

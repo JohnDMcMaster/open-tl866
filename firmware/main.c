@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "modes/bitbang/bitbang.h"
+//#include "modes/glitch/glitch.h"
 
 static inline void init(void) {
         unsigned int pll_startup = 600;
@@ -89,8 +90,12 @@ static inline void init(void) {
 int main(void)
 {
     init();
+    
+    // MODE SELECT. Only one can be uncommented. TODO: Implement a config.h
     bitbang(); // Bitbang mode
     //glitch(); // future glitch mode
+    // MODE SELECT END.
+    
     return 0;
 }
 
