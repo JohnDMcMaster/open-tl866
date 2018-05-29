@@ -1,5 +1,5 @@
 /*
- * USB CDC ACM Demo Configuration
+ * USB CDC ACM Configuration for open-tl866
  *
  * This file may be used by anyone for any purpose and may be used as a
  * starting point making your own application using M-Stack.
@@ -74,21 +74,6 @@
 #define USB_DEVICE_DESCRIPTOR this_device_descriptor
 #define USB_CONFIG_DESCRIPTOR_MAP usb_application_config_descs
 #define USB_STRING_DESCRIPTOR_FUNC usb_application_get_string
-
-/* Optional callbacks from usb.c. Leave them commented if you don't want to
-   use them. For the prototypes and documentation for each one, see usb.h. */
-
-#define SET_CONFIGURATION_CALLBACK app_set_configuration_callback
-#define GET_DEVICE_STATUS_CALLBACK app_get_device_status_callback
-#define ENDPOINT_HALT_CALLBACK     app_endpoint_halt_callback
-#define SET_INTERFACE_CALLBACK     app_set_interface_callback
-#define GET_INTERFACE_CALLBACK     app_get_interface_callback
-#define OUT_TRANSACTION_CALLBACK   app_out_transaction_callback
-#define IN_TRANSACTION_COMPLETE_CALLBACK   app_in_transaction_complete_callback
-#define UNKNOWN_SETUP_REQUEST_CALLBACK app_unknown_setup_request_callback
-#define UNKNOWN_GET_DESCRIPTOR_CALLBACK app_unknown_get_descriptor_callback
-#define START_OF_FRAME_CALLBACK    app_start_of_frame_callback
-#define USB_RESET_CALLBACK         app_usb_reset_callback
 
 /* CDC Configuration functions. See usb_cdc.h for documentation. */
 #define CDC_SEND_ENCAPSULATED_COMMAND_CALLBACK app_send_encapsulated_command
