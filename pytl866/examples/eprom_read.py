@@ -87,7 +87,7 @@ with pytl866.Tl866Context(sys.argv[1]) as tl:
         tl.cmd_zif_write(addr_bits(i) | eprom_to_int([pgm, oe])) # CE low
         tl.cmd_zif_write((addr_bits(i) & ~eprom_to_int([oe, ce])) | eprom_to_int([pgm])) # OE low
 
-        res += get_data(tl.zr()).to_bytes(1, byteorder="little")
+        res += get_data(tl.cmd_zif_read()).to_bytes(1, byteorder="little")
     end = timer()
 
     with open(sys.argv[2], "wb+") as fp:
