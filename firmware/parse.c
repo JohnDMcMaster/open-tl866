@@ -1,7 +1,6 @@
 #include <string.h>
 
 #include "parse.h"
-#include "comlib.h"
 
 typedef struct cmd_map
 {
