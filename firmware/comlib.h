@@ -12,5 +12,6 @@ inline void disable_echo();
 
 unsigned char * com_readline();
 void com_print(const char * str);
+void com_println(const char * str);
 
 #endif
