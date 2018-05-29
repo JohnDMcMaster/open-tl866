@@ -8,7 +8,6 @@
 
 #include <xc.h>
 #include <string.h>
-#include "usb.h"
 #include "../../comlib.h"
 #include "../../parse.h"
 

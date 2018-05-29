@@ -8,6 +8,7 @@
 
 #include <xc.h>
 #include <string.h>
+#include "io.h"
 
 #include "modes/bitbang/bitbang.h"
 //#include "modes/glitch/glitch.h"
