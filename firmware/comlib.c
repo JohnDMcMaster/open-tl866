@@ -2,12 +2,12 @@
 
 int echo = 0;
 
-void enable_echo()
+inline void enable_echo()
 {
     echo = 1;
 }
 
-void disable_echo()
+inline void disable_echo()
 {
     echo = 0;
 }
