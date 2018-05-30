@@ -2,12 +2,12 @@
 
 int echo = 0;
 
-void enable_echo()
+inline void enable_echo()
 {
     echo = 1;
 }
 
-void disable_echo()
+inline void disable_echo()
 {
     echo = 0;
 }
@@ -105,7 +105,17 @@ unsigned char * com_readline()
     }
 }
 
+// TODO: Add logic to ensure string fits in EP_2_OUT_LEN and split string
+// into multiple USB packets if exceeded
 void com_print(const char * str)
 {
    send_string_sync(2, str);
+}
+
+void com_println(const char * str)
+{
+    // TODO: Append to string instead, and split into multiple packets
+    // if necessary as per previous TODO
+    send_string_sync(2, str);
+    send_string_sync(2, "\r\n");
 }
