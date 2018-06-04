@@ -5,7 +5,6 @@
 
 #include "usb.h"
 #include "usb/usb_callbacks.c"
-#include "io.h"
 
 #include <xc.h>
 #include <string.h>
