@@ -33,6 +33,17 @@ static inline void send_string_sync(uint8_t endpoint, const char *str)
     usb_send_in_buffer(endpoint, strlen(in_buf));
 }
 
+static inline void send_char_sync(uint8_t endpoint, const char *str)
+{
+    char *in_buf = (char*) usb_get_in_buffer(endpoint);
+
+    while (usb_in_endpoint_busy(endpoint));
+
+    strcpy(in_buf, str);
+
+    usb_send_in_buffer(endpoint, 1);
+}
+
 
 static inline bool usb_ready()
 {
@@ -118,4 +129,8 @@ void com_println(const char * str)
     // if necessary as per previous TODO
     send_string_sync(2, str);
     send_string_sync(2, "\r\n");
+}
+void putch(const unsigned char c)
+{
+    send_char_sync(2, &c);
 }

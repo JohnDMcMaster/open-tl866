@@ -1,6 +1,7 @@
 #ifndef COMLIB_H
 #define COMLIB_H
 
+#include <stdio.h>
 #include <string.h>
 #include "usb.h"
 
