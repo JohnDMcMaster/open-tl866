@@ -95,6 +95,12 @@ unsigned char * com_readline()
 
             if(echo) {
                 printf(out_buf);
+                
+                // Temporary workaround buffer printing out previous char of
+                // previous input characters after a certain length.
+                // Real fix is to make sure all strings are properly null
+                // terminated. TODO
+                memset(out_buf, 0, 64);
             }
 
             if(!newline_found) {
@@ -103,7 +109,6 @@ unsigned char * com_readline()
             }
 
             cmd_ptr = 0;
-            out_buf = 0;
             
             usb_arm_out_endpoint(2);
             
