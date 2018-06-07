@@ -94,7 +94,7 @@ unsigned char * com_readline()
             }
 
             if(echo) {
-                com_print(out_buf);
+                printf(out_buf);
             }
 
             if(!newline_found) {
