@@ -132,5 +132,7 @@ void com_println(const char * str)
 }
 void putch(const unsigned char c)
 {
+    // TODO: Make a buffer and flush function to avoid sending one character
+    // per USB packet.
     send_char_sync(2, &c);
 }
