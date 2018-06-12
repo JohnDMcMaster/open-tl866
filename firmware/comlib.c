@@ -33,6 +33,17 @@ static inline void send_string_sync(uint8_t endpoint, const char *str)
     usb_send_in_buffer(endpoint, strlen(in_buf));
 }
 
+static inline void send_char_sync(uint8_t endpoint, const char *str)
+{
+    char *in_buf = (char*) usb_get_in_buffer(endpoint);
+
+    while (usb_in_endpoint_busy(endpoint));
+
+    strcpy(in_buf, str);
+
+    usb_send_in_buffer(endpoint, 1);
+}
+
 
 static inline bool usb_ready()
 {
@@ -83,7 +94,13 @@ unsigned char * com_readline()
             }
 
             if(echo) {
-                com_print(out_buf);
+                printf(out_buf);
+                
+                // Temporary workaround buffer printing out previous char of
+                // previous input characters after a certain length.
+                // Real fix is to make sure all strings are properly null
+                // terminated. TODO
+                memset(out_buf, 0, 64);
             }
 
             if(!newline_found) {
@@ -92,7 +109,6 @@ unsigned char * com_readline()
             }
 
             cmd_ptr = 0;
-            out_buf = 0;
             
             usb_arm_out_endpoint(2);
             
@@ -118,4 +134,10 @@ void com_println(const char * str)
     // if necessary as per previous TODO
     send_string_sync(2, str);
     send_string_sync(2, "\r\n");
+}
+void putch(const unsigned char c)
+{
+    // TODO: Make a buffer and flush function to avoid sending one character
+    // per USB packet.
+    send_char_sync(2, &c);
 }
