@@ -121,7 +121,9 @@ void read_byte(unsigned int addr, unsigned int range)
                              0b00000000 };
 
     zif_bits_t read_clk;
-    for(unsigned int byte_idx = 0; byte_idx <= range; byte_idx++) {
+    
+    if (!range) { range = 1; }
+    for (unsigned int byte_idx = 0; byte_idx < range; byte_idx++) {
         // Mask in the address bits to the appropriate pins
         mask_addr(read_base, addr + byte_idx);
 
