@@ -71,7 +71,7 @@ inline void zif_clock_write(zif_bits_t op_template, zif_bits_t op_clk,
     }
 }
 
-void read_byte(unsigned char * cmd)
+void read_byte(unsigned int addr, unsigned int range)
 {
     /* 
      * AT89C51 Read Pinout:
@@ -93,7 +93,6 @@ void read_byte(unsigned char * cmd)
      * P3.7     <-      17          RE0                     // ctrl (high)
      */
     
-    unsigned int addr = atoi(strtok(NULL, " "));
     printf("\r\n%u", addr);
 
     // Set pin direction
@@ -142,7 +141,7 @@ void read_byte(unsigned char * cmd)
     printf(" %02X\r\n", zif_to_addr(input_byte) );
 }
 
-void write_byte(unsigned char * cmd)
+void write_byte(unsigned int addr, unsigned char data)
 {
     /* 
      * AT89C51 write Pinout:
@@ -163,9 +162,6 @@ void write_byte(unsigned char * cmd)
      * P3.6     <-      16          RG1                     // ctrl (high)
      * P3.7     <-      17          RE0                     // ctrl (high)
      */
-    
-    unsigned int addr  = atoi(strtok(NULL, " "));
-    unsigned char data = atoi(strtok(NULL, " "));
 
     // Set pin direction
     zif_bits_t dir = {  0,
@@ -221,7 +217,7 @@ void write_byte(unsigned char * cmd)
     printf("\r\nWrote byte %x at address %x\r\n", data, addr);
 }
 
-void erase(unsigned char * cmd)
+void erase()
 {
     /* 
      * AT89C51 erase Pinout:
@@ -302,15 +298,23 @@ inline void eval_command(unsigned char * cmd)
     unsigned char * cmd_t = strtok(cmd, " ");
     switch (cmd_t[0]) {
         case 'r':
-            read_byte(cmd_t);
+        {
+            unsigned int addr  = atoi(strtok(NULL, " "));
+            unsigned int range = atoi(strtok(NULL, " "));
+            read_byte(addr, range);
             break;
+        }
             
         case 'w':
-            write_byte(cmd_t);
+        {
+            unsigned int addr  = atoi(strtok(NULL, " "));
+            unsigned char data = atoi(strtok(NULL, " "));
+            write_byte(addr, data);
             break;
+        }
             
         case 'e':
-            erase(cmd_t);
+            erase();
             break;
 
         case 'v':
