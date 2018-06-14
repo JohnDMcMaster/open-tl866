@@ -52,6 +52,21 @@ inline void mask_data(zif_bits_t op_base, unsigned char data)
     op_base[4] = (invert_bit_endianness(data & 127) >> 1) | op_base[4];
 }
 
+inline void mask_p2_7(zif_bits_t op_base)
+{
+    op_base[3] = op_base[3] | 8;
+}
+
+inline void mask_p3_6(zif_bits_t op_base)
+{
+    op_base[1] = op_base[1] | 128;
+}
+
+inline void mask_p3_7(zif_bits_t op_base)
+{
+    op_base[2] = op_base[2] | 1;
+}
+
 inline unsigned char zif_to_addr(zif_bits_t zif_state)
 {
     // Filter the zif_bits response into a char byte with P0 bits
@@ -71,7 +86,7 @@ inline void zif_clock_write(zif_bits_t op_template, zif_bits_t op_clk,
     }
 }
 
-void read_byte(unsigned int addr, unsigned int range)
+void read(unsigned int addr, unsigned int range)
 {
     /* 
      * AT89C51 Read Pinout:
@@ -93,7 +108,7 @@ void read_byte(unsigned int addr, unsigned int range)
      * P3.7     <-      17          RE0                     // ctrl (high)
      */
     
-    printf("\r\n%u", addr);
+    printf("\r\n%02X", addr);
 
     // Set pin direction
     zif_bits_t dir = {  0,
@@ -122,7 +137,7 @@ void read_byte(unsigned int addr, unsigned int range)
 
     zif_bits_t read_clk;
     
-    if (!range) { range = 1; }
+    if (!range) { range = 1; } else {com_println("");}
     for (unsigned int byte_idx = 0; byte_idx < range; byte_idx++) {
         // Mask in the address bits to the appropriate pins
         mask_addr(read_base, addr + byte_idx);
@@ -143,10 +158,10 @@ void read_byte(unsigned int addr, unsigned int range)
         // Parse and print interpreted byte
         printf(" %02X", zif_to_addr(input_byte) );
     }
-    printf("\r\n");
+    com_println("");
 }
 
-void write_byte(unsigned int addr, unsigned char data)
+void write(unsigned int addr, unsigned char data)
 {
     /* 
      * AT89C51 write Pinout:
@@ -290,10 +305,98 @@ void erase()
     
     // The client / user is expected to verify this with a read command
     // or a blank check command (TODO)
-    printf("\r\nErased.\r\n");
+    printf("\r\nDone.\r\n");
 }
 
-void verify(unsigned char * cmd)
+void lock(unsigned char mode)
+{
+    /* 
+     * AT89C51 lock (modes 2, 3, 4) Pinout:
+     * 
+     * Target   Dir     ZIF pin#    Programmer port
+     * ------------------------------------------------------------------------
+     * RST      <-      09          RJ4                 // (high)
+     * PSEN     <-      29          RD7                 // (low)
+     * ALE      <-      30          RG0                 // Pulsed write lock
+     * VPP      <-      31          VPP_31              // 12v
+     * VCC      <-      40          Vdd_40
+     * P2.6     <-      27          RD5                 // ctrl (high)
+     * P2.7     <-      28          RD6                 // ctrl (2:h, 3:h, 4:l)
+     * P3.4     ->      14          RD1                 // Busy
+     * P3.6     <-      16          RG1                 // ctrl (2:h, 3:l, 4:h)
+     * P3.7     <-      17          RE0                 // ctrl (2:h, 3:l, 4:l)
+     */
+    
+    // Base pin setting for erasing
+    zif_bits_t lock_base = { 0b00000000,
+                             0b00000001, // RST (9)
+                             0b00000000,  
+                             0b01000100, // VPP (31), 2.6 (27)
+                             0b00000000 };
+    
+    zif_bits_t dir = {  0,
+                        0b00100000,   // Busy signal (14)
+                        0, 0, 0 };
+    
+    switch (mode) {
+        case 2:
+            mask_p2_7(lock_base);
+            mask_p3_6(lock_base);
+            mask_p3_7(lock_base);
+            break;
+        case 3:
+            mask_p2_7(lock_base);
+            break;
+        case 4:
+            mask_p3_6(lock_base);
+            break;
+        default:
+            printf("\r\nUnknown mode %u. Valid modes are 2, 3 or 4.\r\n");
+            return;
+    }
+    
+    // Set pin direction
+    dir_write(dir);
+    
+    // Set pins
+    set_vdd(vdd);
+    set_vpp(vpp);
+    set_gnd(gnd);
+    
+    // Set voltages
+    vdd_val(5); // 5.0 v - 5.2 v
+    vpp_val(1); // 12.8 - 13.2
+    
+    // Create a zif state to set before running the clock
+    // PROG needs to be pulsed, can't be kept low the entire time.
+    zif_bits_t lock_preclk;
+    memcpy(lock_preclk, lock_base, 5);
+    mask_prog(lock_preclk);
+    
+    // Create a zif state with the clock pin turned on
+    zif_bits_t lock_clk;
+    memcpy(lock_clk, lock_base, 5);
+    mask_xtal1(lock_clk);
+    
+    // Enable VPP right before setting the ZIF state
+    vpp_en();
+    
+    // Set PROG high before pulsing it low during erase
+    zif_write(lock_preclk);
+    __delay_us(20); // 20us might be too generous. TODO
+    
+    zif_clock_write(lock_base, lock_clk, 48);
+    
+    // We're done. Disable VPP and reset the ZIF state.
+    vpp_dis();
+    zif_write(zbits_null);
+    
+    // The client / user is expected to verify this with a read command
+    // or a blank check command (TODO)
+    printf("\r\nDone.\r\n");
+}
+
+void verify()
 {
     printf("\r\nUnimplemented.\r\n");
 }
@@ -306,7 +409,7 @@ inline void eval_command(unsigned char * cmd)
         {
             unsigned int addr  = atoi(strtok(NULL, " "));
             unsigned int range = atoi(strtok(NULL, " "));
-            read_byte(addr, range);
+            read(addr, range);
             break;
         }
             
@@ -314,7 +417,14 @@ inline void eval_command(unsigned char * cmd)
         {
             unsigned int addr  = atoi(strtok(NULL, " "));
             unsigned char data = atoi(strtok(NULL, " "));
-            write_byte(addr, data);
+            write(addr, data);
+            break;
+        }
+        
+        case 'l':
+        {
+            unsigned char mode = atoi(strtok(NULL, " "));
+            lock(mode);
             break;
         }
             
@@ -323,7 +433,7 @@ inline void eval_command(unsigned char * cmd)
             break;
 
         case 'v':
-            verify(cmd_t);
+            verify();
             break;
             
         case '?':
