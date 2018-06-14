@@ -8,6 +8,9 @@
 #include "../../../comlib.h"
 #include "../../../parse.h"
 
+zif_bits_t zbits_null = { 0 };
+
+
 int programmer_at89(void);
 
 #endif
