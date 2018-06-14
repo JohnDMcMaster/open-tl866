@@ -21,6 +21,56 @@ inline void print_version()
     com_println("");
 }
 
+// Neat trick taken from a stack overflow answer.
+inline unsigned char invert_bit_endianness(unsigned char byte)
+{
+    static unsigned char lookup[16] = {
+                            0x0, 0x8, 0x4, 0xc, 0x2, 0xa, 0x6, 0xe,
+                            0x1, 0x9, 0x5, 0xd, 0x3, 0xb, 0x7, 0xf, };
+    return (lookup[byte & 0b1111] << 4) | lookup[byte >> 4];
+}
+
+inline void mask_xtal1(zif_bits_t op_base)
+{
+    op_base[2] = op_base[2] | 4;
+}
+
+inline void mask_prog(zif_bits_t op_base)
+{
+    op_base[3] = op_base[3] | 32;
+}
+
+inline void mask_addr(zif_bits_t op_base, unsigned char addr)
+{
+    op_base[0] = addr & 255;
+    op_base[2] = (addr >> 8) << 4 | op_base[2];
+}
+
+inline void mask_data(zif_bits_t op_base, unsigned char data)
+{
+    op_base[3] = (data & 128) | op_base[3];
+    op_base[4] = (invert_bit_endianness(data & 127) >> 1) | op_base[4];
+}
+
+inline unsigned char zif_to_addr(zif_bits_t zif_state)
+{
+    // Filter the zif_bits response into a char byte with P0 bits
+    unsigned char byte = (zif_state[4] << 1) | !! (zif_state[3] & (1 << 7));
+
+    // Invert bit-endianness
+    byte = invert_bit_endianness(byte);
+}
+
+inline void zif_clock_write(zif_bits_t op_template, zif_bits_t op_clk,
+                            unsigned int cycles)
+{
+    for(unsigned char i = 0; i <= cycles; i++) {
+        zif_write(op_template); // Maybe better flip XTAL1 directly than to
+                                // call zif_write every time. TODO
+        zif_write(op_clk);
+    }
+}
+
 void read_byte(unsigned char * cmd)
 {
     /* 
@@ -30,8 +80,8 @@ void read_byte(unsigned char * cmd)
      * ------------------------------------------------------------------------
      * RST      <-      09          RJ4                     // (high)
      * PSEN     <-      29          RD7                     // (low)
-     * ALE      <-      30          RG0                     // (high)
-     * EA       <-      31          RJ0                     // (high)
+     * PROG     <-      30          RG0                     // (high)
+     * VPP      <-      31          RJ0                     // (high)
      * VCC      <-      40          Vdd_40
      * P0.{0-7) ->      39-32       RB{6,5,4,3,2}, RJ{3,2,1}      // PGM Data
      * P1.{0-7} <-      1-8         RC{5,4,3,2}, RJ{7,6}, RC{6,7} // Addr
@@ -41,87 +91,55 @@ void read_byte(unsigned char * cmd)
      * P3.4     ->      14          RD1                     // Busy
      * P3.6     <-      16          RG1                     // ctrl (high)
      * P3.7     <-      17          RE0                     // ctrl (high)
-     * >
-     * 
-     * 
      */
     
     unsigned int addr = atoi(strtok(NULL, " "));
-    
     printf("\r\n%u", addr);
 
+    // Set pin direction
     zif_bits_t dir = {  0,
                         0b00100000,   // Busy signal (14)
                         0,
                         0b10000000,   // p0.7 (32)
                         0b01111111 }; // p0.{6-0} (33-39)  
-    
-    zif_bits_t vdd = {  0, 0, 0, 0,
-                        0b10000000 }; // VDD (40)
-    
-    zif_bits_t gnd = {  0, 0,
-                        0b00001000,   // GND (20)
-                        0, 0 };
-
-    // Set pin direction
     dir_write(dir);
     
     // Set Vdd / GND pinout  
     set_vdd(vdd);
     set_gnd(gnd);
     
-    // Setting voltages
+    // Set voltages
     vdd_val(5); // 5.0 v - 5.2 v
-    
-    zif_bits_t input_byte = {0,0,0,0,0};
-    
-    zif_bits_t read_clk0 =     {        0b00000000,
-                                        0b10000001, // 3.6 ctrl (16), RST (9)
-                                        0b00000001, // 3.7 ctrl (17) 
-                                        0b01100000, // EA (31), ALE (30)
-                                        0b00000000 };
 
-    zif_bits_t read_clk1;
-    memcpy(read_clk1, read_clk0, sizeof read_clk1);
-    read_clk1[2] = read_clk0[2] | 0b00000100;
+    // Allocate an empty zifbits struct for reading pin state
+    zif_bits_t input_byte    = { 0, 0, 0, 0, 0 };
     
-    zif_bits_t read_setup_clk1_d =     {  0b00000000,
-                                        0b10000001, // 3.6 ctrl (16), RST (9)
-                                        0b00000101, // XTAL1 (19), 3.7 ctrl (17)
-                                        0b01100000, // EA (31), ALE (30)
-                                        0b00000000 };
-    
-    // Mask the addrs in
-    read_clk0[0] = addr & 255;
-    read_clk0[2] = (addr >> 8) << 4 | read_clk0[2];
-    
-    read_clk1[0] = addr & 255;
-    read_clk1[2] = (addr >> 8) << 4 | read_clk1[2];
-    
-    for(unsigned char i = 0; i <= 48; i++) {
-        zif_write(read_clk0); // Maybe better flip XTAL1 directly than to
-                                    // call zif_write every time. TODO
-        zif_write(read_clk1);
-    }
-    
+    // Base pin setting for reading
+    zif_bits_t read_base = { 0b00000000,
+                             0b10000001,   // 3.6 ctrl (16), RST (9)
+                             0b00000001,   // 3.7 ctrl (17) 
+                             0b01100000,   // VPP (31), PROG (30)
+                             0b00000000 };
+
+    // Mask in the address bits to the appropriate pins
+    mask_addr(read_base, addr);
+
+    // Create a zif state with the clock pin turned on
+    zif_bits_t read_clk;
+    memcpy(read_clk, read_base, 5);
+    mask_xtal1(read_clk);
+
+    // Give the clock on/off states to zif_clock_write(..) and loop 48 cycles
+    zif_clock_write(read_base, read_clk, 48);
+
+    // Read the current pin state (to read in the requested byte)
     zif_read(input_byte);
     
+    // We're done with the target. Turn off all outputs.
     zif_write(zbits_null);
-    
-    unsigned char byte;
-    {
-        static unsigned char lookup[16] = {
-                            0x0, 0x8, 0x4, 0xc, 0x2, 0xa, 0x6, 0xe,
-                            0x1, 0x9, 0x5, 0xd, 0x3, 0xb, 0x7, 0xf, };
-    
-        // Filter the zif_bits response into a char byte with P0 bits
-        byte = (input_byte[4] << 1) | !! (input_byte[3] & (1 << 7));
-        
-        // Invert bit-endianness
-        byte = (lookup[byte&0b1111] << 4) | lookup[byte>>4];
-    }
 
-    printf(" %02X\r\n", byte );
+    // Parse and print interpreted byte
+    printf(" %02X\r\n", zif_to_addr(input_byte) );
 }
 
 void write_byte(unsigned char * cmd)
@@ -144,106 +162,63 @@ void write_byte(unsigned char * cmd)
      * P3.4     ->      14          RD1                     // Busy
      * P3.6     <-      16          RG1                     // ctrl (high)
      * P3.7     <-      17          RE0                     // ctrl (high)
-     * >
-     * 
-     * 
      */
     
     unsigned int addr  = atoi(strtok(NULL, " "));
-    unsigned char byte = atoi(strtok(NULL, " "));
-    
-    printf("\r\nWriting byte %x at address %x\r\n", byte, addr);
+    unsigned char data = atoi(strtok(NULL, " "));
 
+    // Set pin direction
     zif_bits_t dir = {  0,
                         0b00100000,   // Busy signal (14)
                         0, 0, 0 };
-    
-    zif_bits_t vdd = {  0, 0, 0, 0,
-                        0b10000000 }; // VDD (40)
-
-    zif_bits_t vpp = {  0, 0, 0,
-                        0b01000000,   // VPP (31)
-                        0 };
-    
-    zif_bits_t gnd = {  0, 0,
-                        0b00001000,   // GND (20)
-                        0, 0 };
-
-    printf("Setting pin direction.\r\n");
     dir_write(dir);
     
-    printf("Setting pins.\r\n");  
+    // Set pins
     set_vdd(vdd);
     set_vpp(vpp);
     set_gnd(gnd);
     
-    printf("Setting voltages.\r\n");
+    // Set voltages
     vdd_val(5); // 5.0 v - 5.2 v
-    vpp_val(1); // 12.8 - 13.2
+    vpp_val(1); // 12.8 v - 13.2 v
+
+    // Base pin setting for writing
+    zif_bits_t write_base = { 0b00000000,
+                              0b10000001,   // 3.6 ctrl (16), RST (9)
+                              0b00000001,   // 3.7 ctrl (17) 
+                              0b01001000,   // VPP (31), 2.7 (28)
+                              0b00000000 };
     
-    zif_bits_t write_preclk =   { 0b00000000,
-                                  0b10000001, // 3.6 ctrl (16), RST (9)
-                                  0b00000101, // XTAL1 (19), 3.7 ctrl (17)
-                                  0b01101000, // VPP (31), PROG (30), 2.7 (28)
-                                  0b00000000 };
-
-    zif_bits_t write_clk0 =     { 0b00000000,
-                                  0b10000001, // 3.6 ctrl (16), RST (9)
-                                  0b00000001, // 3.7 ctrl (17) 
-                                  0b01001000, // VPP (31), 2.7 (28)
-                                  0b00000000 };
-
-    zif_bits_t write_clk1 =     { 0b00000000,
-                                  0b10000001, // 3.6 ctrl (16), RST (9)
-                                  0b00000101, // XTAL1 (19), 3.7 ctrl (17)
-                                  0b01001000, // VPP (31), 2.7 (28)
-                                  0b00000000 };
+    // Mask in our address and data outputs to the base pin configuration
+    mask_addr(write_base, addr);
+    mask_data(write_base, data);
     
-    // Mask address bits
-    write_clk0[0] = addr & 255;
-    write_clk0[2] = (addr >> 8) << 4 | write_clk0[2];
-    
-    write_clk1[0] = addr & 255;
-    write_clk1[2] = (addr >> 8) << 4 | write_clk1[2];
-    
-    write_preclk[0] = addr & 255;
-    write_preclk[2] = (addr >> 8) << 4 | write_preclk[2];
+    // Create a zif state to set before running the clock
+    // PROG needs to be pulsed, can't be kept low the entire time.
+    zif_bits_t write_preclk;
+    memcpy(write_preclk, write_base, 5);
+    mask_prog(write_preclk);
 
-    // Mask data bits
-    {
-        static unsigned char lookup[16] = {
-                            0x0, 0x8, 0x4, 0xc, 0x2, 0xa, 0x6, 0xe,
-                            0x1, 0x9, 0x5, 0xd, 0x3, 0xb, 0x7, 0xf, };
-        
-        unsigned char mask_4 = byte & 127;
-        unsigned char mask_sw_4 = (lookup[mask_4 & 0b1111] << 4) | lookup[mask_4 >> 4];
-        
-        write_clk0[3] = (byte & 128) | write_clk0[3];
-        write_clk0[4] = (mask_sw_4 >> 1) | write_clk0[4];
-
-        write_clk1[3] = (byte & 128) | write_clk1[3]; 
-        write_clk1[4] = (mask_sw_4 >> 1) | write_clk1[4];
-        
-        write_preclk[3] = (byte & 128) | write_preclk[3]; 
-        write_preclk[4] = (mask_sw_4 >> 1) | write_preclk[4];
-    }
-
+    // Create a zif state with the clock pin turned on
+    zif_bits_t write_clk;
+    memcpy(write_clk, write_base, 5);
+    mask_xtal1(write_clk);
+   
+    // Enable VPP right before setting the ZIF state
     vpp_en();
     
+    // Set PROG high before pulsing it low during programming
     zif_write(write_preclk);
-    
-    __delay_us(20);
+    __delay_us(20); // 20us might be too generous. TODO
 
-    for(unsigned char i = 0; i <= 48; i++) {
-        zif_write(write_clk0); // Better flip XTAL1 directly than to
-                                    // call zif_write every time.
-        
-        zif_write(write_clk1);
-    }
-    
+    zif_clock_write(write_base, write_clk, 48);
+
+    // We're done. Disable VPP and reset the ZIF state.
     vpp_dis();
-    
     zif_write(zbits_null);
+    
+    // The client / user is expected to verify this with a read command.
+    printf("\r\nWrote byte %x at address %x\r\n", data, addr);
 }
 
 void erase(unsigned char * cmd)
@@ -263,74 +238,58 @@ void erase(unsigned char * cmd)
      * P3.4     ->      14          RD1                     // Busy
      * P3.6     <-      16          RG1                     // ctrl (low)
      * P3.7     <-      17          RE0                     // ctrl (low)
-     * >
      */
     
     zif_bits_t dir = {  0,
                         0b00100000,   // Busy signal (14)
                         0, 0, 0 };
     
-    zif_bits_t vdd = {  0, 0, 0, 0,
-                        0b10000000 }; // VDD (40)
-
-    zif_bits_t vpp = {  0, 0, 0,
-                        0b01000000,   // VPP (31)
-                        0 };
-    
-    zif_bits_t gnd = {  0, 0,
-                        0b00001000,   // GND (20)
-                        0, 0 };
-
-    // Setting pin direction
+    // Set pin direction
     dir_write(dir);
     
-    // Setting pins
+    // Set pins
     set_vdd(vdd);
     set_vpp(vpp);
     set_gnd(gnd);
     
-    // Setting voltages
+    // Set voltages
     vdd_val(5); // 5.0 v - 5.2 v
     vpp_val(1); // 12.8 - 13.2
     
-    zif_bits_t erase_preclk =     {     0b00000000,
-                                        0b00000001, // RST (9)
-                                        0b00000100, // XTAL1 (19)
-                                        0b01100100, // VPP (31), PROG (30), 2.6 (27)
-                                        0b00000000 };
-    
-    zif_bits_t erase_clk0 =     {       0b00000000,
+    // Base pin setting for erasing
+    zif_bits_t erase_base =     {       0b00000000,
                                         0b00000001, // RST (9)
                                         0b00000000,  
                                         0b01000100, // VPP (31), 2.6 (27)
                                         0b00000000 };
 
-    zif_bits_t erase_clk1 =     {       0b00000000,
-                                        0b00000001, // RST (9)
-                                        0b00000100, // XTAL1 (19)
-                                        0b01000100, // VPP (31), 2.6 (27)
-                                        0b00000000 };
+    // Create a zif state to set before running the clock
+    // PROG needs to be pulsed, can't be kept low the entire time.
+    zif_bits_t erase_preclk;
+    memcpy(erase_preclk, erase_base, 5);
+    mask_prog(erase_preclk);
     
+    // Create a zif state with the clock pin turned on
+    zif_bits_t erase_clk;
+    memcpy(erase_clk, erase_base, 5);
+    mask_xtal1(erase_clk);
+    
+    // Enable VPP right before setting the ZIF state
     vpp_en();
     
+    // Set PROG high before pulsing it low during erase
     zif_write(erase_preclk);
+    __delay_us(20); // 20us might be too generous. TODO
     
-    __delay_us(20);
+    zif_clock_write(erase_base, erase_clk, 48);
     
-    for(unsigned char i = 0; i <= 48; i++) {
-        zif_write(erase_clk0); // Better flip XTAL1 directly than to
-                                    // call zif_write every time.
-        
-        zif_write(erase_clk1);
-    }
-    
+    // We're done. Disable VPP and reset the ZIF state.
     vpp_dis();
-    
     zif_write(zbits_null);
     
+    // The client / user is expected to verify this with a read command
+    // or a blank check command (TODO)
     printf("\r\nErased.\r\n");
-    
-    
 }
 
 void verify(unsigned char * cmd)
