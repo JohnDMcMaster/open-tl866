@@ -9,7 +9,7 @@ inline void print_banner(void)
 inline void print_help(void)
 {
     com_println("\r\nCommands:\r\n  r <ADDR> [RANGE]\tRead from target");
-    com_println("  w <ADDR>\t\tWrite to target\r\n  e\t\t\tErase target");
+    com_println("  w <ADDR> <BYTE>\tWrite to target\r\n  e\t\t\tErase target");
     com_println("  h\t\t\tPrint help\r\n  v\t\t\tPrint version(s)\r\n");
 }
 
