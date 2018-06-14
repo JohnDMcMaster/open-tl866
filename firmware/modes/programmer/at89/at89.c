@@ -8,9 +8,9 @@ inline void print_banner(void)
 }
 inline void print_help(void)
 {
-    com_println("\r\nCommands:\r\n  r <ADDR>\tRead from target");
-    com_println("  w <ADDR>\tWrite to target\r\n  e\tErase target");
-    com_println("  h\tPrint help\r\n  v\tPrint version(s)\r\n");
+    com_println("\r\nCommands:\r\n  r <ADDR> [RANGE]\tRead from target");
+    com_println("  w <ADDR>\t\tWrite to target\r\n  e\t\t\tErase target");
+    com_println("  h\t\t\tPrint help\r\n  v\t\t\tPrint version(s)\r\n");
 }
 
 inline void print_version()
@@ -120,25 +120,28 @@ void read_byte(unsigned int addr, unsigned int range)
                              0b01100000,   // VPP (31), PROG (30)
                              0b00000000 };
 
-    // Mask in the address bits to the appropriate pins
-    mask_addr(read_base, addr);
-
-    // Create a zif state with the clock pin turned on
     zif_bits_t read_clk;
-    memcpy(read_clk, read_base, 5);
-    mask_xtal1(read_clk);
+    for(unsigned int byte_idx = 0; byte_idx <= range; byte_idx++) {
+        // Mask in the address bits to the appropriate pins
+        mask_addr(read_base, addr + byte_idx);
 
-    // Give the clock on/off states to zif_clock_write(..) and loop 48 cycles
-    zif_clock_write(read_base, read_clk, 48);
+        // Create a zif state with the clock pin turned on
+        memcpy(read_clk, read_base, 5);
+        mask_xtal1(read_clk);
 
-    // Read the current pin state (to read in the requested byte)
-    zif_read(input_byte);
+        // Give the clock on/off states to zif_clock_write(..) and loop 48 cycles
+        zif_clock_write(read_base, read_clk, 48);
+
+        // Read the current pin state (to read in the requested byte)
+        zif_read(input_byte);
     
-    // We're done with the target. Turn off all outputs.
-    zif_write(zbits_null);
+        // We're done with the byte. Turn off all outputs.
+        zif_write(zbits_null);
 
-    // Parse and print interpreted byte
-    printf(" %02X\r\n", zif_to_addr(input_byte) );
+        // Parse and print interpreted byte
+        printf(" %02X", zif_to_addr(input_byte) );
+    }
+    printf("\r\n");
 }
 
 void write_byte(unsigned int addr, unsigned char data)
