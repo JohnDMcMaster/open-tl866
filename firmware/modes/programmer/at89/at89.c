@@ -1,5 +1,10 @@
 #include "at89.h"
 
+static zif_bits_t zbits_null = {0, 0, 0, 0, 0};
+static zif_bits_t gnd        = {0, 0, 8, 0, 0};
+static zif_bits_t vdd        = {0, 0, 0, 0, 128};
+static zif_bits_t vpp        = {0, 0, 0, 64, 0};
+
 inline void print_banner(void)
 {
     com_println("   | |");
@@ -32,42 +37,42 @@ inline unsigned char invert_bit_endianness(unsigned char byte)
 
 inline void mask_xtal1(zif_bits_t op_base)
 {
-    op_base[2] = op_base[2] | 4;
+    op_base[2] |= 4;
 }
 
 inline void mask_prog(zif_bits_t op_base)
 {
-    op_base[3] = op_base[3] | 32;
+    op_base[3] |= 32;
 }
 
-inline void mask_addr(zif_bits_t op_base, unsigned char addr)
+inline void mask_addr(zif_bits_t op_base, unsigned int addr)
 {
-    op_base[0] = addr & 255;
-    op_base[2] = (addr >> 8) << 4 | op_base[2];
+    op_base[0] = addr & 0xFF;
+    op_base[2] |= (addr >> 8) << 4;
 }
 
 inline void mask_data(zif_bits_t op_base, unsigned char data)
 {
-    op_base[3] = (data & 128) | op_base[3];
-    op_base[4] = (invert_bit_endianness(data & 127) >> 1) | op_base[4];
+    op_base[3] |= (data & 128);
+    op_base[4] |= (invert_bit_endianness(data & 127) >> 1);
 }
 
 inline void mask_p2_7(zif_bits_t op_base)
 {
-    op_base[3] = op_base[3] | 8;
+    op_base[3] |= 8;
 }
 
 inline void mask_p3_6(zif_bits_t op_base)
 {
-    op_base[1] = op_base[1] | 128;
+    op_base[1] |= 128;
 }
 
 inline void mask_p3_7(zif_bits_t op_base)
 {
-    op_base[2] = op_base[2] | 1;
+    op_base[2] |= 1;
 }
 
-inline unsigned char zif_to_addr(zif_bits_t zif_state)
+inline unsigned char zif_to_data(zif_bits_t zif_state)
 {
     // Filter the zif_bits response into a char byte with P0 bits
     unsigned char byte = (zif_state[4] << 1) | !! (zif_state[3] & (1 << 7));
@@ -108,7 +113,7 @@ void read(unsigned int addr, unsigned int range)
      * P3.7     <-      17          RE0                     // ctrl (high)
      */
     
-    printf("\r\n%02X", addr);
+    printf("\r\n%02X ", addr);
 
     // Set pin direction
     zif_bits_t dir = {  0,
@@ -124,21 +129,21 @@ void read(unsigned int addr, unsigned int range)
     
     // Set voltages
     vdd_val(5); // 5.0 v - 5.2 v
-
-    // Allocate an empty zifbits struct for reading pin state
-    zif_bits_t input_byte    = { 0, 0, 0, 0, 0 };
-    
-    // Base pin setting for reading
-    zif_bits_t read_base = { 0b00000000,
-                             0b10000001,   // 3.6 ctrl (16), RST (9)
-                             0b00000001,   // 3.7 ctrl (17) 
-                             0b01100000,   // VPP (31), PROG (30)
-                             0b00000000 };
-
-    zif_bits_t read_clk;
     
     if (!range) { range = 1; } else {com_println("");}
     for (unsigned int byte_idx = 0; byte_idx < range; byte_idx++) {
+        // Allocate an empty zifbits struct for reading pin state
+        zif_bits_t input_byte    = { 0, 0, 0, 0, 0 };
+    
+        // Base pin setting for reading
+        zif_bits_t read_base = { 0b00000000,
+                                 0b10000001,   // 3.6 ctrl (16), RST (9)
+                                 0b00000001,   // 3.7 ctrl (17) 
+                                 0b01100000,   // VPP (31), PROG (30)
+                                 0b00000000 };
+
+        zif_bits_t read_clk;
+        
         // Mask in the address bits to the appropriate pins
         mask_addr(read_base, addr + byte_idx);
 
@@ -156,7 +161,7 @@ void read(unsigned int addr, unsigned int range)
         zif_write(zbits_null);
 
         // Parse and print interpreted byte
-        printf(" %02X", zif_to_addr(input_byte) );
+        printf("%02X ", zif_to_data(input_byte) );
     }
     com_println("");
 }
@@ -396,9 +401,11 @@ void lock(unsigned char mode)
     printf("\r\nDone.\r\n");
 }
 
-void verify()
+
+
+void read_sig()
 {
-    printf("\r\nUnimplemented.\r\n");
+    
 }
 
 inline void eval_command(unsigned char * cmd)
@@ -432,8 +439,8 @@ inline void eval_command(unsigned char * cmd)
             erase();
             break;
 
-        case 'v':
-            verify();
+        case 's':
+            read_sig();
             break;
             
         case '?':
