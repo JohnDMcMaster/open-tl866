@@ -35,14 +35,29 @@ inline unsigned char invert_bit_endianness(unsigned char byte)
     return (lookup[byte & 0b1111] << 4) | lookup[byte >> 4];
 }
 
+inline void mask_p2_7(zif_bits_t op_base)
+{
+    op_base[3] |= 0x8;
+}
+
+inline void mask_p3_6(zif_bits_t op_base)
+{
+    op_base[1] |= 0x80;
+}
+
+inline void mask_p3_7(zif_bits_t op_base)
+{
+    op_base[2] |= 0x1;
+}
+
 inline void mask_xtal1(zif_bits_t op_base)
 {
-    op_base[2] |= 4;
+    op_base[2] |= 0x4;
 }
 
 inline void mask_prog(zif_bits_t op_base)
 {
-    op_base[3] |= 32;
+    op_base[3] |= 0x20;
 }
 
 inline void mask_addr(zif_bits_t op_base, unsigned int addr)
@@ -53,23 +68,8 @@ inline void mask_addr(zif_bits_t op_base, unsigned int addr)
 
 inline void mask_data(zif_bits_t op_base, unsigned char data)
 {
-    op_base[3] |= (data & 128);
-    op_base[4] |= (invert_bit_endianness(data & 127) >> 1);
-}
-
-inline void mask_p2_7(zif_bits_t op_base)
-{
-    op_base[3] |= 8;
-}
-
-inline void mask_p3_6(zif_bits_t op_base)
-{
-    op_base[1] |= 128;
-}
-
-inline void mask_p3_7(zif_bits_t op_base)
-{
-    op_base[2] |= 1;
+    op_base[3] |= (data & 0x80);
+    op_base[4] |= (invert_bit_endianness(data & 0x7f) >> 1);
 }
 
 inline unsigned char zif_to_data(zif_bits_t zif_state)
@@ -113,7 +113,7 @@ void read(unsigned int addr, unsigned int range)
      * P3.7     <-      17          RE0                     // ctrl (high)
      */
     
-    printf("\r\n%02X ", addr);
+    printf("%03X ", addr);
 
     // Set pin direction
     zif_bits_t dir = {  0,
@@ -163,7 +163,6 @@ void read(unsigned int addr, unsigned int range)
         // Parse and print interpreted byte
         printf("%02X ", zif_to_data(input_byte) );
     }
-    com_println("");
 }
 
 void write(unsigned int addr, unsigned char data)
@@ -187,6 +186,8 @@ void write(unsigned int addr, unsigned char data)
      * P3.6     <-      16          RG1                     // ctrl (high)
      * P3.7     <-      17          RE0                     // ctrl (high)
      */
+    
+    printf("Writing %02X at %03X... ", data, addr);
 
     // Set pin direction
     zif_bits_t dir = {  0,
@@ -239,7 +240,7 @@ void write(unsigned int addr, unsigned char data)
     zif_write(zbits_null);
     
     // The client / user is expected to verify this with a read command.
-    printf("\r\nWrote byte %x at address %x\r\n", data, addr);
+    printf("done.");
 }
 
 void erase()
@@ -260,6 +261,8 @@ void erase()
      * P3.6     <-      16          RG1                     // ctrl (low)
      * P3.7     <-      17          RE0                     // ctrl (low)
      */
+    
+    printf("Erasing... ");
     
     zif_bits_t dir = {  0,
                         0b00100000,   // Busy signal (14)
@@ -310,7 +313,7 @@ void erase()
     
     // The client / user is expected to verify this with a read command
     // or a blank check command (TODO)
-    printf("\r\nDone.\r\n");
+    printf("done.");
 }
 
 void lock(unsigned char mode)
@@ -331,6 +334,8 @@ void lock(unsigned char mode)
      * P3.6     <-      16          RG1                 // ctrl (2:h, 3:l, 4:h)
      * P3.7     <-      17          RE0                 // ctrl (2:h, 3:l, 4:l)
      */
+    
+    printf("Locking with mode %u... ", mode);
     
     // Base pin setting for erasing
     zif_bits_t lock_base = { 0b00000000,
@@ -356,7 +361,7 @@ void lock(unsigned char mode)
             mask_p3_6(lock_base);
             break;
         default:
-            printf("\r\nUnknown mode %u. Valid modes are 2, 3 or 4.\r\n");
+            printf("Invalid mode %u. Valid modes are 2, 3 or 4.");
             return;
     }
     
@@ -398,14 +403,36 @@ void lock(unsigned char mode)
     
     // The client / user is expected to verify this with a read command
     // or a blank check command (TODO)
-    printf("\r\nDone.\r\n");
+    printf("done.");
 }
-
-
 
 void read_sig()
 {
     
+}
+
+void self_test()
+{
+    printf("Testing first 255 bytes...\r\n");
+    erase();
+    com_println("");
+    for(unsigned char addr = 0; addr < 0xff; addr++) {
+        write(addr, addr);
+        com_println("");
+    }
+    read(0,0xFF);
+    com_println("");
+    printf("Testing last 255 bytes...\r\n");
+    for(unsigned char addr = 0xFF; addr > 0; addr--) {
+        write(addr + (0xFFF - 0xFF), addr);
+        com_println("");
+    }
+    read(0xFFF - 0xFF, 0xFF);
+    printf("Testing last byte...\r\n");
+    write(0xFFF, 0);
+    com_println("");
+    read(0xFFF, 0);
+    printf("\r\ndone.");
 }
 
 inline void eval_command(unsigned char * cmd)
@@ -443,6 +470,10 @@ inline void eval_command(unsigned char * cmd)
             read_sig();
             break;
             
+        case 'T':
+            self_test();
+            break;
+            
         case '?':
         case 'h':
             print_help();
@@ -451,7 +482,7 @@ inline void eval_command(unsigned char * cmd)
             print_version();
             break;
         default:
-            printf("\r\nError: Unknown command.\r\n");
+            printf("Error: Unknown command.");
     }
 }
 
@@ -467,8 +498,9 @@ int programmer_at89(void) {
     unsigned char * cmd;
     
     while(1) {
-        printf("CMD> ");
+        printf("\r\nCMD> ");
         cmd = com_readline();
+        com_println("");
         eval_command(cmd);
     }
     
