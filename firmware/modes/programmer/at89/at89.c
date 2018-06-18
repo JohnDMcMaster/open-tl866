@@ -13,9 +13,13 @@ inline void print_banner(void)
 }
 inline void print_help(void)
 {
-    com_println("\r\nCommands:\r\n  r <ADDR> [RANGE]\tRead from target");
-    com_println("  w <ADDR> <BYTE>\tWrite to target\r\n  e\t\t\tErase target");
-    com_println("  h\t\t\tPrint help\r\n  v\t\t\tPrint version(s)\r\n");
+    com_println("\r\nCommands:\r\n  r <ADDR (hex)> [RANGE (hex)]\tRead from target");
+    com_println("  w <ADDR (hex)> <BYTE (hex)>\tWrite to target");
+    com_println("  e\t\t\t\tErase target");
+    com_println("  l <MODE (int)>\t\tSet lock bits to MODE");
+    com_println("  b\t\t\t\tBlank check");
+    com_println("  T\t\t\t\tRun some tests");
+    com_println("  h\t\t\t\tPrint help\r\n  v\t\t\t\tPrint version(s)");
 }
 
 inline void print_version()
@@ -78,20 +82,42 @@ inline unsigned char zif_to_data(zif_bits_t zif_state)
     unsigned char byte = (zif_state[4] << 1) | !! (zif_state[3] & (1 << 7));
 
     // Invert bit-endianness
-    byte = invert_bit_endianness(byte);
+    return invert_bit_endianness(byte);
+}
+
+// Flip clock pin directly from TL866
+inline void pin_flip_clock()
+{
+    PORTE = PORTE ^ (1 << 2);
 }
 
 inline void zif_clock_write(zif_bits_t op_template, zif_bits_t op_clk,
-                            unsigned int cycles)
+                            unsigned int cycles
+                            )
 {
     for(unsigned char i = 0; i <= cycles; i++) {
-        zif_write(op_template); // Maybe better flip XTAL1 directly than to
-                                // call zif_write every time. TODO
+        zif_write(op_template);
         zif_write(op_clk);
+
+        // Might drive XTAL1 directly. WIP
+        //pin_flip_clock();
+
+        //__delay_us(20);
+        //pin_flip_clock();
     }
 }
 
-void read(unsigned int addr, unsigned int range)
+inline void print_zif_state(zif_bits_t op)
+{
+    com_println("");
+    com_println("01-08 09-16 17-24 25-32 33-40");
+    for (unsigned char i = 0; i < 5; i++) {
+        printf("%02X    ", op[i]);
+    }
+    com_println("");
+}
+
+unsigned char read_byte(unsigned int addr)
 {
     /* 
      * AT89C51 Read Pinout:
@@ -113,8 +139,6 @@ void read(unsigned int addr, unsigned int range)
      * P3.7     <-      17          RE0                     // ctrl (high)
      */
     
-    printf("%03X ", addr);
-
     // Set pin direction
     zif_bits_t dir = {  0,
                         0b00100000,   // Busy signal (14)
@@ -130,38 +154,45 @@ void read(unsigned int addr, unsigned int range)
     // Set voltages
     vdd_val(5); // 5.0 v - 5.2 v
     
+    // Allocate an empty zifbits struct for reading pin state
+    zif_bits_t input_byte    = { 0, 0, 0, 0, 0 };
+
+    // Base pin setting for reading
+    zif_bits_t read_base = { 0b00000000,
+                             0b10000001,   // 3.6 ctrl (16), RST (9)
+                             0b00000001,   // 3.7 ctrl (17) 
+                             0b01100000,   // VPP (31), PROG (30)
+                             0b00000000 };
+
+    zif_bits_t read_clk;
+
+    // Mask in the address bits to the appropriate pins
+    mask_addr(read_base, addr);
+
+    // Create a zif state with the clock pin turned on
+    memcpy(read_clk, read_base, 5);
+    mask_xtal1(read_clk);
+
+    // Give the clock on/off states to zif_clock_write(..) and loop 48 cycles
+    zif_clock_write(read_base, read_clk, 48);
+
+    // Read the current pin state (to read in the requested byte)
+    zif_read(input_byte);
+
+    // We're done with the byte. Turn off all outputs.
+    zif_write(zbits_null);
+    
+    return zif_to_data(input_byte);
+}
+
+void read(unsigned int addr, unsigned int range)
+{    
+    printf("%03X ", addr);
+
+    
     if (!range) { range = 1; } else {com_println("");}
     for (unsigned int byte_idx = 0; byte_idx < range; byte_idx++) {
-        // Allocate an empty zifbits struct for reading pin state
-        zif_bits_t input_byte    = { 0, 0, 0, 0, 0 };
-    
-        // Base pin setting for reading
-        zif_bits_t read_base = { 0b00000000,
-                                 0b10000001,   // 3.6 ctrl (16), RST (9)
-                                 0b00000001,   // 3.7 ctrl (17) 
-                                 0b01100000,   // VPP (31), PROG (30)
-                                 0b00000000 };
-
-        zif_bits_t read_clk;
-        
-        // Mask in the address bits to the appropriate pins
-        mask_addr(read_base, addr + byte_idx);
-
-        // Create a zif state with the clock pin turned on
-        memcpy(read_clk, read_base, 5);
-        mask_xtal1(read_clk);
-
-        // Give the clock on/off states to zif_clock_write(..) and loop 48 cycles
-        zif_clock_write(read_base, read_clk, 48);
-
-        // Read the current pin state (to read in the requested byte)
-        zif_read(input_byte);
-    
-        // We're done with the byte. Turn off all outputs.
-        zif_write(zbits_null);
-
-        // Parse and print interpreted byte
-        printf("%02X ", zif_to_data(input_byte) );
+        printf("%02X ", read_byte(addr + byte_idx));
     }
 }
 
@@ -347,7 +378,7 @@ void lock(unsigned char mode)
     zif_bits_t dir = {  0,
                         0b00100000,   // Busy signal (14)
                         0, 0, 0 };
-    
+
     switch (mode) {
         case 2:
             mask_p2_7(lock_base);
@@ -364,7 +395,6 @@ void lock(unsigned char mode)
             printf("Invalid mode %u. Valid modes are 2, 3 or 4.");
             return;
     }
-    
     // Set pin direction
     dir_write(dir);
     
@@ -406,9 +436,28 @@ void lock(unsigned char mode)
     printf("done.");
 }
 
+bool blank_check()
+{
+    printf("Performing a blank-check... ");
+    unsigned char data = 0;
+    for (unsigned int addr = 0; addr < 0xFFF; addr++) {
+        printf("%03X", addr);
+        data = read_byte(addr);
+        if (data != 0xFF) {
+            printf("\b\b\bdone. %X03 set to byte %02X. Target not blank.",
+                    addr, read_byte(addr));
+            return false;
+        }
+        printf("\b\b\b");
+    }
+    printf("done. All bytes 0xFF. Target is blank.");
+    return true;
+}
+
 void read_sig()
 {
-    
+   // TODO. Implements the signature reading routine as described in the
+   // datasheet. Would be a good precheck before doign read/write/erase ops.
 }
 
 void self_test()
@@ -428,7 +477,7 @@ void self_test()
         com_println("");
     }
     read(0xFFF - 0xFF, 0xFF);
-    printf("Testing last byte...\r\n");
+    printf("\r\fTesting last byte...\r\n");
     write(0xFFF, 0);
     com_println("");
     read(0xFFF, 0);
@@ -472,6 +521,10 @@ inline void eval_command(unsigned char * cmd)
             
         case 'T':
             self_test();
+            break;
+            
+        case 'b':
+            blank_check();
             break;
             
         case '?':
