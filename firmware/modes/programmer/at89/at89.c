@@ -2,7 +2,7 @@
 
 static zif_bits_t zbits_null = {0, 0, 0, 0, 0};
 static zif_bits_t gnd        = {0, 0, 8, 0, 0};
-static zif_bits_t vdd        = {0, 0, 0, 0, 128};
+static zif_bits_t vdd        = {0, 0, 4, 0, 128};
 static zif_bits_t vpp        = {0, 0, 0, 64, 0};
 
 inline void print_banner(void)
@@ -79,6 +79,7 @@ inline void mask_data(zif_bits_t op_base, unsigned char data)
 inline unsigned char zif_to_data(zif_bits_t zif_state)
 {
     // Filter the zif_bits response into a char byte with P0 bits
+                   // Trim non-data ZIF pins    // Set the LSB of data byte
     unsigned char byte = (zif_state[4] << 1) | !! (zif_state[3] & (1 << 7));
 
     // Invert bit-endianness
@@ -88,23 +89,7 @@ inline unsigned char zif_to_data(zif_bits_t zif_state)
 // Flip clock pin directly from TL866
 inline void pin_flip_clock()
 {
-    PORTE = PORTE ^ (1 << 2);
-}
-
-inline void zif_clock_write(zif_bits_t op_template, zif_bits_t op_clk,
-                            unsigned int cycles
-                            )
-{
-    for(unsigned char i = 0; i <= cycles; i++) {
-        zif_write(op_template);
-        zif_write(op_clk);
-
-        // Might drive XTAL1 directly. WIP
-        //pin_flip_clock();
-
-        //__delay_us(20);
-        //pin_flip_clock();
-    }
+    PORTE ^= (1 << 2);
 }
 
 inline void print_zif_state(zif_bits_t op)
@@ -115,6 +100,29 @@ inline void print_zif_state(zif_bits_t op)
         printf("%02X    ", op[i]);
     }
     com_println("");
+}
+
+inline void clock_write(zif_bits_t op, unsigned int cycles)
+{
+    zif_write(op);
+    for(unsigned int i = 0; i <= cycles; i++) {
+        pin_flip_clock();
+        __delay_us(1);
+        pin_flip_clock();
+        __delay_us(1);
+    }
+}
+
+// Very slow, but useful for prototyping when other
+// pins need to be changed alongside the clock
+inline void zif_clock_write(zif_bits_t op_template, zif_bits_t op_clk,
+                            unsigned int cycles
+                            )
+{
+    for(unsigned char i = 0; i <= cycles; i++) {
+        zif_write(op_template);
+        zif_write(op_clk);
+    }
 }
 
 unsigned char read_byte(unsigned int addr)
@@ -169,12 +177,8 @@ unsigned char read_byte(unsigned int addr)
     // Mask in the address bits to the appropriate pins
     mask_addr(read_base, addr);
 
-    // Create a zif state with the clock pin turned on
-    memcpy(read_clk, read_base, 5);
-    mask_xtal1(read_clk);
-
     // Give the clock on/off states to zif_clock_write(..) and loop 48 cycles
-    zif_clock_write(read_base, read_clk, 48);
+    clock_write(read_base, 48);
 
     // Read the current pin state (to read in the requested byte)
     zif_read(input_byte);
@@ -205,8 +209,8 @@ void write(unsigned int addr, unsigned char data)
      * ------------------------------------------------------------------------
      * RST      <-      09          RJ4                     // (high)
      * PSEN     <-      29          RD7                     // (low)
-     * PROG      <-      30          RG0                     // Pulsed prog.
-     * VPP       <-      31          VPP_31                  // 12v
+     * PRO      <-      30          RG0                     // Pulsed prog.
+     * VPP      <-      31          VPP_31                  // 12v
      * VCC      <-      40          Vdd_40
      * P0.{0-7) <-      39-32       RB{6,5,4,3,2}, RJ{3,2,1}      // PGM Data
      * P1.{0-7} <-      1-8         RC{5,4,3,2}, RJ{7,6}, RC{6,7} // Addr
@@ -251,11 +255,6 @@ void write(unsigned int addr, unsigned char data)
     zif_bits_t write_preclk;
     memcpy(write_preclk, write_base, 5);
     mask_prog(write_preclk);
-
-    // Create a zif state with the clock pin turned on
-    zif_bits_t write_clk;
-    memcpy(write_clk, write_base, 5);
-    mask_xtal1(write_clk);
    
     // Enable VPP right before setting the ZIF state
     vpp_en();
@@ -264,7 +263,7 @@ void write(unsigned int addr, unsigned char data)
     zif_write(write_preclk);
     __delay_us(20); // 20us might be too generous. TODO
 
-    zif_clock_write(write_base, write_clk, 48);
+    clock_write(write_base, 48);
 
     // We're done. Disable VPP and reset the ZIF state.
     vpp_dis();
@@ -284,7 +283,7 @@ void erase()
      * RST      <-      09          RJ4                     // (high)
      * PSEN     <-      29          RD7                     // (low)
      * ALE      <-      30          RG0                     // Pulsed erase
-     * VPP       <-      31          VPP_31                  // 12v
+     * VPP      <-      31          VPP_31                  // 12v
      * VCC      <-      40          Vdd_40
      * P2.6     <-      27          RD5                     // ctrl (high)
      * P2.7     <-      28          RD6                     // ctrl (low)
@@ -324,19 +323,17 @@ void erase()
     memcpy(erase_preclk, erase_base, 5);
     mask_prog(erase_preclk);
     
-    // Create a zif state with the clock pin turned on
-    zif_bits_t erase_clk;
-    memcpy(erase_clk, erase_base, 5);
-    mask_xtal1(erase_clk);
-    
     // Enable VPP right before setting the ZIF state
     vpp_en();
     
     // Set PROG high before pulsing it low during erase
     zif_write(erase_preclk);
-    __delay_us(20); // 20us might be too generous. TODO
+    __delay_us(20);
     
-    zif_clock_write(erase_base, erase_clk, 48);
+    clock_write(erase_base, 48);
+    
+    // Erase function requires 10ms prog pulse
+    __delay_ms(10);
     
     // We're done. Disable VPP and reset the ZIF state.
     vpp_dis();
@@ -347,6 +344,7 @@ void erase()
     printf("done.");
 }
 
+// Does not work yet.
 void lock(unsigned char mode)
 {
     /* 
@@ -392,7 +390,7 @@ void lock(unsigned char mode)
             mask_p3_6(lock_base);
             break;
         default:
-            printf("Invalid mode %u. Valid modes are 2, 3 or 4.");
+            printf("Invalid mode %u. Valid modes are 2, 3 or 4.", mode);
             return;
     }
     // Set pin direction
@@ -413,11 +411,6 @@ void lock(unsigned char mode)
     memcpy(lock_preclk, lock_base, 5);
     mask_prog(lock_preclk);
     
-    // Create a zif state with the clock pin turned on
-    zif_bits_t lock_clk;
-    memcpy(lock_clk, lock_base, 5);
-    mask_xtal1(lock_clk);
-    
     // Enable VPP right before setting the ZIF state
     vpp_en();
     
@@ -425,7 +418,7 @@ void lock(unsigned char mode)
     zif_write(lock_preclk);
     __delay_us(20); // 20us might be too generous. TODO
     
-    zif_clock_write(lock_base, lock_clk, 48);
+    clock_write(lock_base, 48);
     
     // We're done. Disable VPP and reset the ZIF state.
     vpp_dis();
@@ -465,19 +458,19 @@ void self_test()
     printf("Testing first 255 bytes...\r\n");
     erase();
     com_println("");
-    for(unsigned char addr = 0; addr < 0xff; addr++) {
+    for(unsigned int addr = 0; addr < 0xff; addr++) {
         write(addr, addr);
         com_println("");
     }
     read(0,0xFF);
     com_println("");
     printf("Testing last 255 bytes...\r\n");
-    for(unsigned char addr = 0xFF; addr > 0; addr--) {
-        write(addr + (0xFFF - 0xFF), addr);
+    for(unsigned int addr = 0xF00; addr <= 0xFFF; addr++) {
+        write(addr, addr - 0xF00);
         com_println("");
     }
-    read(0xFFF - 0xFF, 0xFF);
-    printf("\r\fTesting last byte...\r\n");
+    read(0xF00, 0xFF);
+    printf("\r\nTesting last byte...\r\n");
     write(0xFFF, 0);
     com_println("");
     read(0xFFF, 0);
@@ -490,16 +483,16 @@ inline void eval_command(unsigned char * cmd)
     switch (cmd_t[0]) {
         case 'r':
         {
-            unsigned int addr  = atoi(strtok(NULL, " "));
-            unsigned int range = atoi(strtok(NULL, " "));
+            unsigned int addr  = xtoi(strtok(NULL, " "));
+            unsigned int range = xtoi(strtok(NULL, " "));
             read(addr, range);
             break;
         }
             
         case 'w':
         {
-            unsigned int addr  = atoi(strtok(NULL, " "));
-            unsigned char data = atoi(strtok(NULL, " "));
+            unsigned int addr  = xtoi(strtok(NULL, " "));
+            unsigned char data = xtoi(strtok(NULL, " "));
             write(addr, data);
             break;
         }
