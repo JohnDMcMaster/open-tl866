@@ -93,8 +93,8 @@ int main(void)
     init();
     
     // MODE SELECT. Only one can be uncommented. TODO: Implement a config.h
-    //bitbang(); // Bitbang mode
-    programmer_at89();
+    bitbang(); // Bitbang mode
+    //programmer_at89();
     //glitch(); // future glitch mode
     // MODE SELECT END.
     
