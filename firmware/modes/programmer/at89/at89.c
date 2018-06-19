@@ -17,6 +17,7 @@ inline void print_help(void)
     com_println("  w <ADDR (hex)> <BYTE (hex)>\tWrite to target");
     com_println("  e\t\t\t\tErase target");
     com_println("  l <MODE (int)>\t\tSet lock bits to MODE");
+    com_println("  s\t\t\t\tPrint signature bytes");
     com_println("  b\t\t\t\tBlank check");
     com_println("  T\t\t\t\tRun some tests");
     com_println("  h\t\t\t\tPrint help\r\n  v\t\t\t\tPrint version(s)");
@@ -163,7 +164,7 @@ unsigned char read_byte(unsigned int addr)
     vdd_val(5); // 5.0 v - 5.2 v
     
     // Allocate an empty zifbits struct for reading pin state
-    zif_bits_t input_byte    = { 0, 0, 0, 0, 0 };
+    zif_bits_t response    = { 0, 0, 0, 0, 0 };
 
     // Base pin setting for reading
     zif_bits_t read_base = { 0b00000000,
@@ -181,12 +182,12 @@ unsigned char read_byte(unsigned int addr)
     clock_write(read_base, 48);
 
     // Read the current pin state (to read in the requested byte)
-    zif_read(input_byte);
+    zif_read(response);
 
     // We're done with the byte. Turn off all outputs.
     zif_write(zbits_null);
     
-    return zif_to_data(input_byte);
+    return zif_to_data(response);
 }
 
 void read(unsigned int addr, unsigned int range)
@@ -429,6 +430,80 @@ void lock(unsigned char mode)
     printf("done.");
 }
 
+unsigned char read_sig(unsigned int offset)
+{
+   // TODO. Implements the signature reading routine as described in the
+   // datasheet. Would be a good precheck before doign read/write/erase ops.
+    
+     /* 
+     * AT89C51 Read Signature Pinout:
+     * 
+     * Target   Dir     ZIF pin#    Programmer port
+     * ------------------------------------------------------------------------
+     * RST      <-      09          RJ4                     // (high)
+     * PSEN     <-      29          RD7                     // (low)
+     * PROG     <-      30          RG0                     // (high)
+     * VPP      <-      31          RJ0                     // (high)
+     * VCC      <-      40          Vdd_40
+     * P0.{0-7) ->      39-32       RB{6,5,4,3,2}, RJ{3,2,1}      // PGM Data
+     * P1.{0-7} <-      1-8         RC{5,4,3,2}, RJ{7,6}, RC{6,7} // Addr
+     * P2.{0-3} <-      21-24       RE{4,5,6,1}             // Addr (contd.)
+     * P2.6     <-      27          RD5                     // ctrl (low)
+     * P2.7     <-      28          RD6                     // ctrl (low)
+     * P3.4     ->      14          RD1                     // Busy
+     * P3.6     <-      16          RG1                     // ctrl (low)
+     * P3.7     <-      17          RE0                     // ctrl (low)
+     */
+    
+    // Set pin direction
+    zif_bits_t dir = {  0,
+                        0b00100000,   // Busy signal (14)
+                        0,
+                        0b10000000,   // p0.7 (32)
+                        0b01111111 }; // p0.{6-0} (33-39)  
+    dir_write(dir);
+    
+    // Set Vdd / GND pinout  
+    set_vdd(vdd);
+    set_gnd(gnd);
+    
+    // Set voltages
+    vdd_val(5); // 5.0 v - 5.2 v
+    
+    // Allocate an empty zifbits struct for reading pin state
+    zif_bits_t response  = { 0, 0, 0, 0, 0 };
+
+    // Base pin setting for reading
+    zif_bits_t signature_base = { 0b00000000,
+                             0b00000001,   // RST (9)
+                             0b00000000,
+                             0b01100000,   // VPP (31), PROG (30)
+                             0b00000000 };
+
+    zif_bits_t signature_clk;
+    
+    // Mask in the address bits to the appropriate pins
+    mask_addr(signature_base, 0x30 + offset);
+
+    // Give the clock on/off states to zif_clock_write(..) and loop 48 cycles
+    clock_write(signature_base, 48);
+
+    // Read the current pin state (to read in the requested byte)
+    zif_read(response);
+
+    // We're done with the byte. Turn off all outputs.
+    zif_write(zbits_null);
+    
+    return zif_to_data(response);
+}
+
+bool sig_check()
+{
+    if (read_sig(0) != 0x1E || read_sig(1) != 0x51 || read_sig(2) != 0xFF)
+        return false;
+    return true;
+}
+
 bool blank_check()
 {
     printf("Performing a blank-check... ");
@@ -437,20 +512,14 @@ bool blank_check()
         printf("%03X", addr);
         data = read_byte(addr);
         if (data != 0xFF) {
-            printf("\b\b\bdone. %X03 set to byte %02X. Target not blank.",
-                    addr, read_byte(addr));
+            printf("\b\b\bdone. %03X set to byte %02X. Target is not blank.",
+                    addr, data);
             return false;
         }
         printf("\b\b\b");
     }
-    printf("done. All bytes 0xFF. Target is blank.");
+    printf("done. Target is blank.");
     return true;
-}
-
-void read_sig()
-{
-   // TODO. Implements the signature reading routine as described in the
-   // datasheet. Would be a good precheck before doign read/write/erase ops.
 }
 
 void self_test()
@@ -483,6 +552,11 @@ inline void eval_command(unsigned char * cmd)
     switch (cmd_t[0]) {
         case 'r':
         {
+            if (!sig_check()) {
+                printf("Could not detect an AT89C51. Ignoring command.");
+                break;
+            }
+            
             unsigned int addr  = xtoi(strtok(NULL, " "));
             unsigned int range = xtoi(strtok(NULL, " "));
             read(addr, range);
@@ -491,6 +565,11 @@ inline void eval_command(unsigned char * cmd)
             
         case 'w':
         {
+            if (!sig_check()) {
+                printf("Could not detect an AT89C51. Ignoring command.");
+                break;
+            }
+            
             unsigned int addr  = xtoi(strtok(NULL, " "));
             unsigned char data = xtoi(strtok(NULL, " "));
             write(addr, data);
@@ -499,24 +578,46 @@ inline void eval_command(unsigned char * cmd)
         
         case 'l':
         {
+            if (!sig_check()) {
+                printf("Could not detect an AT89C51. Ignoring command.");
+                break;
+            }
+            
             unsigned char mode = atoi(strtok(NULL, " "));
             lock(mode);
             break;
         }
             
         case 'e':
+            if (!sig_check()) {
+                printf("Could not detect an AT89C51. Ignoring command.");
+                break;
+            }
+            
             erase();
             break;
 
         case 's':
-            read_sig();
+            printf("(0x30) Manufacturer: %02X\r\n", read_sig(0));
+            printf("(0x31) Model:        %02X\r\n", read_sig(1));
+            printf("(0x32) VPP Voltage:  %02X\r\n", read_sig(2));
             break;
             
         case 'T':
+            if (!sig_check()) {
+                printf("Could not detect an AT89C51. Ignoring command.");
+                break;
+            }
+            
             self_test();
             break;
             
         case 'b':
+            if (!sig_check()) {
+                printf("Could not detect an AT89C51. Ignoring command.");
+                break;
+            }
+            
             blank_check();
             break;
             
