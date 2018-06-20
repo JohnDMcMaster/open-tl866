@@ -5,13 +5,13 @@ static zif_bits_t gnd        = {0, 0, 0x8, 0, 0};
 static zif_bits_t vdd        = {0, 0, 0x4, 0, 0x80};
 static zif_bits_t vpp        = {0, 0, 0, 0x40, 0};
 
-inline void print_banner(void)
+static inline void print_banner(void)
 {
     com_println("   | |");
     com_println(" ==[+]==  open-tl866 Programmer Mode (AT89)");
     com_println("   | |");
 }
-inline void print_help(void)
+static inline void print_help(void)
 {
     com_println("\r\nCommands:\r\n  r <ADDR (hex)> [RANGE (hex)]\tRead from target");
     com_println("  w <ADDR (hex)> <BYTE (hex)>\tWrite to target");
@@ -23,7 +23,7 @@ inline void print_help(void)
     com_println("  h\t\t\t\tPrint help\r\n  v\t\t\t\tPrint version(s)");
 }
 
-inline void print_version()
+static inline void print_version()
 {
     // All these should be defined in some config header files. TODO
     com_println("Programmer Mode - AT89 version: 0.0.1");
@@ -32,7 +32,7 @@ inline void print_version()
 }
 
 // Neat trick taken from a stack overflow answer.
-inline unsigned char invert_bit_endianness(unsigned char byte)
+static inline unsigned char invert_bit_endianness(unsigned char byte)
 {
     static unsigned char lookup[16] = {
                             0x0, 0x8, 0x4, 0xc, 0x2, 0xa, 0x6, 0xe,
@@ -40,44 +40,44 @@ inline unsigned char invert_bit_endianness(unsigned char byte)
     return (lookup[byte & 0b1111] << 4) | lookup[byte >> 4];
 }
 
-inline void mask_p2_7(zif_bits_t op_base)
+static inline void mask_p2_7(zif_bits_t op_base)
 {
     op_base[3] |= 0x8;
 }
 
-inline void mask_p3_6(zif_bits_t op_base)
+static inline void mask_p3_6(zif_bits_t op_base)
 {
     op_base[1] |= 0x80;
 }
 
-inline void mask_p3_7(zif_bits_t op_base)
+static inline void mask_p3_7(zif_bits_t op_base)
 {
     op_base[2] |= 0x1;
 }
 
-inline void mask_xtal1(zif_bits_t op_base)
+static inline void mask_xtal1(zif_bits_t op_base)
 {
     op_base[2] |= 0x4;
 }
 
-inline void mask_prog(zif_bits_t op_base)
+static inline void mask_prog(zif_bits_t op_base)
 {
     op_base[3] |= 0x20;
 }
 
-inline void mask_addr(zif_bits_t op_base, unsigned int addr)
+static inline void mask_addr(zif_bits_t op_base, unsigned int addr)
 {
     op_base[0] = addr & 0xFF;
     op_base[2] |= (addr >> 8) << 4;
 }
 
-inline void mask_data(zif_bits_t op_base, unsigned char data)
+static inline void mask_data(zif_bits_t op_base, unsigned char data)
 {
     op_base[3] |= (data & 0x80);
     op_base[4] |= (invert_bit_endianness(data & 0x7f) >> 1);
 }
 
-inline unsigned char zif_to_data(zif_bits_t zif_state)
+static inline unsigned char zif_to_data(zif_bits_t zif_state)
 {
     // Filter the zif_bits response into a char byte with P0 bits
                    // Trim non-data ZIF pins    // Set the LSB of data byte
@@ -88,12 +88,12 @@ inline unsigned char zif_to_data(zif_bits_t zif_state)
 }
 
 // Flip clock pin directly from TL866
-inline void pin_flip_clock()
+static inline void pin_flip_clock()
 {
     PORTE ^= (1 << 2);
 }
 
-inline void print_zif_state(zif_bits_t op)
+static inline void print_zif_state(zif_bits_t op)
 {
     com_println("");
     com_println("01-08 09-16 17-24 25-32 33-40");
@@ -103,7 +103,7 @@ inline void print_zif_state(zif_bits_t op)
     com_println("");
 }
 
-inline void clock_write(zif_bits_t op, unsigned int cycles)
+static inline void clock_write(zif_bits_t op, unsigned int cycles)
 {
     zif_write(op);
     for(unsigned int i = 0; i <= cycles; i++) {
@@ -116,7 +116,7 @@ inline void clock_write(zif_bits_t op, unsigned int cycles)
 
 // Very slow, but useful for prototyping when other
 // pins need to be changed alongside the clock
-inline void zif_clock_write(zif_bits_t op_template, zif_bits_t op_clk,
+static inline void zif_clock_write(zif_bits_t op_template, zif_bits_t op_clk,
                             unsigned int cycles
                             )
 {
@@ -126,7 +126,7 @@ inline void zif_clock_write(zif_bits_t op_template, zif_bits_t op_clk,
     }
 }
 
-unsigned char read_byte(unsigned int addr)
+static unsigned char read_byte(unsigned int addr)
 {
     /* 
      * AT89C51 Read Pinout:
@@ -190,7 +190,7 @@ unsigned char read_byte(unsigned int addr)
     return zif_to_data(response);
 }
 
-void read(unsigned int addr, unsigned int range)
+static void read(unsigned int addr, unsigned int range)
 {    
     printf("%03X ", addr);
 
@@ -201,7 +201,7 @@ void read(unsigned int addr, unsigned int range)
     }
 }
 
-void write(unsigned int addr, unsigned char data)
+static void write(unsigned int addr, unsigned char data)
 {
     /* 
      * AT89C51 write Pinout:
@@ -274,7 +274,7 @@ void write(unsigned int addr, unsigned char data)
     printf("done.");
 }
 
-void erase()
+static void erase()
 {
     /* 
      * AT89C51 erase Pinout:
@@ -346,7 +346,7 @@ void erase()
 }
 
 // Does not work yet.
-void lock(unsigned char mode)
+static void lock(unsigned char mode)
 {
     /* 
      * AT89C51 lock (modes 2, 3, 4) Pinout:
@@ -430,7 +430,7 @@ void lock(unsigned char mode)
     printf("done.");
 }
 
-unsigned char read_sig(unsigned int offset)
+static unsigned char read_sig(unsigned int offset)
 {
    // TODO. Implements the signature reading routine as described in the
    // datasheet. Would be a good precheck before doign read/write/erase ops.
@@ -497,14 +497,14 @@ unsigned char read_sig(unsigned int offset)
     return zif_to_data(response);
 }
 
-bool sig_check()
+static bool sig_check()
 {
     if (read_sig(0) != 0x1E || read_sig(1) != 0x51 || read_sig(2) != 0xFF)
         return false;
     return true;
 }
 
-bool blank_check()
+static bool blank_check()
 {
     printf("Performing a blank-check... ");
     unsigned char data = 0;
@@ -522,7 +522,7 @@ bool blank_check()
     return true;
 }
 
-void self_test()
+static void self_test()
 {
     printf("Testing first 255 bytes...\r\n");
     erase();
@@ -546,7 +546,7 @@ void self_test()
     printf("\r\ndone.");
 }
 
-inline void eval_command(unsigned char * cmd)
+static inline void eval_command(unsigned char * cmd)
 {
     unsigned char * cmd_t = strtok(cmd, " ");
     switch (cmd_t[0]) {
