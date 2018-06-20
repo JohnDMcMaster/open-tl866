@@ -9,9 +9,9 @@
 #include <xc.h>
 #include <string.h>
 
-//#include "modes/bitbang/bitbang.h"
+#include "modes/bitbang/bitbang.h"
 //#include "modes/glitch/glitch.h"
-#include "modes/programmer/at89/at89.h"
+//#include "modes/programmer/at89/at89.h"
 
 static inline void init(void) {
         unsigned int pll_startup = 600;
