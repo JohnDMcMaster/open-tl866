@@ -1,9 +1,9 @@
 #include "at89.h"
 
 static zif_bits_t zbits_null = {0, 0, 0, 0, 0};
-static zif_bits_t gnd        = {0, 0, 8, 0, 0};
-static zif_bits_t vdd        = {0, 0, 4, 0, 128};
-static zif_bits_t vpp        = {0, 0, 0, 64, 0};
+static zif_bits_t gnd        = {0, 0, 0x8, 0, 0};
+static zif_bits_t vdd        = {0, 0, 0x4, 0, 0x80};
+static zif_bits_t vpp        = {0, 0, 0, 0x40, 0};
 
 inline void print_banner(void)
 {
