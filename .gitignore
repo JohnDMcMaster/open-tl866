@@ -6,4 +6,5 @@ firmware/nbproject/Package-*.bash
 firmware/nbproject/private/
 firmware/build/
 firmware/dist/
-__pycache__
+__pycache__/
+*.egg-info/
