@@ -11,6 +11,7 @@
 
 #include "modes/bitbang/bitbang.h"
 //#include "modes/glitch/glitch.h"
+//#include "modes/programmer/at89/at89.h"
 
 static inline void init(void) {
         unsigned int pll_startup = 600;
@@ -93,6 +94,7 @@ int main(void)
     
     // MODE SELECT. Only one can be uncommented. TODO: Implement a config.h
     bitbang(); // Bitbang mode
+    //programmer_at89();
     //glitch(); // future glitch mode
     // MODE SELECT END.
     
