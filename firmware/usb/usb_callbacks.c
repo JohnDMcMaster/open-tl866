@@ -70,3 +70,21 @@ int8_t app_send_break_callback(uint8_t interface, uint16_t duration)
 {
     return 0;
 }
+
+int8_t app_unknown_setup_request_callback(const struct setup_packet *setup)
+{
+    /* To use the CDC device class, have a handler for unknown setup
+     * requests and call process_cdc_setup_request() (as shown here),
+     * which will check if the setup request is CDC-related, and will
+     * call the CDC application callbacks defined in usb_cdc.h. For
+     * composite devices containing other device classes, make sure
+     * MULTI_CLASS_DEVICE is defined in usb_config.h and call all
+     * appropriate device class setup request functions here.
+     */
+    return process_cdc_setup_request(setup);
+}
+
+int16_t app_unknown_get_descriptor_callback(const struct setup_packet *pkt, const void **descriptor)
+{
+    return -1;
+}
