@@ -75,6 +75,13 @@
 #define USB_CONFIG_DESCRIPTOR_MAP usb_application_config_descs
 #define USB_STRING_DESCRIPTOR_FUNC usb_application_get_string
 
+/* Optional callbacks from usb.c. Leave them commented if you don't want to
+   use them. For the prototypes and documentation for each one, see usb.h. */
+
+// Actually these are required for CDC on windows. -- cnomad
+#define UNKNOWN_SETUP_REQUEST_CALLBACK app_unknown_setup_request_callback
+#define UNKNOWN_GET_DESCRIPTOR_CALLBACK app_unknown_get_descriptor_callback
+
 /* CDC Configuration functions. See usb_cdc.h for documentation. */
 #define CDC_SEND_ENCAPSULATED_COMMAND_CALLBACK app_send_encapsulated_command
 #define CDC_GET_ENCAPSULATED_RESPONSE_CALLBACK app_get_encapsulated_response
