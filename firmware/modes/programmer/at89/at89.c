@@ -90,7 +90,7 @@ static inline unsigned char zif_to_data(zif_bits_t zif_state)
 // Flip clock pin directly from TL866
 static inline void pin_flip_clock()
 {
-    PORTE ^= (1 << 2);
+    PORTE ^= 0x4;
 }
 
 static inline void print_zif_state(zif_bits_t op)
@@ -329,7 +329,7 @@ static void erase()
     
     // Set PROG high before pulsing it low during erase
     zif_write(erase_preclk);
-    __delay_us(20);
+    __delay_ms(20);
     
     clock_write(erase_base, 48);
     
@@ -378,22 +378,27 @@ static void lock(unsigned char mode)
                         0b00100000,   // Busy signal (14)
                         0, 0, 0 };
 
+    print_zif_state(lock_base);
     switch (mode) {
         case 2:
+            printf("2\r\n");
             mask_p2_7(lock_base);
             mask_p3_6(lock_base);
             mask_p3_7(lock_base);
             break;
         case 3:
+            printf("3\r\n");
             mask_p2_7(lock_base);
             break;
         case 4:
+            printf("4\r\n");
             mask_p3_6(lock_base);
             break;
         default:
             printf("Invalid mode %u. Valid modes are 2, 3 or 4.", mode);
             return;
     }
+    print_zif_state(lock_base);
     // Set pin direction
     dir_write(dir);
     
@@ -414,6 +419,9 @@ static void lock(unsigned char mode)
     
     // Enable VPP right before setting the ZIF state
     vpp_en();
+    
+    print_zif_state(lock_base);
+    print_zif_state(lock_preclk);
     
     // Set PROG high before pulsing it low during erase
     zif_write(lock_preclk);
