@@ -455,9 +455,9 @@ static void lock(unsigned char mode)
     // Enable PWM clock. 
     CCP2CON = 0b10001100;
     TRISEbits.RE2 = 0;
-	T2CON = 0b00000100;
-	PR2 = 249;
-	CCPR1L = 125;
+    T2CON = 0b00000100;
+    PR2 = 249;
+    CCPR1L = 125;
 
     zif_write(lock_1);
     __delay_ms(400);
@@ -480,7 +480,7 @@ static void lock(unsigned char mode)
     zif_write(lock_3);
     __delay_ms(400);
     
-	T2CON = 0;     // Enable TMR2 with prescaler = 1
+    T2CON = 0;     // Enable TMR2 with prescaler = 1
     CCP2CON = 0;   // Disable PWM on CCP1
 
     ///////////////////////////////////////////////////////////////////////////
