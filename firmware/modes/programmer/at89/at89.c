@@ -442,7 +442,6 @@ static void lock(unsigned char mode)
     
     // Enable VPP right before setting the ZIF state
     vpp_en();
-
    
     // Using clock_write(...) results in some inconsistency, and being unable
     // to set pins while the clock is running makes it rather unflexible.
@@ -459,9 +458,6 @@ static void lock(unsigned char mode)
     T2CON = 0b00000100;
     PR2 = 249;
     CCPR1L = 125;
-    
-    // Wait for PWM to engage...
-    __delay_ms(1);
 
     zif_write(lock_1);
     __delay_ms(400);
