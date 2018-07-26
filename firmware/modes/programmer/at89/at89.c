@@ -162,7 +162,7 @@ static unsigned char read_byte(unsigned int addr)
     
     // Set voltages
     vdd_val(5); // 5.0 v - 5.2 v
-    
+
     // Allocate an empty zifbits struct for reading pin state
     zif_bits_t response    = { 0, 0, 0, 0, 0 };
 
@@ -186,7 +186,7 @@ static unsigned char read_byte(unsigned int addr)
 
     // We're done with the byte. Turn off all outputs.
     zif_write(zbits_null);
-    
+
     return zif_to_data(response);
 }
 
@@ -259,7 +259,7 @@ static void write(unsigned int addr, unsigned char data)
    
     // Enable VPP right before setting the ZIF state
     vpp_en();
-    
+
     // Set PROG high before pulsing it low during programming
     zif_write(write_preclk);
     __delay_us(20); // 20us might be too generous. TODO
@@ -368,7 +368,19 @@ static void lock(unsigned char mode)
     printf("Locking with mode %u... ", mode);
     
     // Base pin setting for erasing
-    zif_bits_t lock_base = { 0b00000000,
+    zif_bits_t lock_1 = { 0b00000000,
+                             0b00000001, // RST (9)
+                             0b00000000,  
+                             0b01000000, // VPP (31)
+                             0b00000000 };
+
+    zif_bits_t lock_2 = { 0b00000000,
+                             0b00000001, // RST (9)
+                             0b00000000,  
+                             0b01000100, // VPP (31), 2.6 (27)
+                             0b00000000 };
+
+    zif_bits_t lock_3 = { 0b00000000,
                              0b00000001, // RST (9)
                              0b00000000,  
                              0b01000100, // VPP (31), 2.6 (27)
@@ -378,27 +390,43 @@ static void lock(unsigned char mode)
                         0b00100000,   // Busy signal (14)
                         0, 0, 0 };
 
-    print_zif_state(lock_base);
+
+    mask_prog(lock_1);
+
+    mask_p2_7(lock_2);
+    mask_p3_6(lock_2);
+    mask_p3_7(lock_2);
+
     switch (mode) {
         case 2:
             printf("2\r\n");
-            mask_p2_7(lock_base);
-            mask_p3_6(lock_base);
-            mask_p3_7(lock_base);
+            mask_p2_7(lock_3);
+            mask_p3_6(lock_3);
+            mask_p3_7(lock_3);
             break;
         case 3:
             printf("3\r\n");
-            mask_p2_7(lock_base);
+            mask_p2_7(lock_3);
             break;
         case 4:
             printf("4\r\n");
-            mask_p3_6(lock_base);
+            mask_p3_6(lock_3);
             break;
         default:
             printf("Invalid mode %u. Valid modes are 2, 3 or 4.", mode);
             return;
     }
-    print_zif_state(lock_base);
+
+    // Making a pulsed lock_2
+    zif_bits_t lock_2_proglow;
+    memcpy(lock_2_proglow, lock_2, 5);
+    mask_prog(lock_2);
+
+    // Making a pulsed lock_3
+    zif_bits_t lock_3_proglow;
+    memcpy(lock_3_proglow, lock_3, 5);
+    mask_prog(lock_3);
+
     // Set pin direction
     dir_write(dir);
     
@@ -410,31 +438,60 @@ static void lock(unsigned char mode)
     // Set voltages
     vdd_val(5); // 5.0 v - 5.2 v
     vpp_val(1); // 12.8 - 13.2
-    
-    // Create a zif state to set before running the clock
-    // PROG needs to be pulsed, can't be kept low the entire time.
-    zif_bits_t lock_preclk;
-    memcpy(lock_preclk, lock_base, 5);
-    mask_prog(lock_preclk);
+
     
     // Enable VPP right before setting the ZIF state
     vpp_en();
+   
+    // Using clock_write(...) results in some inconsistency, and being unable
+    // to set pins while the clock is running makes it rather unflexible.
+    // Working around this limitation by making multiple calls to clock_write
+    // results in gaps on the clock line while writing to sreg with the new pin
+    // state. This happens to hinder the following algorithm, so the clock here
+    // will be driven by the PIC18F87J50 PWM module as described in sections
+    // 17.4, 18.1 and 18.4 of the datasheet. Eventually this should be a
+    // drop-in replacement function for clock_write(...)
+
+    // Enable PWM clock. 
+    CCP2CON = 0b10001100;
+    TRISEbits.RE2 = 0;
+	T2CON = 0b00000100;
+	PR2 = 249;
+	CCPR1L = 125;
+
+    zif_write(lock_1);
+    __delay_ms(400);
+
+    zif_write(lock_2);
+    __delay_ms(1);
+
+    zif_write(lock_2_proglow);
+    __delay_ms(1);
+
+    zif_write(lock_2);
+    __delay_ms(400);
+
+    zif_write(lock_3);
+    __delay_ms(1);
+
+    zif_write(lock_3_proglow);
+    __delay_ms(1);
+
+    zif_write(lock_3);
+    __delay_ms(400);
     
-    print_zif_state(lock_base);
-    print_zif_state(lock_preclk);
-    
-    // Set PROG high before pulsing it low during erase
-    zif_write(lock_preclk);
-    __delay_us(20); // 20us might be too generous. TODO
-    
-    clock_write(lock_base, 48);
-    
+	T2CON = 0;     // Enable TMR2 with prescaler = 1
+    CCP2CON = 0;   // Disable PWM on CCP1
+
+    ///////////////////////////////////////////////////////////////////////////
+
     // We're done. Disable VPP and reset the ZIF state.
     vpp_dis();
     zif_write(zbits_null);
     
     // The client / user is expected to verify this with a read command
-    // or a blank check command (TODO)
+    // or a blank check command. A slight timing invariance could also be used
+    // to discern blank and protected chips. (TODO)
     printf("done.");
 }
 
