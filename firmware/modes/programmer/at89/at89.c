@@ -9,7 +9,7 @@ static inline void print_banner(void)
 {
     com_println("   | |");
     com_println(" ==[+]==  open-tl866 Programmer Mode (AT89)");
-    com_println("   | |");
+    com_println("   | |    with glitching support.");
 }
 static inline void print_help(void)
 {
@@ -20,6 +20,8 @@ static inline void print_help(void)
     com_println("  s\t\t\t\tPrint signature bytes");
     com_println("  b\t\t\t\tBlank check");
     com_println("  T\t\t\t\tRun some tests");
+    com_println("  G\t\t\t\tDo a glitch search. Will erase progmem!");
+    com_println("  g <OFFSET>\t\t\tAttempt a glitch at OFFSET");
     com_println("  h\t\t\t\tPrint help\r\n  v\t\t\t\tPrint version(s)");
 }
 
@@ -345,7 +347,6 @@ static void erase()
     printf("done.");
 }
 
-// Does not work yet.
 static void lock(unsigned char mode)
 {
     /* 
@@ -562,6 +563,151 @@ static unsigned char read_sig(unsigned int offset)
     return zif_to_data(response);
 }
 
+static void glitch(unsigned long offset)
+{
+    /* 
+     * AT89C51 erase Pinout:
+     * 
+     * Target   Dir     ZIF pin#    Programmer port
+     * ------------------------------------------------------------------------
+     * RST      <-      09          RJ4                     // (high)
+     * PSEN     <-      29          RD7                     // (low)
+     * ALE      <-      30          RG0                     // Pulsed erase
+     * VPP      <-      31          VPP_31                  // 12v
+     * VCC      <-      40          Vdd_40
+     * P2.6     <-      27          RD5                     // ctrl (high)
+     * P2.7     <-      28          RD6                     // ctrl (low)
+     * P3.4     ->      14          RD1                     // Busy
+     * P3.6     <-      16          RG1                     // ctrl (low)
+     * P3.7     <-      17          RE0                     // ctrl (low)
+     */
+    
+    printf("Glitching via erase function with offset %lu... ", offset);
+    
+    zif_bits_t dir = {  0,
+                        0b00100000,   // Busy signal (14)
+                        0, 0, 0 };
+    
+    // Set pin direction
+    dir_write(dir);
+    
+    // Set pins
+    set_vdd(vdd);
+    set_vpp(vpp);
+    set_gnd(gnd);
+    
+    // Set voltages
+    vdd_val(5); // 5.0 v - 5.2 v
+    vpp_val(1); // 12.8 - 13.2
+    
+    // Base pin setting for erasing
+    zif_bits_t erase_base =     {       0b00000000,
+                                        0b00000001, // RST (9)
+                                        0b00000000,  
+                                        0b01000100, // VPP (31), 2.6 (27)
+                                        0b00000000 };
+
+    // Create a zif state to set before running the clock
+    // PROG needs to be pulsed, can't be kept low the entire time.
+    zif_bits_t erase_preclk;
+    memcpy(erase_preclk, erase_base, 5);
+    mask_prog(erase_preclk);
+    
+    // Enable VPP right before setting the ZIF state
+    vpp_en();
+    
+    // Set PROG high before pulsing it low during erase
+    zif_write(erase_preclk);
+    __delay_ms(20);
+    
+    clock_write(erase_base, 48);
+    
+    // Erase function requires 10ms prog pulse... but let's do a trick.
+    for (unsigned long i = 0; i <= offset; i++) {
+        __delay_us(1);
+    }
+    
+    // We're done. Disable VPP and reset the ZIF state.
+    vpp_dis();
+    zif_write(zbits_null);
+    
+    // The client / user is expected to verify this with a read command
+    // or a blank check command (TODO)
+    printf("done.");
+}
+
+static void search_glitch()
+{
+    erase();
+
+    //if (!blank_check()) return;
+    com_println("");
+
+    printf("Flashing test pattern...");
+    com_println("");
+    for(unsigned int addr = 0; addr < 0xFF; addr++) {
+        write(addr, addr);
+        com_println("");
+    }
+    com_println("");
+
+    printf("Verifying test pattern... ");
+    unsigned char data = 0;
+    for (unsigned int addr = 0; addr < 0xFF; addr++) {
+        data = read_byte(addr);
+        if (data != addr) {
+            printf("FAILED at addr %03X : %03X",
+                    addr, data);
+            return;
+        }
+    }
+    printf("SUCCESS.");
+    com_println("");
+
+    lock(3);
+    com_println("");
+
+    // Interestingly, a delay is required here.
+    __delay_ms(10000);
+
+    printf("Testing lock state... ");
+    data = read_byte(1);
+    printf("%03X", data);
+    if (data == 0x01) {
+        com_println("");
+        printf("A known bug occured with enabling the PWM clock.");
+        printf(" Please power-reset the tl866 and try again.");
+        return;
+    }
+    com_println("");
+
+    printf("SUCCESS.");
+    com_println("");
+
+    printf("Starting glitch search...");
+    com_println("");
+
+    for(unsigned long offset = 1; offset < 0xffffffff; offset++) {
+        glitch(offset);
+        com_println("");
+        printf("Checking program memory...");
+        data = read_byte(0x05);
+        printf(" %02X", data);
+        com_println("");
+        if (data == 0x05) {
+            printf("Succeeded code protection bypass with offset %lu!", offset);
+            break;
+        }
+        if (data == 0xFF) {
+            printf("Erased without flipping security bits.");
+            break;
+        }
+        com_println("");
+        __delay_ms(400);
+    }
+
+}
+
 static bool sig_check()
 {
     if (read_sig(0) != 0x1E || read_sig(1) != 0x51 || read_sig(2) != 0xFF)
@@ -685,6 +831,33 @@ static inline void eval_command(unsigned char * cmd)
             
             blank_check();
             break;
+
+        case 'g':
+        {
+            if (!sig_check()) {
+                printf("Could not detect an AT89C51. Ignoring command.");
+                printf("Please make sure the target is inserted in the correct");
+                printf(" orientation.");
+                break;
+            }
+
+            unsigned long offset = atol(strtok(NULL, " "));
+            glitch(offset);
+            break;
+        }
+        case 'G':
+        {
+            if (!sig_check()) {
+                printf("Could not detect an AT89C51. Ignoring command.");
+                printf("Please make sure the target is inserted in the correct");
+                printf(" orientation.");
+                break;
+            }
+
+            unsigned long offset = atol(strtok(NULL, " "));
+            search_glitch();
+            break;
+        }
             
         case '?':
         case 'h':
