@@ -583,6 +583,7 @@ static void glitch(unsigned long offset)
      */
     
     printf("Glitching via erase function with offset %lu... ", offset);
+    unsigned long delay_cycles = 0;
     
     zif_bits_t dir = {  0,
                         0b00100000,   // Busy signal (14)
@@ -612,8 +613,12 @@ static void glitch(unsigned long offset)
     zif_bits_t erase_preclk;
     memcpy(erase_preclk, erase_base, 5);
     mask_prog(erase_preclk);
+
+    ///////////////////////////////////////////////////////////////////////////
     
     // Enable VPP right before setting the ZIF state
+    vdd_en();
+    zif_write(zbits_null);
     vpp_en();
     
     // Set PROG high before pulsing it low during erase
@@ -621,22 +626,24 @@ static void glitch(unsigned long offset)
     __delay_ms(20);
     
     clock_write(erase_base, 48);
-    
+
     // Erase function requires 10ms prog pulse... but let's do a trick.
-    for (unsigned long i = 0; i <= offset; i++) {
-        __delay_us(1);
+    for (; delay_cycles <= offset; delay_cycles++) {
     }
     
     // We're done. Disable VPP and reset the ZIF state.
     vpp_dis();
+    vdd_dis();
     zif_write(zbits_null);
+
+    ///////////////////////////////////////////////////////////////////////////
     
     // The client / user is expected to verify this with a read command
     // or a blank check command (TODO)
     printf("done.");
 }
 
-static void search_glitch()
+static void search_glitch(unsigned long start)
 {
     erase();
 
@@ -671,7 +678,7 @@ static void search_glitch()
     __delay_ms(10000);
 
     printf("Testing lock state... ");
-    data = read_byte(1);
+    data = read_byte(0x01);
     printf("%03X", data);
     if (data == 0x01) {
         com_println("");
@@ -687,14 +694,16 @@ static void search_glitch()
     printf("Starting glitch search...");
     com_println("");
 
-    for(unsigned long offset = 1; offset < 0xffffffff; offset++) {
+    for(unsigned long offset = start; offset < 0xffffffff; offset++) {
         glitch(offset);
         com_println("");
         printf("Checking program memory...");
-        data = read_byte(0x05);
+        vdd_en();
+        zif_write(zbits_null);
+        data = read_byte(0xF5);
         printf(" %02X", data);
         com_println("");
-        if (data == 0x05) {
+        if (data == 0xF5) {
             printf("Succeeded code protection bypass with offset %lu!", offset);
             break;
         }
@@ -703,7 +712,7 @@ static void search_glitch()
             break;
         }
         com_println("");
-        __delay_ms(400);
+        __delay_ms(1000);
     }
 
 }
@@ -843,6 +852,13 @@ static inline void eval_command(unsigned char * cmd)
 
             unsigned long offset = atol(strtok(NULL, " "));
             glitch(offset);
+            com_println("");
+
+            printf("Reseting Vdd... ");
+            vdd_en();
+            read_sig(0);
+            printf("done.");
+
             break;
         }
         case 'G':
@@ -854,11 +870,17 @@ static inline void eval_command(unsigned char * cmd)
                 break;
             }
 
-            unsigned long offset = atol(strtok(NULL, " "));
-            search_glitch();
+            unsigned long start = atol(strtok(NULL, " "));
+            search_glitch(start);
             break;
         }
-            
+        case 'R':
+            printf("Reseting Vdd... ");
+            vdd_dis();
+            vdd_en();
+            read_sig(0);
+            printf("done.");
+            break;
         case '?':
         case 'h':
             print_help();
