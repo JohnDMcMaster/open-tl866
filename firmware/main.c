@@ -14,6 +14,9 @@
 //#include "modes/glitch/glitch.h"
 //#include "modes/programmer/at89/at89.h"
 
+static zif_bits_t zbits_null = {0, 0, 0, 0, 0};
+static zif_bits_t zbits_ff = {0xff, 0xff, 0xff, 0xff, 0xff};
+
 static inline void init(void) {
         unsigned int pll_startup = 600;
     OSCTUNEbits.PLLEN = 1;
@@ -106,5 +109,17 @@ int main(void)
 
 void interrupt high_priority isr()
 {
+    if (INTCONbits.T0IF) {
+        T0CONbits.TMR0ON = 0;
+        INTCONbits.T0IF = 0;
+        //PORTE ^= 0x4;
+        set_vdd(zbits_null);
+        set_vpp(zbits_null);
+        zif_write(zbits_null);
+        vpp_dis();
+        vdd_dis();
+        set_gnd(zbits_ff);
+        return;
+    }
     usb_service();
 }

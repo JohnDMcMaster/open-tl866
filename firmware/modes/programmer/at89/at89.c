@@ -116,6 +116,22 @@ static inline void clock_write(zif_bits_t op, unsigned int cycles)
     }
 }
 
+static inline void clock_write_glitch(zif_bits_t op, unsigned int cycles, unsigned int vpp_off)
+{
+    zif_write(op);
+    for(unsigned int i = 0; i <= cycles; i++) {
+        __delay_us(1);
+        pin_flip_clock();
+        __delay_us(1);
+        pin_flip_clock();
+        if (i == vpp_off) {
+            vpp_dis();
+            zif_write(zbits_null);
+            break;
+        }
+    }
+}
+
 // Very slow, but useful for prototyping when other
 // pins need to be changed alongside the clock
 static inline void zif_clock_write(zif_bits_t op_template, zif_bits_t op_clk,
@@ -563,7 +579,7 @@ static unsigned char read_sig(unsigned int offset)
     return zif_to_data(response);
 }
 
-static void glitch(unsigned long offset)
+static void glitch(unsigned long offset, unsigned int cycles, unsigned int vpp_off, unsigned int timer)
 {
     /* 
      * AT89C51 erase Pinout:
@@ -582,7 +598,12 @@ static void glitch(unsigned long offset)
      * P3.7     <-      17          RE0                     // ctrl (low)
      */
     
-    printf("Glitching via erase function with offset %lu... ", offset);
+    if (vpp_off == 0) {
+        vpp_off = cycles + 1;
+    }
+    printf("Glitching via erase function with the following parameters:\r\n");
+    printf("  Cycles: %u\r\n  VPP cut cycle: %u\r\n  Offset: %lu\r\n", cycles, vpp_off, offset);
+    printf("  Timer: %u\r\n", timer);
     unsigned long delay_cycles = 0;
     
     zif_bits_t dir = {  0,
@@ -616,6 +637,30 @@ static void glitch(unsigned long offset)
 
     ///////////////////////////////////////////////////////////////////////////
     
+    ///////////////////
+    // Timer 0 Setup // See section 12.0 of datasheet
+    ///////////////////
+
+    T0CONbits.T08BIT = 0;
+    T0CONbits.T0CS   = 0;
+    //T0CONbits.T0SE   = 0;
+    T0CONbits.PSA    = 0;
+
+    T0CONbits.T0PS0  = 0;
+    T0CONbits.T0PS1  = 1;
+    T0CONbits.T0PS2  = 0;
+
+    //TMR0H = 0xFF;
+    TMR0 = 0xffff - timer;
+
+    // Set up interrupt. section 9.1 of ds
+    INTCONbits.TMR0IE = 1;
+    INTCONbits.TMR0IF = 0;
+    //INTCON2bits.TMR0IP = 1; // High priority TODO actually enable
+
+    // Start timer.
+    T0CONbits.TMR0ON = 1;
+
     // Enable VPP right before setting the ZIF state
     vdd_en();
     zif_write(zbits_null);
@@ -625,12 +670,11 @@ static void glitch(unsigned long offset)
     zif_write(erase_preclk);
     __delay_ms(20);
     
-    clock_write(erase_base, 48);
+    clock_write_glitch(erase_base, cycles, vpp_off);
 
-    // Erase function requires 10ms prog pulse... but let's do a trick.
-    for (; delay_cycles <= offset; delay_cycles++) {
-    }
-    
+    // Erase function requires 10ms prog pulse
+    __delay_ms(10);
+
     // We're done. Disable VPP and reset the ZIF state.
     vpp_dis();
     vdd_dis();
@@ -641,6 +685,16 @@ static void glitch(unsigned long offset)
     // The client / user is expected to verify this with a read command
     // or a blank check command (TODO)
     printf("done.");
+}
+
+void interrupt low_priority isr2() {
+    if (INTCONbits.TMR0IE && INTCONbits.T0IF) {
+        INTCONbits.T0IF = 0;
+        TMR0L = 0xFF;
+        PORTE ^= 0x4;
+        PORTE ^= 0x4;
+        printf("Interrupt recvd in handler.\r\n");
+    }
 }
 
 static void search_glitch(unsigned long start)
@@ -694,8 +748,11 @@ static void search_glitch(unsigned long start)
     printf("Starting glitch search...");
     com_println("");
 
-    for(unsigned long offset = start; offset < 0xffffffff; offset++) {
-        glitch(offset);
+    unsigned long offset = 0;
+    unsigned int cycles = 48;
+    unsigned int vpp_cut = 0;
+    for(unsigned int timer = start; timer < 0xffff; timer++) {
+        glitch(offset, cycles, vpp_cut, timer);
         com_println("");
         printf("Checking program memory...");
         vdd_en();
@@ -704,7 +761,7 @@ static void search_glitch(unsigned long start)
         printf(" %02X", data);
         com_println("");
         if (data == 0xF5) {
-            printf("Succeeded code protection bypass with offset %lu!", offset);
+            printf("Succeeded code protection bypass!");
             break;
         }
         if (data == 0xFF) {
@@ -844,15 +901,20 @@ static inline void eval_command(unsigned char * cmd)
         case 'g':
         {
             if (!sig_check()) {
-                printf("Could not detect an AT89C51. Ignoring command.");
+                printf("Could not detect an AT89C51. Ignoring command.\r\n");
                 printf("Please make sure the target is inserted in the correct");
                 printf(" orientation.");
                 break;
             }
 
             unsigned long offset = atol(strtok(NULL, " "));
-            glitch(offset);
+            unsigned int cycles  = atoi(strtok(NULL, " "));
+            unsigned int vpp_off  = atoi(strtok(NULL, " "));
+            unsigned int timer  = atoi(strtok(NULL, " "));
+            glitch(offset, cycles, vpp_off, timer);
             com_println("");
+
+            __delay_ms(1000);
 
             printf("Reseting Vdd... ");
             vdd_en();
@@ -863,8 +925,13 @@ static inline void eval_command(unsigned char * cmd)
         }
         case 'G':
         {
+            printf("Reseting Vdd... ");
+            vdd_en();
+            read_sig(0);
+            printf("done.\r\n");
+
             if (!sig_check()) {
-                printf("Could not detect an AT89C51. Ignoring command.");
+                printf("Could not detect an AT89C51. Ignoring command.\r\n");
                 printf("Please make sure the target is inserted in the correct");
                 printf(" orientation.");
                 break;
