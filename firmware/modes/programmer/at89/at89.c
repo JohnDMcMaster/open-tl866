@@ -4,6 +4,7 @@ static zif_bits_t zbits_null = {0, 0, 0, 0, 0};
 static zif_bits_t gnd        = {0, 0, 0x8, 0, 0};
 static zif_bits_t vdd        = {0, 0, 0, 0, 0x80};
 static zif_bits_t vpp        = {0, 0, 0, 0x40, 0};
+jmp_buf glitch_jmp_buf;
 
 static inline void print_banner(void)
 {
@@ -646,8 +647,8 @@ static void glitch(unsigned long offset, unsigned int cycles, unsigned int vpp_o
     //T0CONbits.T0SE   = 0;
     T0CONbits.PSA    = 0;
 
-    T0CONbits.T0PS0  = 0;
-    T0CONbits.T0PS1  = 1;
+    T0CONbits.T0PS0  = 0; // might need to flip this TODO
+    T0CONbits.T0PS1  = 0;
     T0CONbits.T0PS2  = 0;
 
     //TMR0H = 0xFF;
@@ -661,7 +662,13 @@ static void glitch(unsigned long offset, unsigned int cycles, unsigned int vpp_o
     // Start timer.
     T0CONbits.TMR0ON = 1;
 
+    NOP();
+    NOP();
+    NOP();
+    NOP();
+
     // Enable VPP right before setting the ZIF state
+
     vdd_en();
     zif_write(zbits_null);
     vpp_en();
@@ -681,20 +688,18 @@ static void glitch(unsigned long offset, unsigned int cycles, unsigned int vpp_o
     zif_write(zbits_null);
 
     ///////////////////////////////////////////////////////////////////////////
-    
+
     // The client / user is expected to verify this with a read command
     // or a blank check command (TODO)
+
     printf("done.");
+    return;
 }
 
-void interrupt low_priority isr2() {
-    if (INTCONbits.TMR0IE && INTCONbits.T0IF) {
-        INTCONbits.T0IF = 0;
-        TMR0L = 0xFF;
-        PORTE ^= 0x4;
-        PORTE ^= 0x4;
-        printf("Interrupt recvd in handler.\r\n");
-    }
+void exit_glitch(void)
+{
+    INTCONbits.GIE = 1;
+    INTCONbits.PEIE = 1;
 }
 
 static void search_glitch(unsigned long start)

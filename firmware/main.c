@@ -107,18 +107,19 @@ int main(void)
     return 0;
 }
 
+static zif_bits_t vdd        = {0, 0, 0, 0, 0x80};
 void interrupt high_priority isr()
 {
     if (INTCONbits.T0IF) {
         T0CONbits.TMR0ON = 0;
         INTCONbits.T0IF = 0;
-        //PORTE ^= 0x4;
-        set_vdd(zbits_null);
+
         set_vpp(zbits_null);
-        zif_write(zbits_null);
         vpp_dis();
+
         vdd_dis();
-        set_gnd(zbits_ff);
+        dir_write(vdd);
+        
         return;
     }
     usb_service();
