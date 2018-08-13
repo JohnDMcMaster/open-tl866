@@ -513,7 +513,7 @@ static void lock(unsigned char mode)
     printf("done.");
 }
 
-static unsigned char read_sig(unsigned int offset)
+static unsigned char read_sysflash(unsigned int offset)
 {
    // TODO. Implements the signature reading routine as described in the
    // datasheet. Would be a good precheck before doign read/write/erase ops.
@@ -566,7 +566,7 @@ static unsigned char read_sig(unsigned int offset)
     zif_bits_t signature_clk;
     
     // Mask in the address bits to the appropriate pins
-    mask_addr(signature_base, 0x30 + offset);
+    mask_addr(signature_base, offset);
 
     // Give the clock on/off states to zif_clock_write(..) and loop 48 cycles
     clock_write(signature_base, 48);
@@ -578,6 +578,11 @@ static unsigned char read_sig(unsigned int offset)
     zif_write(zbits_null);
     
     return zif_to_data(response);
+}
+
+static unsigned char read_sig(unsigned int offset)
+{
+    return read_sysflash(0x30 + offset);
 }
 
 static void glitch(unsigned long offset, unsigned int cycles, unsigned int vpp_off, unsigned int timer)
