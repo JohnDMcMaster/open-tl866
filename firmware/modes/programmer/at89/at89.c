@@ -14,7 +14,8 @@ static inline void print_banner(void)
 }
 static inline void print_help(void)
 {
-    com_println("\r\nCommands:\r\n  r <ADDR (hex)> [RANGE (hex)]\tRead from target");
+    com_println("\r\nCommands:\r\n");
+    com_println("  r <ADDR (hex)> [RANGE (hex)]\tRead from target");
     com_println("  w <ADDR (hex)> <BYTE (hex)>\tWrite to target");
     com_println("  e\t\t\t\tErase target");
     com_println("  l <MODE (int)>\t\tSet lock bits to MODE");
@@ -23,7 +24,9 @@ static inline void print_help(void)
     com_println("  T\t\t\t\tRun some tests");
     com_println("  G\t\t\t\tDo a glitch search. Will erase progmem!");
     com_println("  g <OFFSET>\t\t\tAttempt a glitch at OFFSET");
-    com_println("  h\t\t\t\tPrint help\r\n  V\t\t\t\tPrint version(s)");
+    com_println("  h\t\t\t\tPrint help");
+    com_println("  v\t\t\t\tReset VPP");
+    com_println("  V\t\t\t\tPrint version(s)");
 }
 
 static inline void print_version()
@@ -951,7 +954,7 @@ static inline void eval_command(unsigned char * cmd)
             search_glitch(start);
             break;
         }
-        case 'R':
+        case 'v':
             printf("Reseting Vdd... ");
             vdd_dis();
             vdd_en();
