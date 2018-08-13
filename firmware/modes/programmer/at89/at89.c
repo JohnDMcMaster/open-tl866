@@ -801,9 +801,14 @@ static void search_glitch(unsigned long start)
 
 static bool sig_check()
 {
-    if (read_sig(0) != 0x1E || read_sig(1) != 0x51 || read_sig(2) != 0xFF)
-        return false;
-    return true;
+    if (read_sig(0) == 0x1E && read_sig(1) == 0x51 && read_sig(2) == 0xFF) {
+        return true;
+    }
+
+    printf("Could not detect an AT89C51. Ignoring command.\r\n");
+    printf("Please make sure the target is inserted in the correct");
+    printf(" orientation.");
+    return false;
 }
 
 static bool blank_check()
@@ -855,7 +860,6 @@ static inline void eval_command(unsigned char * cmd)
         case 'r':
         {
             if (!sig_check()) {
-                printf("Could not detect an AT89C51. Ignoring command.");
                 break;
             }
             
@@ -868,7 +872,6 @@ static inline void eval_command(unsigned char * cmd)
         case 'w':
         {
             if (!sig_check()) {
-                printf("Could not detect an AT89C51. Ignoring command.");
                 break;
             }
             
@@ -881,7 +884,6 @@ static inline void eval_command(unsigned char * cmd)
         case 'R':
         {
             if (!sig_check()) {
-                printf("Could not detect an AT89C51. Ignoring command.");
                 break;
             }
             
@@ -894,7 +896,6 @@ static inline void eval_command(unsigned char * cmd)
         case 'l':
         {
             if (!sig_check()) {
-                printf("Could not detect an AT89C51. Ignoring command.");
                 break;
             }
             
@@ -905,7 +906,6 @@ static inline void eval_command(unsigned char * cmd)
             
         case 'e':
             if (!sig_check()) {
-                printf("Could not detect an AT89C51. Ignoring command.");
                 break;
             }
             
@@ -920,7 +920,6 @@ static inline void eval_command(unsigned char * cmd)
             
         case 'T':
             if (!sig_check()) {
-                printf("Could not detect an AT89C51. Ignoring command.");
                 break;
             }
             
@@ -929,7 +928,6 @@ static inline void eval_command(unsigned char * cmd)
             
         case 'b':
             if (!sig_check()) {
-                printf("Could not detect an AT89C51. Ignoring command.");
                 break;
             }
             
@@ -939,9 +937,6 @@ static inline void eval_command(unsigned char * cmd)
         case 'g':
         {
             if (!sig_check()) {
-                printf("Could not detect an AT89C51. Ignoring command.\r\n");
-                printf("Please make sure the target is inserted in the correct");
-                printf(" orientation.");
                 break;
             }
 
@@ -969,9 +964,6 @@ static inline void eval_command(unsigned char * cmd)
             printf("done.\r\n");
 
             if (!sig_check()) {
-                printf("Could not detect an AT89C51. Ignoring command.\r\n");
-                printf("Please make sure the target is inserted in the correct");
-                printf(" orientation.");
                 break;
             }
 
