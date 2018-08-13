@@ -17,6 +17,7 @@ static inline void print_help(void)
     com_println("\r\nCommands:\r\n");
     com_println("  r <ADDR (hex)> [RANGE (hex)]\tRead from target");
     com_println("  w <ADDR (hex)> <BYTE (hex)>\tWrite to target");
+    com_println("  R <ADDR (hex)> [RANGE (hex)]\tRead sysflash from target");
     com_println("  e\t\t\t\tErase target");
     com_println("  l <MODE (int)>\t\tSet lock bits to MODE");
     com_println("  s\t\t\t\tPrint signature bytes");
@@ -588,6 +589,17 @@ static unsigned char read_sig(unsigned int offset)
     return read_sysflash(0x30 + offset);
 }
 
+static void print_sysflash(unsigned int addr, unsigned int range)
+{    
+    printf("%03X ", addr);
+
+    
+    if (!range) { range = 1; } else {com_println("");}
+    for (unsigned int byte_idx = 0; byte_idx < range; byte_idx++) {
+        printf("%02X ", read_sysflash(addr + byte_idx));
+    }
+}
+
 static void glitch(unsigned long offset, unsigned int cycles, unsigned int vpp_off, unsigned int timer)
 {
     /* 
@@ -865,7 +877,20 @@ static inline void eval_command(unsigned char * cmd)
             write(addr, data);
             break;
         }
-        
+
+        case 'R':
+        {
+            if (!sig_check()) {
+                printf("Could not detect an AT89C51. Ignoring command.");
+                break;
+            }
+            
+            unsigned int addr  = xtoi(strtok(NULL, " "));
+            unsigned int range = xtoi(strtok(NULL, " "));
+            print_sysflash(addr, range);
+            break;
+        }
+
         case 'l':
         {
             if (!sig_check()) {
