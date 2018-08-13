@@ -23,7 +23,7 @@ static inline void print_help(void)
     com_println("  T\t\t\t\tRun some tests");
     com_println("  G\t\t\t\tDo a glitch search. Will erase progmem!");
     com_println("  g <OFFSET>\t\t\tAttempt a glitch at OFFSET");
-    com_println("  h\t\t\t\tPrint help\r\n  v\t\t\t\tPrint version(s)");
+    com_println("  h\t\t\t\tPrint help\r\n  V\t\t\t\tPrint version(s)");
 }
 
 static inline void print_version()
