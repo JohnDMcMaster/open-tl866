@@ -25,6 +25,7 @@ static cmd_map_t valid_cmds[] = {
     { "pe", VPP_ENABLE },
     { "ps", VPP_SET },
     { "pw", VPP_WRITE },
+    { "rb", RESET_BOOTLOADER },
     { "zd", ZIF_DIR },
     { "ze", ZIF_DIR_READ },
     { "zr", ZIF_READ },

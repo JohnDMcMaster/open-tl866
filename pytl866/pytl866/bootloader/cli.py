@@ -1,6 +1,8 @@
 import sys
+import time
 from intelhex import IntelHex
 
+from pytl866.driver import Tl866Driver
 from pytl866.bootloader import driver, firmware
 
 
@@ -50,6 +52,18 @@ def cmd_identify(args):
 
 
 def cmd_update(args):
+    if args.reset_tty:
+        sys.stdout.write("resetting to bootloader via serial\n")
+        serial = Tl866Driver(args.reset_tty)
+        serial.cmd_reset_to_bootloader()
+
+        # wait for the device to show up
+        devs = None
+        stop_time = time.time() + 5  # timeout 5s
+        while not devs and time.time() < stop_time:
+            time.sleep(0.100)
+            devs = driver.list_devices()
+
     dev = find_dev()
 
     report = dev.report()
@@ -150,6 +164,11 @@ def build_argparse(parent):
     update.add_argument(
         '--keys-from',
         help="Load keys from a (different) update.dat file.",
+    )
+
+    update.add_argument(
+        '--reset-tty',
+        help="Reset open firmware to bootloader via serial port.",
     )
 
     update.add_argument(
