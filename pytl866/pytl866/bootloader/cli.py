@@ -16,7 +16,7 @@ def find_dev():
         sys.exit(1)
 
     else:
-        return devs[0]
+        return driver.BootloaderDriver(devs[0])
 
 
 def cmd_identify(args):
@@ -113,6 +113,8 @@ def cmd_update(args):
     for off in range(0, len(cryptbuf), 80):
         dev.write(addr, 80, cryptbuf[off:off+80])
         addr += 64
+
+    sys.stdout.write("success!\n")
 
     report = dev.report()
     if report.status != dev.STATUS_NORMAL:
