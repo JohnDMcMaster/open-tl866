@@ -66,56 +66,6 @@ void stock_load_serial_block()
 
 
 
-#define CMD_REPORT  0x00
-#define CMD_RESET   0xFF
-
-#define STATUS_NORMAL      1
-#define STATUS_BOOTLOADER  2
-
-#define MODEL_TL866A   1
-#define MODEL_TL866CS  2
-
-struct report_t {
-    uint8_t echo;
-    uint8_t status;
-    uint16_t report_size;
-    uint8_t version_minor;
-    uint8_t version_major;
-    uint8_t model;
-    uint8_t device_code[8];
-    uint8_t serial_number[24];
-    uint8_t version_hardware;
-};
-
-static void send_report()
-{
-    struct report_t *report;
-    int idx;
-
-    report = (struct report_t *) usb_get_in_buffer(STOCK_ENDPOINT);
-
-    report->echo = CMD_REPORT;
-    report->status = STATUS_NORMAL;
-    report->report_size = sizeof(*report);
-
-    // FIXME: figure out how to detect the model properly
-    report->model = MODEL_TL866CS;
-
-    report->version_hardware = 255;
-    report->version_major = 1;
-    report->version_minor = 0;
-
-    for (idx = 0; idx < 8; idx++) {
-        report->device_code[idx] = serial_block.dev_code[idx];
-    }
-
-    for (idx = 0; idx < 24; idx++) {
-        report->serial_number[idx] = serial_block.serial.chars[idx];
-    }
-
-    usb_send_in_buffer(STOCK_ENDPOINT, sizeof(*report));
-}
-
 void stock_disable_usb()
 {
     uint8_t cycles;
@@ -142,25 +92,4 @@ void stock_reset_to_bootloader()
     // set the bootloader signature and reboot
     *((uint32_t*)0x0700) = 0x55AA55AA;
     RESET();
-}
-
-
-void stock_handle_out_txn()
-{
-    const char *buffer;
-    uint8_t size;
-
-    size = usb_get_out_buffer(STOCK_ENDPOINT, &buffer);
-
-    switch (buffer[0]) {
-    case CMD_REPORT:
-        send_report();
-        break;
-
-    case CMD_RESET:
-        stock_reset_to_bootloader();
-        break;
-    }
-
-    usb_arm_out_endpoint(STOCK_ENDPOINT);
 }

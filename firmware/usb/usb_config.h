@@ -28,30 +28,18 @@
    BOTH IN and OUT endpoints for endpoint numbers (besides zero) up to the
    value specified.  For example, setting NUM_ENDPOINT_NUMBERS to 2 will
    activate endpoints EP 1 IN, EP 1 OUT, EP 2 IN, EP 2 OUT.  */
-#define NUM_ENDPOINT_NUMBERS 3
-
+#define NUM_ENDPOINT_NUMBERS 2
 
 /* Only 8, 16, 32 and 64 are supported for endpoint zero length. */
 #define EP_0_LEN 8
 
-
-/* Stock Compatibility Interface */
-#define EP_1_OUT_LEN 64
-#define EP_1_IN_LEN  64
-
-
-/* ACM Notification Interface */
-#define EP_2_OUT_LEN 1
-#define EP_2_IN_LEN 10 /* May need to be longer, depending
+#define EP_1_OUT_LEN 1
+#define EP_1_IN_LEN 10 /* May need to be longer, depending
                         * on the notifications you support. */
-
-/* ACM Data Interface */
-/* The code in the demo app assumes that EP3 IN and OUT are the same length */
-#define EP_3_LEN 64
-#define EP_3_OUT_LEN EP_3_LEN
-#define EP_3_IN_LEN EP_3_LEN
-
-
+ /* The code in the demo app assumes that EP2 IN and OUT are the same length */
+#define EP_2_LEN 64
+#define EP_2_OUT_LEN EP_2_LEN
+#define EP_2_IN_LEN EP_2_LEN
 
 #define NUMBER_OF_CONFIGURATIONS 1
 
@@ -79,7 +67,7 @@
  * (such as HID+HID). Device class implementations have additional requirements
  * for multi-class devices. See the documentation for each device class for
  * details. */
-#define MULTI_CLASS_DEVICE
+//#define MULTI_CLASS_DEVICE
 
 
 /* Objects from usb_descriptors.c */
@@ -93,11 +81,6 @@
 // Actually these are required for CDC on windows. -- cnomad
 #define UNKNOWN_SETUP_REQUEST_CALLBACK app_unknown_setup_request_callback
 #define UNKNOWN_GET_DESCRIPTOR_CALLBACK app_unknown_get_descriptor_callback
-
-
-/* Handler for non-CDC out transactions. */
-#define OUT_TRANSACTION_CALLBACK app_out_txn_callback
-
 
 /* CDC Configuration functions. See usb_cdc.h for documentation. */
 #define CDC_SEND_ENCAPSULATED_COMMAND_CALLBACK app_send_encapsulated_command

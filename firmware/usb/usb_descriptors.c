@@ -56,13 +56,7 @@
  */
 struct configuration_1_packet {
 	struct configuration_descriptor  config;
-
-	/* Stock Compatibility Interface */
-	struct interface_descriptor      stock_interface;
-	struct endpoint_descriptor       stock_ep_out;
-	struct endpoint_descriptor       stock_ep_in;
-
-	struct interface_association_descriptor cdc_iad;
+	struct interface_association_descriptor iad;
 
 	/* CDC Class Interface */
 	struct interface_descriptor      cdc_class_interface;
@@ -96,9 +90,10 @@ const ROMPTR struct device_descriptor this_device_descriptor =
 	         Association Descriptor Device Class Code and Use Model" */
 	0x01, // Protocol. See document referenced above.
 	EP_0_LEN, // bMaxPacketSize0
-	0x04D8, // Vendor
-	0xE11C, // Product
-	0x0000, // device release (1.0)
+	// allocated by pid.codes: see http://pid.codes/org/ProgHQ/
+	0x1209, // Vendor
+	0x8661, // Product
+	0x0000, // device release
 	1, // Manufacturer
 	2, // Product
 	3, // Serial
@@ -120,72 +115,36 @@ static const ROMPTR struct configuration_1_packet configuration_1 =
 	sizeof(struct configuration_descriptor),
 	DESC_CONFIGURATION,
 	sizeof(configuration_1), // wTotalLength (length of the whole packet)
-	3, // bNumInterfaces
+	2, // bNumInterfaces
 	1, // bConfigurationValue
 	0, // iConfiguration (index of string descriptor)
 	0b10000000,
 	100/2,   // 100/2 indicates 100mA
 	},
 
-
-	/* Stock Compatibility Interface */
-	{
-	sizeof(struct interface_descriptor), // bLength
-	DESC_INTERFACE,
-	0, // InterfaceNumber
-	0, // AlternateSetting
-	2, // bNumEndpoints
-	0, // bInterfaceClass
-	0, // bInterfaceSubClass
-	0, // bInterfaceProtocol
-	4, // iInterface
-	},
-
-	/* Stock Compat Write (Endpoint 1 OUT) */
-	{
-	sizeof(struct endpoint_descriptor),
-	DESC_ENDPOINT,
-	0x01 | 0x00, // endpoint #1 0x00=OUT
-	EP_BULK, // bmAttributes
-	EP_1_OUT_LEN, // wMaxPacketSize
-	1, // bInterval in ms.
-	},
-
-	/* Stock Compat Read (Endpoint 1 IN) */
-	{
-	sizeof(struct endpoint_descriptor),
-	DESC_ENDPOINT,
-	0x01 | 0x80, // endpoint #1 0x80=IN
-	EP_BULK, // bmAttributes
-	EP_1_IN_LEN, // wMaxPacketSize
-	1, // bInterval in ms.
-	},
-
-
-
 	/* Interface Association Descriptor */
 	{
 	sizeof(struct interface_association_descriptor),
 	DESC_INTERFACE_ASSOCIATION,
-	1, /* bFirstInterface */
+	0, /* bFirstInterface */
 	2, /* bInterfaceCount */
 	CDC_COMMUNICATION_INTERFACE_CLASS,
 	CDC_COMMUNICATION_INTERFACE_CLASS_ACM_SUBCLASS,
 	0, /* bFunctionProtocol */
-	5, /* iFunction (string descriptor index) */
+	4, /* iFunction (string descriptor index) */
 	},
 
 	/* CDC Class Interface */
 	{
 	sizeof(struct interface_descriptor), // bLength;
 	DESC_INTERFACE,
-	0x1, // InterfaceNumber
+	0x0, // InterfaceNumber
 	0x0, // AlternateSetting
 	0x1, // bNumEndpoints
 	CDC_COMMUNICATION_INTERFACE_CLASS, // bInterfaceClass
 	CDC_COMMUNICATION_INTERFACE_CLASS_ACM_SUBCLASS, // bInterfaceSubclass
 	0x00, // bInterfaceProtocol
-	5, // iInterface
+	4, // iInterface
 	},
 
 	/* CDC Functional Descriptor Header */
@@ -211,17 +170,17 @@ static const ROMPTR struct configuration_1_packet configuration_1 =
 	sizeof (struct cdc_union_functional_descriptor),
 	DESC_CS_INTERFACE,
 	CDC_FUNCTIONAL_DESCRIPTOR_SUBTYPE_UNION,
-	1, /* bMasterInterface */
-	2, /* bSlaveInterface0 */
+	0, /* bMasterInterface */
+	1, /* bSlaveInterface0 */
 	},
 
-	/* CDC ACM Notification Endpoint (Endpoint 2 IN) */
+	/* CDC ACM Notification Endpoint (Endpoint 1 IN) */
 	{
 	sizeof(struct endpoint_descriptor),
 	DESC_ENDPOINT,
-	0x02 | 0x80, // endpoint #2 0x80=IN
+	0x01 | 0x80, // endpoint #1 0x80=IN
 	EP_INTERRUPT, // bmAttributes
-	EP_2_IN_LEN, // wMaxPacketSize
+	EP_1_IN_LEN, // wMaxPacketSize
 	1, // bInterval in ms.
 	},
 
@@ -229,37 +188,35 @@ static const ROMPTR struct configuration_1_packet configuration_1 =
 	{
 	sizeof(struct interface_descriptor), // bLength;
 	DESC_INTERFACE,
-	0x2, // InterfaceNumber
+	0x1, // InterfaceNumber
 	0x0, // AlternateSetting
 	0x2, // bNumEndpoints
 	CDC_DATA_INTERFACE_CLASS, // bInterfaceClass
 	0, // bInterfaceSubclass (no subclass)
 	CDC_DATA_INTERFACE_CLASS_PROTOCOL_NONE, // bInterfaceProtocol
-	5, // iInterface
+	4, // iInterface
 	},
 
-	/* CDC Data IN Endpoint (Endpoint 3 IN) */
+	/* CDC Data IN Endpoint (Endpoint 2 IN) */
 	{
 	sizeof(struct endpoint_descriptor),
 	DESC_ENDPOINT,
-	0x03 | 0x80, // endpoint #3 0x80=IN
+	0x02 | 0x80, // endpoint #2 0x80=IN
 	EP_BULK, // bmAttributes
-	EP_3_IN_LEN, // wMaxPacketSize
+	EP_2_IN_LEN, // wMaxPacketSize
 	1, // bInterval in ms.
 	},
 
-	/* CDC Data OUT Endpoint (Endpoint 3 OUT) */
+	/* CDC Data OUT Endpoint (Endpoint 2 OUT) */
 	{
 	sizeof(struct endpoint_descriptor),
 	DESC_ENDPOINT,
-	0x03 /*| 0x00*/, // endpoint #3 0x00=OUT
+	0x02 /*| 0x00*/, // endpoint #2 0x00=OUT
 	EP_BULK, // bmAttributes
-	EP_3_OUT_LEN, // wMaxPacketSize
+	EP_2_OUT_LEN, // wMaxPacketSize
 	1, // bInterval in ms.
 	},
 };
-
-
 
 /* String Descriptors
  *
@@ -279,24 +236,16 @@ static const ROMPTR struct {uint8_t bLength;uint8_t bDescriptorType; uint16_t la
 	0x0409 // US English
 };
 
-static const ROMPTR struct {uint8_t bLength;uint8_t bDescriptorType; uint16_t chars[15]; } vendor_string = {
+static const ROMPTR struct {uint8_t bLength;uint8_t bDescriptorType; uint16_t chars[6]; } vendor_string = {
 	sizeof(vendor_string),
 	DESC_STRING,
-	{'a','u','t','o','e','l','e','c','t','r','i','c','.','c','n'}
+	{'P','r','o','g','H','Q'}
 };
 
-static const ROMPTR struct {uint8_t bLength;uint8_t bDescriptorType; uint16_t chars[37]; } product_string = {
+static const ROMPTR struct {uint8_t bLength;uint8_t bDescriptorType; uint16_t chars[21]; } product_string = {
 	sizeof(product_string),
 	DESC_STRING,
-	{'M','i','n','i','P','r','o',' ','T','L','8','6','6',' ','P','r','o','g','r','a','m','m','e','r',
-	 ' ','[','O','p','e','n','-','T','L','8','6','6',']'
-	}
-};
-
-static const ROMPTR struct {uint8_t bLength;uint8_t bDescriptorType; uint16_t chars[17]; } stock_interface_string = {
-	sizeof(stock_interface_string),
-	DESC_STRING,
-	{'B','o','o','t','l','o','a','d','e','r',' ','C','o','m','p','a','t'}
+	{'O','p','e','n','-','T','L','8','6','6',' ','P','r','o','g','r','a','m','m','e','r'}
 };
 
 static const ROMPTR struct {uint8_t bLength;uint8_t bDescriptorType; uint16_t chars[17]; } cdc_interface_string = {
@@ -333,9 +282,6 @@ int16_t usb_application_get_string(uint8_t string_number, const void **ptr)
 		*ptr = &serial_block.serial;
 		return sizeof(serial_block.serial);
 	case 4:
-		*ptr = &stock_interface_string;
-		return sizeof(stock_interface_string);
-	case 5:
 		*ptr = &cdc_interface_string;
 		return sizeof(cdc_interface_string);
 	default:

@@ -5,7 +5,7 @@
 #include <string.h>
 #include "usb.h"
 
-#define COM_ENDPOINT 3
+#define COM_ENDPOINT 2
 
 static inline void send_string_sync(uint8_t endpoint, const char *str);
 static inline bool usb_ready();

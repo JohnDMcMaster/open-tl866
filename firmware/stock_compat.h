@@ -17,8 +17,6 @@ extern struct serial_block_t {
 
 void stock_load_serial_block();
 
-void stock_handle_out_txn();
-
 void stock_disable_usb();
 void stock_reset_to_bootloader();
 

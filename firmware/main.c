@@ -4,7 +4,6 @@
  */
 
 #include "usb.h"
-#include "usb_cdc.h"
 #include "usb/usb_callbacks.c"
 
 #include <xc.h>
@@ -14,12 +13,6 @@
 #include "modes/bitbang/bitbang.h"
 //#include "modes/glitch/glitch.h"
 //#include "modes/programmer/at89/at89.h"
-
-
-// this is missing from "usb_cdc.h"
-void cdc_set_interface_list(uint8_t *interfaces, uint8_t num_interfaces);
-
-static uint8_t cdc_interfaces[] = { 1, 2 };
 
 static inline void init(void) {
         unsigned int pll_startup = 600;
@@ -93,8 +86,6 @@ static inline void init(void) {
 
     stock_load_serial_block();
     stock_disable_usb();
-
-    cdc_set_interface_list(cdc_interfaces, sizeof(cdc_interfaces));
     usb_init();
 
     PORTCbits.RC0 = 1;

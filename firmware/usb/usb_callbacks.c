@@ -3,15 +3,6 @@
 #include "usb_cdc.h"
 #include "usb_config.h"
 
-#include "../stock_compat.h"
-
-void app_out_txn_callback(uint8_t endpoint)
-{
-    if (endpoint == STOCK_ENDPOINT) {
-        stock_handle_out_txn();
-    }
-}
-
 int8_t app_send_encapsulated_command(uint8_t interface, uint16_t length)
 {
     return -1;
