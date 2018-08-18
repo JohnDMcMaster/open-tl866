@@ -94,6 +94,11 @@ class Tl866Driver():
     def cmd_zif_write(self, val):
         return self.mk_and_send_cmd("zw", val)
 
+    def cmd_reset_to_bootloader(self):
+        cmd = self.mk_cmd("rb", 0)
+        self.handle.write(cmd)
+        self.handle.close()
+
 
 class DriverError(Exception):
     def __init__(self, str, message):

@@ -9,6 +9,7 @@
 #include <xc.h>
 #include <string.h>
 
+#include "stock_compat.h"
 #include "modes/bitbang/bitbang.h"
 //#include "modes/glitch/glitch.h"
 //#include "modes/programmer/at89/at89.h"
@@ -83,6 +84,8 @@ static inline void init(void) {
     OE_VPP = 0;
     OE_VDD = 0;
 
+    stock_load_serial_block();
+    stock_disable_usb();
     usb_init();
 
     PORTCbits.RC0 = 1;

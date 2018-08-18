@@ -11,5 +11,14 @@ setup(
     author_email="thor0505@comcast.net",
     license="BSD",
     packages=["pytl866"],
-    install_requires=["pyserial"]
+    install_requires=[
+        "intelhex",
+        "pyserial",
+        "pyusb",
+    ],
+    entry_points={
+        'console_scripts': [
+            "tl866=pytl866.cli:main",
+        ],
+    },
 )

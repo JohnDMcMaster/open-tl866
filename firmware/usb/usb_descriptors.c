@@ -23,6 +23,8 @@
 #include "usb_ch9.h"
 #include "usb_cdc.h"
 
+#include "../stock_compat.h"
+
 #ifdef __C18
 #define ROMPTR rom
 #else
@@ -51,9 +53,6 @@
  * It's worth noting that adding endpoints here does not automatically
  * enable them in the USB stack.  To use an endpoint, it must be declared
  * here and also in usb_config.h.
- *
- * The configuration packet below is for the mouse demo application.
- * Yours will of course vary.
  */
 struct configuration_1_packet {
 	struct configuration_descriptor  config;
@@ -91,12 +90,13 @@ const ROMPTR struct device_descriptor this_device_descriptor =
 	         Association Descriptor Device Class Code and Use Model" */
 	0x01, // Protocol. See document referenced above.
 	EP_0_LEN, // bMaxPacketSize0
+	// allocated by pid.codes: see http://pid.codes/org/ProgHQ/
 	0x1209, // Vendor
 	0x8661, // Product
-	0x0001, // device release (1.0)
+	0x0000, // device release
 	1, // Manufacturer
 	2, // Product
-	5, // Serial
+	3, // Serial
 	NUMBER_OF_CONFIGURATIONS // NumConfigurations
 };
 
@@ -112,13 +112,12 @@ const ROMPTR struct device_descriptor this_device_descriptor =
 static const ROMPTR struct configuration_1_packet configuration_1 =
 {
 	{
-	// Members from struct configuration_descriptor
 	sizeof(struct configuration_descriptor),
 	DESC_CONFIGURATION,
 	sizeof(configuration_1), // wTotalLength (length of the whole packet)
 	2, // bNumInterfaces
 	1, // bConfigurationValue
-	2, // iConfiguration (index of string descriptor)
+	0, // iConfiguration (index of string descriptor)
 	0b10000000,
 	100/2,   // 100/2 indicates 100mA
 	},
@@ -132,12 +131,11 @@ static const ROMPTR struct configuration_1_packet configuration_1 =
 	CDC_COMMUNICATION_INTERFACE_CLASS,
 	CDC_COMMUNICATION_INTERFACE_CLASS_ACM_SUBCLASS,
 	0, /* bFunctionProtocol */
-	2, /* iFunction (string descriptor index) */
+	4, /* iFunction (string descriptor index) */
 	},
 
 	/* CDC Class Interface */
 	{
-	// Members from struct interface_descriptor
 	sizeof(struct interface_descriptor), // bLength;
 	DESC_INTERFACE,
 	0x0, // InterfaceNumber
@@ -146,7 +144,7 @@ static const ROMPTR struct configuration_1_packet configuration_1 =
 	CDC_COMMUNICATION_INTERFACE_CLASS, // bInterfaceClass
 	CDC_COMMUNICATION_INTERFACE_CLASS_ACM_SUBCLASS, // bInterfaceSubclass
 	0x00, // bInterfaceProtocol
-	0x03, // iInterface (index of string describing interface)
+	4, // iInterface
 	},
 
 	/* CDC Functional Descriptor Header */
@@ -188,7 +186,6 @@ static const ROMPTR struct configuration_1_packet configuration_1 =
 
 	/* CDC Data Interface */
 	{
-	// Members from struct interface_descriptor
 	sizeof(struct interface_descriptor), // bLength;
 	DESC_INTERFACE,
 	0x1, // InterfaceNumber
@@ -197,10 +194,10 @@ static const ROMPTR struct configuration_1_packet configuration_1 =
 	CDC_DATA_INTERFACE_CLASS, // bInterfaceClass
 	0, // bInterfaceSubclass (no subclass)
 	CDC_DATA_INTERFACE_CLASS_PROTOCOL_NONE, // bInterfaceProtocol
-	0x04, // iInterface (index of string describing interface)
+	4, // iInterface
 	},
 
-	/* CDC Data IN Endpoint */
+	/* CDC Data IN Endpoint (Endpoint 2 IN) */
 	{
 	sizeof(struct endpoint_descriptor),
 	DESC_ENDPOINT,
@@ -210,7 +207,7 @@ static const ROMPTR struct configuration_1_packet configuration_1 =
 	1, // bInterval in ms.
 	},
 
-	/* CDC Data OUT Endpoint */
+	/* CDC Data OUT Endpoint (Endpoint 2 OUT) */
 	{
 	sizeof(struct endpoint_descriptor),
 	DESC_ENDPOINT,
@@ -239,39 +236,24 @@ static const ROMPTR struct {uint8_t bLength;uint8_t bDescriptorType; uint16_t la
 	0x0409 // US English
 };
 
-static const ROMPTR struct {uint8_t bLength;uint8_t bDescriptorType; uint16_t chars[23]; } vendor_string = {
+static const ROMPTR struct {uint8_t bLength;uint8_t bDescriptorType; uint16_t chars[6]; } vendor_string = {
 	sizeof(vendor_string),
 	DESC_STRING,
-	{'S','i','g','n','a','l',' ','1','1',' ','S','o','f','t','w','a','r','e',' ','L','L','C','.'}
+	{'P','r','o','g','H','Q'}
 };
 
-static const ROMPTR struct {uint8_t bLength;uint8_t bDescriptorType; uint16_t chars[12]; } product_string = {
+static const ROMPTR struct {uint8_t bLength;uint8_t bDescriptorType; uint16_t chars[21]; } product_string = {
 	sizeof(product_string),
 	DESC_STRING,
-	{'U','S','B',' ','C','D','C',' ','T','e','s','t',}
+	{'O','p','e','n','-','T','L','8','6','6',' ','P','r','o','g','r','a','m','m','e','r'}
 };
 
-static const ROMPTR struct {uint8_t bLength;uint8_t bDescriptorType; uint16_t chars[13]; } cdc_interface_string = {
+static const ROMPTR struct {uint8_t bLength;uint8_t bDescriptorType; uint16_t chars[17]; } cdc_interface_string = {
 	sizeof(cdc_interface_string),
 	DESC_STRING,
-	{'C','D','C',' ','I','n','t','e','r','f','a','c','e'}
+	{'O','p','e','n','-','T','L','8','6','6',' ','S','e','r','i','a','l'}
 };
 
-static const ROMPTR struct {uint8_t bLength;uint8_t bDescriptorType; uint16_t chars[18]; } cdc_data_string = {
-	sizeof(cdc_data_string),
-	DESC_STRING,
-	{'C','D','C',' ','D','a','t','a',' ','I','n','t','e','r','f','a','c','e'}
-};
-
-static const ROMPTR struct {uint8_t bLength;uint8_t bDescriptorType; uint16_t chars[59]; } fake_serial_num = {
-	sizeof(fake_serial_num),
-	DESC_STRING,
-	{'F','A','K','E',' ','S','e','r','i','a','l',' ',
-	 'N','u','m','b','e','r',':',' ',
-	 'D','o','n','\'','t',' ','s','h','i','p',' ','a',' ',
-	 'p','r','o','d','u','c','t',' ','l','i','k','e',' ',
-	 't','h','i','s','.',' ','P','L','E','A','S','E','!', }
-};
 
 
 /* Get String function
@@ -286,40 +268,25 @@ static const ROMPTR struct {uint8_t bLength;uint8_t bDescriptorType; uint16_t ch
  */
 int16_t usb_application_get_string(uint8_t string_number, const void **ptr)
 {
-	if (string_number == 0) {
+	switch (string_number) {
+	case 0:
 		*ptr = &str00;
 		return sizeof(str00);
-	}
-	else if (string_number == 1) {
+	case 1:
 		*ptr = &vendor_string;
 		return sizeof(vendor_string);
-	}
-	else if (string_number == 2) {
+	case 2:
 		*ptr = &product_string;
 		return sizeof(product_string);
-	}
-	else if (string_number == 3) {
+	case 3:
+		*ptr = &serial_block.serial;
+		return sizeof(serial_block.serial);
+	case 4:
 		*ptr = &cdc_interface_string;
 		return sizeof(cdc_interface_string);
+	default:
+		return -1;
 	}
-	else if (string_number == 4) {
-		*ptr = &cdc_data_string;
-		return sizeof(cdc_data_string);
-	}
-	else if (string_number == 5) {
-		/* This is where you will have code to do something like read
-		 * a serial number out of EEPROM and return it. For CDC
-		 * devices, this is a MUST.
-		 *
-		 * However, since this is a demo, we will return a fake,
-		 * hard-coded serial number here. PLEASE don't ship products
-		 * like this. If you do, your customers will be mad as soon
-		 * as they plug two of your devices in at the same time. */
-		*ptr = &fake_serial_num;
-		return sizeof(fake_serial_num);
-	}
-
-	return -1;
 }
 
 /* Configuration Descriptor List

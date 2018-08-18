@@ -4,6 +4,7 @@
  */
 
 #include "bitbang.h"
+#include "../stock_compat.h"
 
 static inline void handle_command(parse_result_t *res) {
     switch(res->cmd)
@@ -109,6 +110,10 @@ static inline void handle_command(parse_result_t *res) {
         case MYSTERY_OFF:
             MYSTERY = 0;
             com_print("Ok 0\r\n");
+            break;
+
+        case RESET_BOOTLOADER:
+            stock_reset_to_bootloader();
             break;
 
         case INVALID:

@@ -1,9 +1,7 @@
 # Open-TL866
 Open-TL866 is open-source firmware for the TL866-series of chip programmers.
 This firmware replaces the proprietary firmware for programming EPROMs, MCUs, GALs, etc.
-**Caution: This is alpha software.
-Currently using this software as-is will irreversibly remove the proprietary bootloader and the encrypted tables required to decrypt the proprietary firmware sent to the bootloader.
-Use at your own risk.**
+**Caution: This is alpha software. Use at your own risk.**
 
 ## Prerequisites
 1. The `open-tl866` firmware requires the `XC8` compiler from Microchip and the `MPLAB X` IDE to generate build system files.
@@ -25,16 +23,85 @@ Your output will be available under `dist/default/production/firmware.production
 The [correct files](http://microchipdeveloper.com/faq:72) are already under version control.
 
 ## Programming
-Unlike w/ the proprietary firmware, there is currently no bootloader for the open firmware.
-Therefore, we need to upload the firmware directly to the `PIC18F87J50` on the TL866 directly using In-Circuit Serial Protocol (ICSP).
-Unfortunately, this means you need an existing ICSP programmer _at this time_, such as another TL866 to program this firmware.
-**As mentioned previously, uploading the open firmware is irreversible. Follow these instructions at your own peril.**
 
-1. Open your TL866, and search for 6 vias in a row labeled J1.
-This is the ICSP header.
-2. The via enclosed in a silkscreen square of `J1` is Pin 1.
-Attach your ICSP programmer to `J1`, soldering a header if necessary, and run your programmer's provided software to upload the `firmware.production.hex` file generated previously.
+The Python client library provides a command-line client for the stock
+bootloader which can be used to flash any firmware to the TL866.
+To install the CLI tool, run:
+
+```python pytl866/setup.py install```
+
+
+### Resetting to the Bootloader
+
+The first step in flashing any firmware is to get the TL866 to reboot
+into its bootloader. How exactly you need to go about that depends on
+which firmware your TL866 is currently running.
+
+#### From the Stock Firmware
+
+If your TL866 is running an older version of the stock firmware the
+update tool can request a reset into the bootloader without any help. If
+you have version 03.2.85 or newer of the stock firmware there's
+currently a bug that prevents that from working, so you'll need to use
+the hardware method below.
+
+#### From the Open Firmware
+
+If your TL866 is running the open firmware the update tool can trigger
+a reset into the bootloader, but it needs to be told which serial port
+to use to talk to the TL866. You can do that with the `--reset-tty`
+option, for example `--reset-tty COM6` on Windows or
+`--reset-tty /dev/ttyACM0` on Linux.
+
+If you flashed the open firmware using an ICSP programmer the bootloader
+has been erased from your TL866. In order to use the update tool you'll
+need to flash the stock firmware via ICSP to restore the bootloader.
+You can find ICSP-ready images of the stock firmware in
+[Radioman's repository][stock-img].
+
+[stock-img]: https://github.com/radiomanV/TL866/tree/67487e2cd60fa8f755e977c9fc656559452f5092/TL866_Updater/C%23/firmware
+
+#### The Hardware Method
+
+If you're having trouble resetting to the bootloader from within the
+firmware currently installed on your TL866, you can force it to boot
+into the bootloader by shorting pin RC1 of the microcontroller to Vcc
+while you plug it in to the USB. The easiest points to short with a
+piece of jumper wire are from pin 2 of J1 (the ICSP header) or the tab
+of the adjacent voltage regulator to the side of R26 nearest J1.
+
+If you find yourself using this method frequently it can be worthwhile
+to solder a mini tactile switch between R26 and the side of R2 nearest
+the edge of the board. That side of R2 is also Vcc and is much closer to
+R26 than the voltage regulator is.
+
+
+### Flashing the Open Firmware
+
+To flash the open firmware, open a command prompt and navigate to the
+folder where you built the firmware. Call the update tool, passing it
+the path to the Intel Hex file. If your TL866 is already running the
+stock firmware you'll also need the `--reset-tty` option (see above).
+
+
+```tl866 self update --reset-tty COM6 dist/default/production/firmware.production.hex```
+
+
+### Flashing the Stock Firmware
+
+The update tool can also flash the stock firmware. To do so you'll need
+the `update.dat` file from the official software. If you installed it
+with the default settings that should be at `C:\MiniPro\update.dat`.
+You'll need to pass the `--stock` option to tell the updater that you
+want to flash the stock firmware, and you'll also need to use the
+`--reset-tty` option if your TL866 is running the open firmware.
+
+
+```tl866 self update --reset-tty COM6 --stock C:\MiniPro\update.dat```
+
+
 
 ## Running
+
 The TL866 with the open firmware will identify itself as a serial port (USB CDC).
-Open a serial console and type '?' for help.
+A Python library is provided which makes it easy to drive the bitbang mode.
