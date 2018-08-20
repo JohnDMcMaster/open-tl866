@@ -10,7 +10,7 @@ setup(
     author="William D. Jones",
     author_email="thor0505@comcast.net",
     license="BSD",
-    packages=["pytl866"],
+    packages=["pytl866", "pytl866/bootloader"],
     install_requires=[
         "intelhex",
         "pyserial",
