@@ -1,11 +1,22 @@
 # udev rules for OpenTL866 programmers
 #
-# Symlinks the serial device the programmer binds to to /dev/tl866
-# If you plan to have several devices attached, switched to the numbered device rule below
 
 ACTION!="add", GOTO="tl866_end"
 
-ACTION=="add", SUBSYSTEM=="tty", ATTRS{idVendor}=="1209", ATTRS{idProduct}=="8661", SYMLINK+="tl866", GROUP="adm"
-# ACTION=="add", SUBSYSTEM=="tty", ATTRS{idVendor}=="1209", ATTRS{idProduct}=="8661", SYMLINK+="tl866_%n", GROUP="adm"
+# Symlinks the serial device the programmer binds to to /dev/tl866
+SUBSYSTEM=="tty", ATTRS{idVendor}=="1209", ATTRS{idProduct}=="8661", SYMLINK+="tl866", GROUP="plugdev", MODE="0660"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="1209", ATTRS{idProduct}=="8662", SYMLINK+="tl866", GROUP="plugdev", MODE="0660"
+
+# If you plan to have several devices attached use these rules instead of the above.
+#SUBSYSTEM=="tty", ATTRS{idVendor}=="1209", ATTRS{idProduct}=="8661", SYMLINK+="tl866_%n", GROUP="plugdev", MODE="0660"
+#SUBSYSTEM=="tty", ATTRS{idVendor}=="1209", ATTRS{idProduct}=="8662", SYMLINK+="tl866_%n", GROUP="plugdev", MODE="0660"
+
+
+# TL866A / TL866CS stock firmware
+SUBSYSTEM=="usb", ATTRS{idVendor}=="04d8", ATTRS{idProduct}=="e11c", GROUP="plugdev", MODE="0660"
+
+# TL866II PLUS stock firmware
+SUBSYSTEM=="usb", ATTRS{idVendor}=="a466", ATTRS{idProduct}=="0a53", GROUP="plugdev", MODE="0660"
+
 
 LABEL="tl866_end"

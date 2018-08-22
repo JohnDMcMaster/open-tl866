@@ -22,6 +22,16 @@ Your output will be available under `dist/default/production/firmware.production
 3. If changing any project options (right-click Project name and select "Properties") or adding new source files (right-click Source Files logical folder and click "New" or "Add Existing"), make sure to commit any changes to `nbproject/*.xml` files to the repository.
 The [correct files](http://microchipdeveloper.com/faq:72) are already under version control.
 
+## Device Drivers and Configuration
+
+On Linux systems, the udev rules file `contrib/96-opentl866.rules`
+should be copied into `/etc/udev/rules.d/`. Doing so will allow non-root
+users who are members of the `plugdev` group to access the devices. Once
+the rules file is installed udev needs to be reloaded. On modern Linux
+systems that use systemd that can be done by running:
+
+```sudo systemctl restart systemd-udevd```
+
 ## Programming
 
 The Python client library provides a command-line client for the stock
