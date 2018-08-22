@@ -5,7 +5,7 @@
 
 ACTION!="add", GOTO="tl866_end"
 
-ACTION=="add", SUBSYSTEM=="tty", ATTRS{idVendor}=="1209", ATTRS{idProduct}=="8661", SYMLINK+="tl866", GROUP="adm"
-# ACTION=="add", SUBSYSTEM=="tty", ATTRS{idVendor}=="1209", ATTRS{idProduct}=="8661", SYMLINK+="tl866_%n", GROUP="adm"
+ACTION=="add", SUBSYSTEM=="plugdev", ATTRS{idVendor}=="1209", ATTRS{idProduct}=="8661", SYMLINK+="tl866", GROUP="adm"
+# ACTION=="add", SUBSYSTEM=="plugdev", ATTRS{idVendor}=="1209", ATTRS{idProduct}=="8661", SYMLINK+="tl866_%n", GROUP="adm"
 
 LABEL="tl866_end"
