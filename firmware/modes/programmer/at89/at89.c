@@ -853,6 +853,28 @@ static void self_test()
     printf("\r\ndone.");
 }
 
+static void print_sig(void)
+{
+    uint8_t sig0 = read_sig(0);
+    uint8_t sig1 = read_sig(1);
+    uint8_t sig2 = read_sig(2);
+
+    printf("(0x30) Manufacturer: %02X\r\n", sig0);
+    printf("(0x31) Model:        %02X\r\n", sig1);
+    printf("(0x32) VPP Voltage:  %02X\r\n", sig2);
+
+    uint32_t sig = (((uint32_t)sig0) << 16) | (sig1 << 8) | (sig2 << 0);
+    const char *name;
+    switch (sig) {
+    case 0x0151FF:  name = "AT89C51 (19651)"; break;
+    case 0x1E51FF:  name = "AT89C51 (19052)"; break;
+    case 0x1EFF1E:  name = "AT89C51RC"; break;
+    case 0x1E52FF:  name = "AT89C52 (19652)"; break;
+    default:        name = "unknown";
+    }
+    printf("Name: %s\r\n", name);
+}
+
 static inline void eval_command(unsigned char * cmd)
 {
     unsigned char * cmd_t = strtok(cmd, " ");
@@ -913,9 +935,7 @@ static inline void eval_command(unsigned char * cmd)
             break;
 
         case 's':
-            printf("(0x30) Manufacturer: %02X\r\n", read_sig(0));
-            printf("(0x31) Model:        %02X\r\n", read_sig(1));
-            printf("(0x32) VPP Voltage:  %02X\r\n", read_sig(2));
+            print_sig();
             break;
             
         case 'T':
