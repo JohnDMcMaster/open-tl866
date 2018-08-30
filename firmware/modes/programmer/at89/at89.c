@@ -4,13 +4,12 @@ static zif_bits_t zbits_null = {0, 0, 0, 0, 0};
 static zif_bits_t gnd        = {0, 0, 0x8, 0, 0};
 static zif_bits_t vdd        = {0, 0, 0, 0, 0x80};
 static zif_bits_t vpp        = {0, 0, 0, 0x40, 0};
-jmp_buf glitch_jmp_buf;
 
 static inline void print_banner(void)
 {
     com_println("   | |");
     com_println(" ==[+]==  open-tl866 Programmer Mode (AT89)");
-    com_println("   | |    with glitching support.");
+    com_println("   | |    EXTREME EDITION.");
 }
 static inline void print_help(void)
 {
@@ -23,8 +22,6 @@ static inline void print_help(void)
     com_println("  s\t\t\t\tPrint signature bytes");
     com_println("  b\t\t\t\tBlank check");
     com_println("  T\t\t\t\tRun some tests");
-    com_println("  G\t\t\t\tDo a glitch search. Will erase progmem!");
-    com_println("  g <OFFSET>\t\t\tAttempt a glitch at OFFSET");
     com_println("  h\t\t\t\tPrint help");
     com_println("  v\t\t\t\tReset VPP");
     com_println("  V\t\t\t\tPrint version(s)");
@@ -118,22 +115,6 @@ static inline void clock_write(zif_bits_t op, unsigned int cycles)
         __delay_us(1);
         pin_flip_clock();
         __delay_us(1);
-    }
-}
-
-static inline void clock_write_glitch(zif_bits_t op, unsigned int cycles, unsigned int vpp_off)
-{
-    zif_write(op);
-    for(unsigned int i = 0; i <= cycles; i++) {
-        __delay_us(1);
-        pin_flip_clock();
-        __delay_us(1);
-        pin_flip_clock();
-        if (i == vpp_off) {
-            vpp_dis();
-            zif_write(zbits_null);
-            break;
-        }
     }
 }
 
@@ -600,205 +581,6 @@ static void print_sysflash(unsigned int addr, unsigned int range)
     }
 }
 
-static void glitch(unsigned long offset, unsigned int cycles, unsigned int vpp_off, unsigned int timer)
-{
-    /* 
-     * AT89C51 erase Pinout:
-     * 
-     * Target   Dir     ZIF pin#    Programmer port
-     * ------------------------------------------------------------------------
-     * RST      <-      09          RJ4                     // (high)
-     * PSEN     <-      29          RD7                     // (low)
-     * ALE      <-      30          RG0                     // Pulsed erase
-     * VPP      <-      31          VPP_31                  // 12v
-     * VCC      <-      40          Vdd_40
-     * P2.6     <-      27          RD5                     // ctrl (high)
-     * P2.7     <-      28          RD6                     // ctrl (low)
-     * P3.4     ->      14          RD1                     // Busy
-     * P3.6     <-      16          RG1                     // ctrl (low)
-     * P3.7     <-      17          RE0                     // ctrl (low)
-     */
-    
-    if (vpp_off == 0) {
-        vpp_off = cycles + 1;
-    }
-    printf("Glitching via erase function with the following parameters:\r\n");
-    printf("  Cycles: %u\r\n  VPP cut cycle: %u\r\n  Offset: %lu\r\n", cycles, vpp_off, offset);
-    printf("  Timer: %u\r\n", timer);
-    unsigned long delay_cycles = 0;
-    
-    zif_bits_t dir = {  0,
-                        0b00100000,   // Busy signal (14)
-                        0, 0, 0 };
-    
-    // Set pin direction
-    dir_write(dir);
-    
-    // Set pins
-    set_vdd(vdd);
-    set_vpp(vpp);
-    set_gnd(gnd);
-    
-    // Set voltages
-    vdd_val(5); // 5.0 v - 5.2 v
-    vpp_val(1); // 12.8 - 13.2
-    
-    // Base pin setting for erasing
-    zif_bits_t erase_base =     {       0b00000000,
-                                        0b00000001, // RST (9)
-                                        0b00000000,  
-                                        0b01000100, // VPP (31), 2.6 (27)
-                                        0b00000000 };
-
-    // Create a zif state to set before running the clock
-    // PROG needs to be pulsed, can't be kept low the entire time.
-    zif_bits_t erase_preclk;
-    memcpy(erase_preclk, erase_base, 5);
-    mask_prog(erase_preclk);
-
-    ///////////////////////////////////////////////////////////////////////////
-    
-    ///////////////////
-    // Timer 0 Setup // See section 12.0 of datasheet
-    ///////////////////
-
-    T0CONbits.T08BIT = 0;
-    T0CONbits.T0CS   = 0;
-    //T0CONbits.T0SE   = 0;
-    T0CONbits.PSA    = 0;
-
-    T0CONbits.T0PS0  = 0; // might need to flip this TODO
-    T0CONbits.T0PS1  = 0;
-    T0CONbits.T0PS2  = 0;
-
-    //TMR0H = 0xFF;
-    TMR0 = 0xffff - timer;
-
-    // Set up interrupt. section 9.1 of ds
-    INTCONbits.TMR0IE = 1;
-    INTCONbits.TMR0IF = 0;
-    //INTCON2bits.TMR0IP = 1; // High priority TODO actually enable
-
-    // Start timer.
-    T0CONbits.TMR0ON = 1;
-
-    NOP();
-    NOP();
-    NOP();
-    NOP();
-
-    // Enable VPP right before setting the ZIF state
-
-    vdd_en();
-    zif_write(zbits_null);
-    vpp_en();
-    
-    // Set PROG high before pulsing it low during erase
-    zif_write(erase_preclk);
-    __delay_ms(20);
-    
-    clock_write_glitch(erase_base, cycles, vpp_off);
-
-    // Erase function requires 10ms prog pulse
-    __delay_ms(10);
-
-    // We're done. Disable VPP and reset the ZIF state.
-    vpp_dis();
-    vdd_dis();
-    zif_write(zbits_null);
-
-    ///////////////////////////////////////////////////////////////////////////
-
-    // The client / user is expected to verify this with a read command
-    // or a blank check command (TODO)
-
-    printf("done.");
-    return;
-}
-
-void exit_glitch(void)
-{
-    INTCONbits.GIE = 1;
-    INTCONbits.PEIE = 1;
-}
-
-static void search_glitch(unsigned long start)
-{
-    erase();
-
-    //if (!blank_check()) return;
-    com_println("");
-
-    printf("Flashing test pattern...");
-    com_println("");
-    for(unsigned int addr = 0; addr < 0xFF; addr++) {
-        write(addr, addr);
-        com_println("");
-    }
-    com_println("");
-
-    printf("Verifying test pattern... ");
-    unsigned char data = 0;
-    for (unsigned int addr = 0; addr < 0xFF; addr++) {
-        data = read_byte(addr);
-        if (data != addr) {
-            printf("FAILED at addr %03X : %03X",
-                    addr, data);
-            return;
-        }
-    }
-    printf("SUCCESS.");
-    com_println("");
-
-    lock(3);
-    com_println("");
-
-    // Interestingly, a delay is required here.
-    __delay_ms(10000);
-
-    printf("Testing lock state... ");
-    data = read_byte(0x01);
-    printf("%03X", data);
-    if (data == 0x01) {
-        com_println("");
-        printf("A known bug occured with enabling the PWM clock.");
-        printf(" Please power-reset the tl866 and try again.");
-        return;
-    }
-    com_println("");
-
-    printf("SUCCESS.");
-    com_println("");
-
-    printf("Starting glitch search...");
-    com_println("");
-
-    unsigned long offset = 0;
-    unsigned int cycles = 48;
-    unsigned int vpp_cut = 0;
-    for(unsigned int timer = start; timer < 0xffff; timer++) {
-        glitch(offset, cycles, vpp_cut, timer);
-        com_println("");
-        printf("Checking program memory...");
-        vdd_en();
-        zif_write(zbits_null);
-        data = read_byte(0xF5);
-        printf(" %02X", data);
-        com_println("");
-        if (data == 0xF5) {
-            printf("Succeeded code protection bypass!");
-            break;
-        }
-        if (data == 0xFF) {
-            printf("Erased without flipping security bits.");
-            break;
-        }
-        com_println("");
-        __delay_ms(1000);
-    }
-
-}
-
 static bool sig_check()
 {
     if (read_sig(0) == 0x1E && read_sig(1) == 0x51 && read_sig(2) == 0xFF) {
@@ -954,43 +736,6 @@ static inline void eval_command(unsigned char * cmd)
             blank_check();
             break;
 
-        case 'g':
-        {
-            if (!sig_check()) {
-                break;
-            }
-
-            unsigned long offset = atol(strtok(NULL, " "));
-            unsigned int cycles  = atoi(strtok(NULL, " "));
-            unsigned int vpp_off  = atoi(strtok(NULL, " "));
-            unsigned int timer  = atoi(strtok(NULL, " "));
-            glitch(offset, cycles, vpp_off, timer);
-            com_println("");
-
-            __delay_ms(1000);
-
-            printf("Reseting Vdd... ");
-            vdd_en();
-            read_sig(0);
-            printf("done.");
-
-            break;
-        }
-        case 'G':
-        {
-            printf("Reseting Vdd... ");
-            vdd_en();
-            read_sig(0);
-            printf("done.\r\n");
-
-            if (!sig_check()) {
-                break;
-            }
-
-            unsigned long start = atol(strtok(NULL, " "));
-            search_glitch(start);
-            break;
-        }
         case 'v':
             printf("Reseting Vdd... ");
             vdd_dis();
