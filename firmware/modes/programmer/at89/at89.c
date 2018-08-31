@@ -9,18 +9,22 @@ static inline void print_banner(void)
 {
     com_println("   | |");
     com_println(" ==[+]==  open-tl866 Programmer Mode (AT89)");
-    com_println("   | |");
+    com_println("   | |    EXTREME EDITION.");
 }
 static inline void print_help(void)
 {
-    com_println("\r\nCommands:\r\n  r <ADDR (hex)> [RANGE (hex)]\tRead from target");
+    com_println("\r\nCommands:\r\n");
+    com_println("  r <ADDR (hex)> [RANGE (hex)]\tRead from target");
     com_println("  w <ADDR (hex)> <BYTE (hex)>\tWrite to target");
+    com_println("  R <ADDR (hex)> [RANGE (hex)]\tRead sysflash from target");
     com_println("  e\t\t\t\tErase target");
     com_println("  l <MODE (int)>\t\tSet lock bits to MODE");
     com_println("  s\t\t\t\tPrint signature bytes");
     com_println("  b\t\t\t\tBlank check");
     com_println("  T\t\t\t\tRun some tests");
-    com_println("  h\t\t\t\tPrint help\r\n  v\t\t\t\tPrint version(s)");
+    com_println("  h\t\t\t\tPrint help");
+    com_println("  v\t\t\t\tReset VPP");
+    com_println("  V\t\t\t\tPrint version(s)");
 }
 
 static inline void print_version()
@@ -345,7 +349,6 @@ static void erase()
     printf("done.");
 }
 
-// Does not work yet.
 static void lock(unsigned char mode)
 {
     /* 
@@ -495,7 +498,7 @@ static void lock(unsigned char mode)
     printf("done.");
 }
 
-static unsigned char read_sig(unsigned int offset)
+static unsigned char read_sysflash(unsigned int offset)
 {
    // TODO. Implements the signature reading routine as described in the
    // datasheet. Would be a good precheck before doign read/write/erase ops.
@@ -548,7 +551,7 @@ static unsigned char read_sig(unsigned int offset)
     zif_bits_t signature_clk;
     
     // Mask in the address bits to the appropriate pins
-    mask_addr(signature_base, 0x30 + offset);
+    mask_addr(signature_base, offset);
 
     // Give the clock on/off states to zif_clock_write(..) and loop 48 cycles
     clock_write(signature_base, 48);
@@ -562,11 +565,32 @@ static unsigned char read_sig(unsigned int offset)
     return zif_to_data(response);
 }
 
+static unsigned char read_sig(unsigned int offset)
+{
+    return read_sysflash(0x30 + offset);
+}
+
+static void print_sysflash(unsigned int addr, unsigned int range)
+{    
+    printf("%03X ", addr);
+
+    
+    if (!range) { range = 1; } else {com_println("");}
+    for (unsigned int byte_idx = 0; byte_idx < range; byte_idx++) {
+        printf("%02X ", read_sysflash(addr + byte_idx));
+    }
+}
+
 static bool sig_check()
 {
-    if (read_sig(0) != 0x1E || read_sig(1) != 0x51 || read_sig(2) != 0xFF)
-        return false;
-    return true;
+    if (read_sig(0) == 0x1E && read_sig(1) == 0x51 && read_sig(2) == 0xFF) {
+        return true;
+    }
+
+    printf("Could not detect an AT89C51. Ignoring command.\r\n");
+    printf("Please make sure the target is inserted in the correct");
+    printf(" orientation.");
+    return false;
 }
 
 static bool blank_check()
@@ -611,6 +635,28 @@ static void self_test()
     printf("\r\ndone.");
 }
 
+static void print_sig(void)
+{
+    uint8_t sig0 = read_sig(0);
+    uint8_t sig1 = read_sig(1);
+    uint8_t sig2 = read_sig(2);
+
+    printf("(0x30) Manufacturer: %02X\r\n", sig0);
+    printf("(0x31) Model:        %02X\r\n", sig1);
+    printf("(0x32) VPP Voltage:  %02X\r\n", sig2);
+
+    uint32_t sig = (((uint32_t)sig0) << 16) | (sig1 << 8) | (sig2 << 0);
+    const char *name;
+    switch (sig) {
+    case 0x0151FF:  name = "AT89C51 (19651)"; break;
+    case 0x1E51FF:  name = "AT89C51 (19052)"; break;
+    case 0x1EFF1E:  name = "AT89C51RC"; break;
+    case 0x1E52FF:  name = "AT89C52 (19652)"; break;
+    default:        name = "unknown";
+    }
+    printf("Name: %s\r\n", name);
+}
+
 static inline void eval_command(unsigned char * cmd)
 {
     unsigned char * cmd_t = strtok(cmd, " ");
@@ -618,7 +664,6 @@ static inline void eval_command(unsigned char * cmd)
         case 'r':
         {
             if (!sig_check()) {
-                printf("Could not detect an AT89C51. Ignoring command.");
                 break;
             }
             
@@ -631,7 +676,6 @@ static inline void eval_command(unsigned char * cmd)
         case 'w':
         {
             if (!sig_check()) {
-                printf("Could not detect an AT89C51. Ignoring command.");
                 break;
             }
             
@@ -640,11 +684,22 @@ static inline void eval_command(unsigned char * cmd)
             write(addr, data);
             break;
         }
-        
+
+        case 'R':
+        {
+            if (!sig_check()) {
+                break;
+            }
+            
+            unsigned int addr  = xtoi(strtok(NULL, " "));
+            unsigned int range = xtoi(strtok(NULL, " "));
+            print_sysflash(addr, range);
+            break;
+        }
+
         case 'l':
         {
             if (!sig_check()) {
-                printf("Could not detect an AT89C51. Ignoring command.");
                 break;
             }
             
@@ -655,7 +710,6 @@ static inline void eval_command(unsigned char * cmd)
             
         case 'e':
             if (!sig_check()) {
-                printf("Could not detect an AT89C51. Ignoring command.");
                 break;
             }
             
@@ -663,14 +717,11 @@ static inline void eval_command(unsigned char * cmd)
             break;
 
         case 's':
-            printf("(0x30) Manufacturer: %02X\r\n", read_sig(0));
-            printf("(0x31) Model:        %02X\r\n", read_sig(1));
-            printf("(0x32) VPP Voltage:  %02X\r\n", read_sig(2));
+            print_sig();
             break;
             
         case 'T':
             if (!sig_check()) {
-                printf("Could not detect an AT89C51. Ignoring command.");
                 break;
             }
             
@@ -679,13 +730,19 @@ static inline void eval_command(unsigned char * cmd)
             
         case 'b':
             if (!sig_check()) {
-                printf("Could not detect an AT89C51. Ignoring command.");
                 break;
             }
             
             blank_check();
             break;
-            
+
+        case 'v':
+            printf("Reseting Vdd... ");
+            vdd_dis();
+            vdd_en();
+            read_sig(0);
+            printf("done.");
+            break;
         case '?':
         case 'h':
             print_help();

@@ -3,6 +3,7 @@
 
 #include <xc.h>
 #include <string.h>
+#include <setjmp.h>
 #include "usb.h"
 #include "../../../system.h"
 #include "../../../comlib.h"
@@ -16,5 +17,6 @@
 #define ZIFMASK_PROG 32;
 
 int programmer_at89(void);
+void exit_glitch(void);
 
 #endif
