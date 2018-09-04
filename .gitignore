@@ -1,10 +1,5 @@
 *.ignore
 *.diary
 *.swp
-firmware/nbproject/Makefile-*
-firmware/nbproject/Package-*.bash
-firmware/nbproject/private/
-firmware/build/
-firmware/dist/
 __pycache__/
 *.egg-info/

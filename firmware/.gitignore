@@ -1,0 +1,10 @@
+# CMake output
+/CMakeFiles/
+/CMakeCache.txt
+/cmake_install.cmake
+/Makefile
+
+# MPLAB X project
+/nbproject/
+/build/
+/dist/

@@ -4,23 +4,47 @@ This firmware replaces the proprietary firmware for programming EPROMs, MCUs, GA
 **Caution: This is alpha software. Use at your own risk.**
 
 ## Prerequisites
-1. The `open-tl866` firmware requires the `XC8` compiler from Microchip and the `MPLAB X` IDE to generate build system files.
-  * Download and install the [MPLAB X IDE](http://www.microchip.com/mplab/mplab-x-ide).
-  * Download and Install the [XC8 Compiler](http://www.microchip.com/mplab/compilers).
-  When activating, use the Free version.
 
-2. We also need [our copy](https://github.com/ProgHQ/m-stack) of [m-stack](http://www.signal11.us/oss/m-stack/).
-Run `git submodule update --init` at the root of this repository so that our `MPLAB X` project can find the USB stack source code.
+1. The XC8 compiler from Microchip is used to compile our C code.
+   Currently version 1.x is required.
+   [Download it from Microchip's site][xc8] and install it.
+   When activating, select the Free version.
+
+1. CMake is needed to generate the build configuration. On Linux you
+   should install it from your distribution's package manager
+   (e.g. `sudo apt-get install cmake`). For Windows, an installer is
+   available [from the CMake website][cmake].
+
+1. Certain dependencies are managed as git submodules.
+   Install them with `git submodule update --init`.
+   * [our copy](https://github.com/ProgHQ/m-stack)
+     of [m-stack](http://www.signal11.us/oss/m-stack/)
+   * [cmake-microchip](https://github.com/Elemecca/cmake-microchip)
+
+[xc8]: http://www.microchip.com/development-tools/pic-and-dspic-downloads-archive
+[cmake]: https://cmake.org/download/
 
 ## Building
-1. Open the `firmware` project in MPLAB-X. This will generate the build system from the `.xml` files committed in the repository.
-2. Click "Build Main Project" button (hammer icon) to compile the project.
-Your output will be available under `dist/default/production/firmware.production.hex`.
-  * Note that the proprietary firmware/bootloader expects a raw binary file that has been trimmed from both the head and tail (to prevent overwriting decryption tables and the bootloader).
-  Microchip tools prefer emitting [Intel HEX](https://en.wikipedia.org/wiki/Intel_HEX) and so we use that format for convenience.
 
-3. If changing any project options (right-click Project name and select "Properties") or adding new source files (right-click Source Files logical folder and click "New" or "Add Existing"), make sure to commit any changes to `nbproject/*.xml` files to the repository.
-The [correct files](http://microchipdeveloper.com/faq:72) are already under version control.
+1. `cd` to the `firmware` directory.
+1. Generate the build configuration by running `cmake .`
+1. Build the project by running `make`
+1. Flashable images are in `dist/tl866-*.hex`
+
+The build configuration is maintained with CMake in `CMakeLists.txt`.
+Calling `cmake .` interprets the CMake configuration and produces a set
+of makefiles in the source tree. If you prefer an out-of-source build,
+just call `cmake` from the directory where you want the build output and
+pass it the path to the `firmware` directory.
+
+There are multiple variants of the firmware with different
+functionality, which are currently called "modes". Each mode produces a
+separate firmware image under `firmware/dist`. Each mode has a
+corresponding target in the makefiles, so you can build just one mode
+with e.g. `make tl866-bitbang`. The currently implemented modes are:
+
+* `tl866-bitbang`
+* `tl866-at86`
 
 ## Device Drivers and Configuration
 
