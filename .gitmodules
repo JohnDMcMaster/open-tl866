@@ -1,3 +1,6 @@
-[submodule "extern/m-stack"]
-	path = extern/m-stack
+[submodule "firmware/external/m-stack"]
+	path = firmware/external/m-stack
 	url = https://github.com/ProgHQ/m-stack.git
+[submodule "firmware/external/cmake-microchip"]
+	path = firmware/external/cmake-microchip
+	url = git://github.com/Elemecca/cmake-microchip.git

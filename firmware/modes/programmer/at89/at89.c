@@ -1,4 +1,5 @@
 #include "at89.h"
+#include "../../../mode.h"
 
 static zif_bits_t zbits_null = {0, 0, 0, 0, 0};
 static zif_bits_t gnd        = {0, 0, 0x8, 0, 0};
@@ -755,7 +756,7 @@ static inline void eval_command(unsigned char * cmd)
     }
 }
 
-int programmer_at89(void) {
+void mode_main(void) {
     vpp_dis();
     
     // Wait for user interaction (press enter).

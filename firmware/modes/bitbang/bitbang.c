@@ -4,7 +4,8 @@
  */
 
 #include "bitbang.h"
-#include "../stock_compat.h"
+#include "../../stock_compat.h"
+#include "../../mode.h"
 
 static inline void handle_command(parse_result_t *res) {
     switch(res->cmd)
@@ -123,7 +124,7 @@ static inline void handle_command(parse_result_t *res) {
     }
 }
 
-int bitbang(void)
+void mode_main(void)
 {
     parse_result_t res;
     unsigned char * cmd;
@@ -133,6 +134,4 @@ int bitbang(void)
         parse_ascii(cmd, &res);
         handle_command(&res);
     }
-
-    return 0;
 }
