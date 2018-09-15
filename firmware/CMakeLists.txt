@@ -25,6 +25,9 @@ target_sources(core INTERFACE
     ${CMAKE_SOURCE_DIR}/usb/usb_descriptors.c
 )
 
+# On Windows, xc8 can't find io.h, and _only_ io.h, without this path added. Compiler bug?
+target_include_directories(core INTERFACE ${CMAKE_SOURCE_DIR})
+
 # set linker options to support the bootloader
 target_link_libraries(core INTERFACE
     # reserve the bootloader code area
