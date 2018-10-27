@@ -8,26 +8,32 @@ import usb.util
 if sys.platform == 'win32':
     from pytl866.bootloader import windows
 
+# Autoelectric
+AE_USB_VENDOR = 0x04D8
+AE_USB_PRODUCT = 0xE11C
 
-USB_VENDOR = 0x04D8
-USB_PRODUCT = 0xE11C
+# Open
+O_USB_VENDOR = 0x1209
+O_USB_PRODUCT = 0x8661
 
+VIDS_PIDS = [(AE_USB_VENDOR, AE_USB_PRODUCT), (O_USB_VENDOR, O_USB_PRODUCT)]
 
 def list_devices():
     devices = list()
 
-    try:
-        devices.extend([
-            UsbDevice(d)
-            for d in usb.core.find(
-                idVendor=USB_VENDOR,
-                idProduct=USB_PRODUCT,
-                find_all=True,
-            )
-        ])
-    except usb.core.NoBackendError as caught:
-        if sys.platform != 'win32':
-            raise caught
+    for (vid, pid) in VIDS_PIDS:
+        try:
+            devices.extend([
+                UsbDevice(d)
+                for d in usb.core.find(
+                    idVendor=vid,
+                    idProduct=pid,
+                    find_all=True,
+                )
+            ])
+        except usb.core.NoBackendError as caught:
+            if sys.platform != 'win32':
+                raise caught
 
     if sys.platform == 'win32':
         devices.extend(windows.list_devices())
@@ -60,9 +66,9 @@ class UsbDevice():
         if dev is None:
             raise RuntimeError("device did not reconnect after reset")
 
-        if dev.idVendor != USB_VENDOR or dev.idProduct != USB_PRODUCT:
+        if (dev.idVendor, dev.idProduct) != (O_USB_VENDOR, O_USB_PRODUCT):
             raise RuntimeError("wrong device reconnected after reset (exp: %04X:%04X, got %04X:%04X)" %
-                    (USB_VENDOR, USB_PRODUCT, dev.idVendor, dev.idProduct))
+                    (O_USB_VENDOR, O_USB_PRODUCT, dev.idVendor, dev.idProduct))
 
         self.device = dev
 
