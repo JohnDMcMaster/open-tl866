@@ -61,7 +61,8 @@ class UsbDevice():
             raise RuntimeError("device did not reconnect after reset")
 
         if dev.idVendor != USB_VENDOR or dev.idProduct != USB_PRODUCT:
-            raise RuntimeError("wrong device reconnected after reset")
+            raise RuntimeError("wrong device reconnected after reset (exp: %04X:%04X, got %04X:%04X)" %
+                    (USB_VENDOR, USB_PRODUCT, dev.idVendor, dev.idProduct))
 
         self.device = dev
 
