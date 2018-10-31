@@ -5,10 +5,8 @@
 
 static void ports_to_zif_pins(port_bits_t port, zif_bits_t zif);
 static void zif_pins_to_ports(zif_bits_t zif, port_bits_t port);
-static void port_read_all(port_bits_t);
-static void port_write_all(port_bits_t);
-static void dir_read_all(port_bits_t p_bits);
-static void dir_write_all(port_bits_t p_bits);
+
+latch_bits_t latch_cache = {0};
 
 #define OFFS_A 0
 #define OFFS_B 1
@@ -73,51 +71,61 @@ const port_info_t zif2port[40] = {
 /* LE signal number is based off radioman schematic. They are scattered
  * between banks unfortunately. */
 const latch_info_t zif2vdd[40] = {
+    //1
     {3, 7},
     {3, 4},
     {3, 5},
     {4, 0},
 
+    //5
     {3, 2},
     {4, 2},
     {2, 6},
     {2, 1},
 
+    //9
     {2, 2},
     {2, 3},
     {2, 0},
     {2, 7},
 
+    //13
     {2, 4},
     {0, -1},
     {0, -1},
     {0, -1},
 
+    //17
     {0, -1},
     {0, -1},
     {0, -1},
     {0, -1},
 
+    //21
     {2, 5},
     {0, -1},
     {0, -1},
     {0, -1},
 
+    //25
     {0, -1},
     {0, -1},
     {0, -1},
     {0, -1},
 
+    //29
     {0, -1},
     {4, 6},
     {0, -1},
     {4, 1},
 
+    //33
     {4, 5},
     {4, 3},
     {4, 4},
     {4, 7},
 
+    //37
     {3, 3},
     {3, 6},
     {3, 0},
@@ -125,51 +133,61 @@ const latch_info_t zif2vdd[40] = {
 };
 
 const latch_info_t zif2vpp[40] = {
+    //1
     {0, 2},
     {0, 3},
     {1, 2},
     {1, 3},
 
+    //5
     {0, -1},
     {0, -1},
     {0, -1},
     {0, -1},
 
+    //9
     {1, 5},
     {1, 4},
     {0, -1},
     {0, -1},
 
+    //13
     {0, -1},
     {0, -1},
     {0, -1},
     {0, -1},
 
+    //17
     {0, -1},
     {0, -1},
     {0, -1},
     {0, -1},
 
+    //21
     {0, -1},
     {0, -1},
     {0, -1},
     {0, -1},
 
+    //25
     {0, -1},
     {0, -1},
     {0, -1},
     {0, -1},
 
+    //29
     {0, -1},
     {0, 0},
     {1, 0},
     {0, 7},
 
+    //33
     {1, 6},
     {1, 1},
     {0, -1},
     {0, 1},
 
+    //37
     {1, 7},
     {0, 6},
     {0, 5},
@@ -235,6 +253,7 @@ void dir_write(zif_bits_t zif_val)
 {
     port_bits_t port_val = {0};
 
+    //Read control signals
     dir_read_all(port_val);
     zif_pins_to_ports(zif_val, port_val);
 
@@ -253,6 +272,7 @@ void zif_write(zif_bits_t zif_val)
 {
     port_bits_t port_val = {0};
 
+    //Read control signals
     port_read_all(port_val);
     zif_pins_to_ports(zif_val, port_val);
 
@@ -304,7 +324,7 @@ static void ports_to_zif_pins(port_bits_t port, zif_bits_t zif)
 
 
 /* Internal functions- we read/write all I/O ports at once. */
-static void port_read_all(port_bits_t p_bits)
+void port_read_all(port_bits_t p_bits)
 {
     p_bits[0] = PORTA;
     p_bits[1] = PORTB;
@@ -317,7 +337,7 @@ static void port_read_all(port_bits_t p_bits)
     p_bits[8] = PORTJ;
 }
 
-static void port_write_all(port_bits_t p_bits)
+void port_write_all(port_bits_t p_bits)
 {
     PORTA = p_bits[0];
     PORTB = p_bits[1];
@@ -330,7 +350,7 @@ static void port_write_all(port_bits_t p_bits)
     PORTJ = p_bits[8];
 }
 
-static void dir_read_all(port_bits_t p_bits)
+void dir_read_all(port_bits_t p_bits)
 {
     p_bits[0] = TRISA;
     p_bits[1] = TRISB;
@@ -343,7 +363,7 @@ static void dir_read_all(port_bits_t p_bits)
     p_bits[8] = TRISJ;
 }
 
-static void dir_write_all(port_bits_t p_bits)
+void dir_write_all(port_bits_t p_bits)
 {
     TRISA = p_bits[0];
     TRISB = p_bits[1];
@@ -358,10 +378,12 @@ static void dir_write_all(port_bits_t p_bits)
 
 
 /* Read mask of I/O pin dir (TRIS) into array in ZIF order. */
+/*
 void zifdir_mask(unsigned char (*)[5])
 {
 
 }
+*/
 
 
 /* Write one of the 8 pin driver latches */
@@ -426,6 +448,8 @@ void write_latch(int latch_no, unsigned char val)
             break;
 
     }
+
+    latch_cache[latch_no] = val;
 }
 
 /* Write the shift reg which connects to pin driver latches */
@@ -462,6 +486,11 @@ void vpp_dis(void)
     OE_VPP = 1;
 }
 
+int vpp_state(void)
+{
+    return OE_VPP;
+}
+
 void vdd_en(void)
 {
     OE_VDD = 0;
@@ -472,8 +501,17 @@ void vdd_dis(void)
     OE_VDD = 1;
 }
 
+int vdd_state(void)
+{
+    return OE_VDD;
+}
 
-void set_vpp(zif_bits_t zif)
+
+int OEn_state(void) {
+    return (LE7 << 7) | (LE6 << 6) | (LE5 << 5) | (LE4 << 4) | (LE3 << 3) | (LE2 << 2) | (LE1 << 1) | (LE0 << 0);
+}
+
+void set_vpp(const_zif_bits_t zif)
 {
     unsigned char latch_vpp_masks[2] = { 0 };
 
@@ -502,7 +540,7 @@ void set_vpp(zif_bits_t zif)
     write_latch(1, latch_vpp_masks[1]);
 }
 
-void set_vdd(zif_bits_t zif)
+void set_vdd(const_zif_bits_t zif)
 {
     unsigned char latch_vdd_masks[3] = { 0 };
 
@@ -531,7 +569,7 @@ void set_vdd(zif_bits_t zif)
     write_latch(4, ~latch_vdd_masks[2]);
 }
 
-void set_gnd(zif_bits_t zif)
+void set_gnd(const_zif_bits_t zif)
 {
     unsigned char latch_gnd_masks[3] = { 0 };
 
