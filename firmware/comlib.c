@@ -1,6 +1,7 @@
 #include "comlib.h"
 
 int echo = 0;
+unsigned comblib_drops = 0;
 
 inline void enable_echo()
 {
@@ -18,11 +19,18 @@ inline void disable_echo()
 // https://github.com/signal11/m-stack/blob/master/apps/cdc_acm/main.c
 static inline void send_string_sync(uint8_t endpoint, const char *str)
 {
-    char *in_buf = (char*) usb_get_in_buffer(endpoint);
+    unsigned int len = strlen(str);
+    char *in_buf = NULL;
+
+    if (len > 64) {
+        comblib_drops += len - 64;
+        len = 64;
+    }
 
     while (usb_in_endpoint_busy(endpoint));
 
-    strcpy(in_buf, str);
+    in_buf = (char*) usb_get_in_buffer(endpoint);
+    strncpy(in_buf, str, len);
 
     // TODO: get deterministic lens at compile time. Add len argument to
     // this function, so non-deterministic lengths are calculated before
@@ -30,16 +38,17 @@ static inline void send_string_sync(uint8_t endpoint, const char *str)
 
     /* Hack: Get the length from strlen(). This is inefficient, but it's
      * just a demo. strlen()'s return excludes the terminating NULL. */
-    usb_send_in_buffer(endpoint, strlen(in_buf));
+    usb_send_in_buffer(endpoint, len);
 }
 
-static inline void send_char_sync(uint8_t endpoint, const char *str)
+static inline void send_char_sync(uint8_t endpoint, char c)
 {
-    char *in_buf = (char*) usb_get_in_buffer(endpoint);
+    char *in_buf = NULL;
 
     while (usb_in_endpoint_busy(endpoint));
 
-    strcpy(in_buf, str);
+    in_buf = (char*) usb_get_in_buffer(endpoint);
+    in_buf[0] = c;
 
     usb_send_in_buffer(endpoint, 1);
 }
@@ -119,13 +128,14 @@ unsigned char * com_readline()
                 usb_arm_out_endpoint(COM_ENDPOINT);
         }
     }
+    return NULL;
 }
 
 // TODO: Add logic to ensure string fits in EP_2_OUT_LEN and split string
 // into multiple USB packets if exceeded
 void com_print(const char * str)
 {
-   send_string_sync(COM_ENDPOINT, str);
+    send_string_sync(COM_ENDPOINT, str);
 }
 
 void com_println(const char * str)
@@ -135,9 +145,12 @@ void com_println(const char * str)
     send_string_sync(COM_ENDPOINT, str);
     send_string_sync(COM_ENDPOINT, "\r\n");
 }
+
+//used by printf type functions
 void putch(const unsigned char c)
 {
     // TODO: Make a buffer and flush function to avoid sending one character
     // per USB packet.
-    send_char_sync(COM_ENDPOINT, &c);
+    send_char_sync(COM_ENDPOINT, c);
 }
+

@@ -17,4 +17,9 @@ unsigned char * com_readline();
 void com_print(const char * str);
 void com_println(const char * str);
 
+//xc18 can't handle 
+//#define com_printfln(s, ...) printf(s "\r\n", __VA_ARGS__)
+
+extern unsigned comblib_drops;
+
 #endif
