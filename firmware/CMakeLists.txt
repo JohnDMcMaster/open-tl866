@@ -70,6 +70,8 @@ function(add_tl866_mode name)
     )
 endfunction()
 
+# <RESERVED FOR THIRD PARTY>
+# </RESERVED FOR THIRD PARTY>
 
 add_tl866_mode(tl866-bitbang
     ${CMAKE_SOURCE_DIR}/modes/bitbang/bitbang.c
