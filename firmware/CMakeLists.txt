@@ -6,6 +6,14 @@ set(CMAKE_TOOLCHAIN_FILE external/cmake-microchip/toolchain.cmake)
 # set the default MCU model
 set(MICROCHIP_MCU PIC18F87J50)
 
+# FIXME: get someone who knows CMake to review this
+if(DEFINED CODEOFFSET)
+    message("codeoffset: overriding ${CODEOFFSET}")
+else()
+    # Allow user ovveriding to 0 for no bootloader
+    message("codeoffset: default")
+    set(CODEOFFSET 1800)
+endif()
 
 project(open-tl866 C)
 
@@ -32,7 +40,7 @@ target_include_directories(core INTERFACE ${CMAKE_SOURCE_DIR})
 # set linker options to support the bootloader
 target_link_libraries(core INTERFACE
     # reserve the bootloader code area
-    "--codeoffset=1800"
+    "--codeoffset=${CODEOFFSET}"
     # reserve the bootloader data area
     "--rom=default,-1fc00-1ffff"
     # set the firmware magic number
