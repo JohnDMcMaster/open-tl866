@@ -9,7 +9,7 @@ You should not use low level APIs unless you know what you are doing
 #include "io.h"
 
 
-#define EZZIF_D40
+#define EZZIF_D28
 //#include "defines.h"
 
 //High level API
@@ -73,7 +73,7 @@ TODO: convert these to ni directly instead of DIP28 => d40 => ni
 #define ezzif_dip_40to40(n) (n)
 //Pin 1 => 1
 //Pin 28 => 40, etc
-#define ezzif_dip_28to40(n) ((n) <= 28 ? (n) : (n) + 40 - 28)
+#define ezzif_dip_28to40(n) ((n) <= 14 ? (n) : (n) + 40 - 28)
 
 #if defined(EZZIF_D40)
     #define ezzif_dipto40 ezzif_dip_40to40

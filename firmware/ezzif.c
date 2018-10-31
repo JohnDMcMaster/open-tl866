@@ -4,6 +4,9 @@
 #include <string.h>
 #include <stdio.h>
 
+#define D40_MASK(n) (1 << (((n) - 1) % 8))
+#define D40_OFF(n) (((n) - 1) / 8)
+
 //Direction
 zif_bits_t ezzif_zbd = {0};
 //Output
@@ -154,21 +157,16 @@ void ezzif_w_d40(int n, int val) {
     int ni = n - 1;
     int off = ni / 8;
     int mask = 1 << (ni % 8);
+    int delta;
 
     if (!ezzif_assert_d40(n)) {
         return;
     }
 
-    if (val) {
-        if (ezzif_zbo[off] & mask == 0) {
-            ezzif_zbo[off] = ezzif_zbo[off] | mask;
-            zif_write(ezzif_zbo);
-        }
-    } else {
-        if (ezzif_zbo[off] & mask != 0) {
-            ezzif_zbo[off] = ezzif_zbo[off] & mask;
-            zif_write(ezzif_zbo);
-        }
+    delta = (ezzif_zbo[off] & mask) ^ (val ? mask : 0);
+    if (delta) {
+        ezzif_zbo[off] = ezzif_zbo[off] ^ delta;
+        zif_write(ezzif_zbo);
     }
 }
 
@@ -182,7 +180,7 @@ void ezzif_dir_d40(int n, int isout) {
         return;
     }
 
-    delta = (ezzif_zbd[off] & mask) ^ (isout ? (1 << mask) : 0);
+    delta = (ezzif_zbd[off] & mask) ^ (isout ? mask : 0);
     if (delta) {
         ezzif_zbd[off] = ezzif_zbd[off] ^ delta;
         if (!is_vsafe()) {
@@ -193,10 +191,6 @@ void ezzif_dir_d40(int n, int isout) {
 }
 
 void ezzif_io_d40(int n, int isout, int val) {
-    int ni = n - 1;
-    int off = ni / 8;
-    int mask = 1 << (ni % 8);
-
     ezzif_dir_d40(n, isout);
     if (isout) {
         ezzif_w_d40(n, val);
