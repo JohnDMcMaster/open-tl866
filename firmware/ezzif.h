@@ -7,7 +7,7 @@ You should not use low level APIs unless you know what you are doing
 #define EZZIF_H
 
 #include "io.h"
-
+#include <stdint.h>
 
 #define EZZIF_D28
 //#include "defines.h"
@@ -43,9 +43,9 @@ void ezzif_toggle_d40(int n);
 //Set given pin to value (0 or 1)
 void ezzif_w_d40(int n, int val);
 //Set source / sink on given pin
-void ezzif_dir_d40(int n, int isout);
+void ezzif_dir_d40(int n, int tristate);
 //Set source / sink on given pin and, if output, set initial output value
-void ezzif_io_d40(int n, int isout, int val);
+void ezzif_io_d40(int n, int tristate, int val);
 //Make given pin an output and set initial value
 void ezzif_o_d40(int n, int val);
 //Make given pin an input
@@ -62,6 +62,11 @@ void ezzif_gnd_d40(int n);
 //Low level API
 //Set given bit in zb
 void zif_bit_d40(zif_bits_t zb, int n);
+
+void ezzif_bus_dir_d40(const char *ns, unsigned len, int tristate);
+void ezzif_bus_w_d40(const char *ns, unsigned len, uint16_t val);
+uint16_t ezzif_bus_r_d40(const char *ns, unsigned len);
+
 
 
 /****************************************************************************
@@ -87,8 +92,8 @@ TODO: convert these to ni directly instead of DIP28 => d40 => ni
 //See d40 API for definitions
 #define ezzif_toggle(n) ezzif_toggle_d40(ezzif_dipto40(n))
 #define ezzif_w(n, val) ezzif_w_d40(ezzif_dipto40(n), val)
-#define ezzif_dir(n, isout) ezzif_dir_d40(ezzif_dipto40(n), isout)
-#define ezzif_io(n, isout, val) ezzif_io_d40(ezzif_dipto40(n), isout, val)
+#define ezzif_dir(n, tristate) ezzif_dir_d40(ezzif_dipto40(n), tristate)
+#define ezzif_io(n, tristate, val) ezzif_io_d40(ezzif_dipto40(n), tristate, val)
 #define ezzif_o(n, val) ezzif_o_d40(ezzif_dipto40(n), val)
 #define ezzif_i(n) ezzif_i_d40(ezzif_dipto40(n))
 #define ezzif_r(n) ezzif_r_d40(ezzif_dipto40(n))
@@ -104,11 +109,11 @@ ns: pin array
 len: array length
 */
 //Set source / sink on given pins
-void ezzif_bus_dir(const char *ns, int len, int isout);
+void ezzif_bus_dir(const char *ns, unsigned len, int tristate);
 //Set given pins to value (0 or 1)
-void ezzif_bus_w(const char *ns, int len, int val);
+void ezzif_bus_w(const char *ns, unsigned len, uint16_t val);
 //Read value on given pins
-int ezzif_bus_r(const char *ns, int len);
+uint16_t ezzif_bus_r(const char *ns, unsigned len);
 
 #endif
 
