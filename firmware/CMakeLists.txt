@@ -84,3 +84,7 @@ add_tl866_mode(tl866-ezzif
 add_tl866_mode(tl866-at89
     ${CMAKE_SOURCE_DIR}/modes/programmer/at89/at89.c
 )
+
+add_tl866_mode(tl866-epromv
+    ${CMAKE_SOURCE_DIR}/modes/programmer/epromv/main.c
+)
