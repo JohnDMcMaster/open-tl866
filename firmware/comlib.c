@@ -66,7 +66,7 @@ unsigned char * com_readline()
 {
     // TODO: Might be good to make a global struct to handle the command buffer
     static unsigned char cmd_buf[64];
-    memset(cmd_buf, 0, 64);
+    memset(cmd_buf, 0, sizeof(cmd_buf));
     int cmd_ptr = 0;
     
     while(1) {
@@ -75,7 +75,7 @@ unsigned char * com_readline()
 
             const unsigned char * out_buf;
             
-            size_t out_buf_len;
+            uint8_t out_buf_len;
             int newline_found = 0;
 
             /* Check for an empty transaction. */
@@ -96,6 +96,7 @@ unsigned char * com_readline()
             for (int i = 0; i < out_buf_len; i++) {
                 if (cmd_buf[cmd_ptr + i] == '\n' ||
                     cmd_buf[cmd_ptr + i] == '\r') {
+                    cmd_buf[cmd_ptr + i] = 0;
                     newline_found = 1;
                     cmd_ptr = 0;
                     break;
