@@ -1,10 +1,11 @@
+//#define DEBUG(x) x
+#define DEBUG(x) do {} while(0)
+
 #include <xc.h>
 
 #include "system.h"
 #include "io.h"
-
-static void ports_to_zif_pins(port_bits_t port, zif_bits_t zif);
-static void zif_pins_to_ports(zif_bits_t zif, port_bits_t port);
+#include "comlib.h"
 
 latch_bits_t latch_cache = {0};
 
@@ -22,6 +23,7 @@ latch_bits_t latch_cache = {0};
  * This array provides a mapping from a ZIF pin to the corresponding PIC18
  * I/O location (0-based port bank addressing, and bit offset). */
 const port_info_t zif2port[40] = {
+    //1-8
     {OFFS_C, 5},
     {OFFS_C, 4},
     {OFFS_C, 3},
@@ -31,6 +33,7 @@ const port_info_t zif2port[40] = {
     {OFFS_C, 6},
     {OFFS_C, 7},
 
+    //9-16
     {OFFS_J, 4},
     {OFFS_J, 5},
     {OFFS_G, 3},
@@ -40,6 +43,7 @@ const port_info_t zif2port[40] = {
     {OFFS_D, 2},
     {OFFS_G, 1},
 
+    //17-24
     {OFFS_E, 0},
     {OFFS_E, 7},
     {OFFS_E, 2},
@@ -49,6 +53,7 @@ const port_info_t zif2port[40] = {
     {OFFS_E, 6},
     {OFFS_E, 1},
 
+    //25-32
     {OFFS_D, 3},
     {OFFS_D, 4},
     {OFFS_D, 5},
@@ -58,6 +63,7 @@ const port_info_t zif2port[40] = {
     {OFFS_J, 0},
     {OFFS_J, 1},
 
+    //33-40
     {OFFS_J, 2},
     {OFFS_J, 3},
     {OFFS_B, 2},
@@ -253,10 +259,12 @@ void dir_write(zif_bits_t zif_val)
 {
     port_bits_t port_val = {0};
 
+    DEBUG(print_zif_bits("  dir_write zif_bits", zif_val));
+
     //Read control signals
     dir_read_all(port_val);
     zif_pins_to_ports(zif_val, port_val);
-
+    DEBUG(print_port_bits("  dir_write port_bits", port_val));
     dir_write_all(port_val);
 }
 
@@ -265,17 +273,21 @@ void dir_read(zif_bits_t zif_val)
     port_bits_t port_val = {0};
 
     dir_read_all(port_val);
+    DEBUG(print_port_bits("  dir_read port_bits", port_val));
     ports_to_zif_pins(port_val, zif_val);
+    DEBUG(print_zif_bits("  dir_read zif_bits", zif_val));
 }
 
 void zif_write(zif_bits_t zif_val)
 {
     port_bits_t port_val = {0};
 
+    DEBUG(print_zif_bits("  zif_write zif_bits", zif_val));
+
     //Read control signals
     port_read_all(port_val);
     zif_pins_to_ports(zif_val, port_val);
-
+    DEBUG(print_port_bits("  zif_write port_bits", port_val));
     port_write_all(port_val);
 }
 
@@ -284,10 +296,13 @@ void zif_read(zif_bits_t zif_val)
     port_bits_t port_val = {0};
 
     port_read_all(port_val);
+    DEBUG(print_port_bits("  zif_read port_bits", port_val));
+
     ports_to_zif_pins(port_val, zif_val);
+    DEBUG(print_zif_bits("  zif_read zif_bits", zif_val));
 }
 
-static void zif_pins_to_ports(zif_bits_t zif, port_bits_t port)
+void zif_pins_to_ports(zif_bits_t zif, port_bits_t port)
 {
     for(unsigned int pin_no = 0; pin_no < (sizeof(zif2port)/sizeof(port_info_t)); pin_no++)
     {
@@ -306,7 +321,7 @@ static void zif_pins_to_ports(zif_bits_t zif, port_bits_t port)
 }
 
 
-static void ports_to_zif_pins(port_bits_t port, zif_bits_t zif)
+void ports_to_zif_pins(port_bits_t port, zif_bits_t zif)
 {
     for(unsigned int pin_no = 0; pin_no < (sizeof(zif2port)/sizeof(port_info_t)); pin_no++)
     {
@@ -619,3 +634,29 @@ void vdd_val(unsigned char setting)
 
     __delay_ms(2);
 }
+
+void pupd(int tristate, int val) {
+    PUPD_TRIS = tristate;
+    PUPD_PORT = val;
+}
+
+void print_port_bits(const char *prefix, port_bits_t p_bits) {
+    printf("%s: A:%02X B:%02X C:%02X D:%02X E:%02X F:%02X G:%02X H:%02X J:%02X\r\n",
+            prefix,
+            p_bits[0], p_bits[1], p_bits[2], p_bits[3], p_bits[4],
+            p_bits[5], p_bits[6], p_bits[7], p_bits[8]);
+}
+
+void print_zif_bits(const char *prefix, zif_bits_t zif_val) {
+    printf("%s: %02X %02X %02X %02X %02X\r\n",
+            prefix,
+            zif_val[0], zif_val[1], zif_val[2], zif_val[3], zif_val[4]);
+}
+
+void print_latch_bits(const char *prefix, latch_bits_t lb) {
+    printf("%s: 0:%02X 1:%02X 2:%02X 3:%02X 4:%02X 5:%02X 6:%02X 7:%02X\r\n",
+            prefix,
+            lb[0], lb[1], lb[2], lb[3],
+            lb[4], lb[5], lb[6], lb[7]);
+}
+

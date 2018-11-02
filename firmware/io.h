@@ -62,12 +62,30 @@ typedef struct latch_info {
 #define VID_11 PORTHbits.RH7
 #define VID_12 PORTFbits.RF2
 
+#define VID_00_TRIS TRISFbits.TRISF5
+#define VID_01_TRIS TRISFbits.TRISF6
+#define VID_02_TRIS TRISFbits.TRISF7
+#define VID_10_TRIS TRISHbits.TRISH6
+#define VID_11_TRIS TRISHbits.TRISH7
+#define VID_12_TRIS TRISFbits.TRISF2
+
+
+
 #define GND20 PORTCbits.RC1
 #define OVC PORTBbits.RB0
 
 #define LED PORTCbits.RC0
 
-#define MYSTERY PORTBbits.RB1
+/*
+Connects to resistors on P1, P2, P3, P4, P7, P8, P11, P12, P16, P30
+For some specific chips?
+Maybe for loopback testing?
+Maybe a DAC?
+*/
+#define PUPD_PORT PORTBbits.RB1
+#define PUPD_TRIS TRISBbits.TRISB1
+#define MYSTERY BUS_PUPD
+
 
 // Prototypes
 /*
@@ -116,10 +134,13 @@ int vdd_state(void);
 
 void set_gnd(const_zif_bits_t zif);
 
+void pupd(int tristate, int val);
+
+
 //Low level API
 //MCU
 //Write MCU pin output values
-//You must also set tristate (dir_write_all()) if you want to actually drive out
+//You must also clear tristate (dir_write_all()) if you want to actually drive out
 void port_write_all(port_bits_t p_bits);
 //Read MCU pins
 void port_read_all(port_bits_t p_bits);
@@ -129,8 +150,12 @@ void dir_write_all(port_bits_t p_bits);
 void dir_read_all(port_bits_t p_bits);
 //This should always return 0x00 (no latches enabled)
 int OEn_state(void);
+void ports_to_zif_pins(port_bits_t port, zif_bits_t zif);
+void zif_pins_to_ports(zif_bits_t zif, port_bits_t port);
 
-
+void print_port_bits(const char *prefix, port_bits_t p_bits);
+void print_zif_bits(const char *prefix, zif_bits_t zif_val);
+void print_latch_bits(const char *prefix, latch_bits_t lb);
 
 #ifdef	__cplusplus
 }
