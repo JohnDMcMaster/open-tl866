@@ -16,15 +16,15 @@ VDDS = (VDD_30, VDD_35, VDD_46, VDD_51, VDD_43, VDD_48, VDD_60,
 # My measurements: 2.99, 3.50, 4.64, 5.15, 4.36, 4.86, 6.01, 6.52
 
 
-class Tl866Driver():
-    def __init__(self, device, ser_timeout=1.0, verbose=False):
+class OTL866:
+    def __init__(self, device, ser_timeout=0.5, verbose=False):
         self.handle = serial.Serial(
             device, timeout=ser_timeout, baudrate=115200, writeTimeout=0)
         self.ser.flushInput()
         self.ser.flushOutput()
         self.verbose = verbose
 
-    def expect(self, s, timeout=3.0):
+    def expect(self, s, timeout=0.5):
         return self.e.expect(s, timeout=timeout)
 
     def cmd(self, cmd, *args):
@@ -56,10 +56,10 @@ class Tl866Driver():
         assert val in VPPS
         self.cmd('P', val)
 
-    def vpp_pins(self, zifstr):
+    def vpp_pins(self, val):
         '''VPP: set active pins'''
-        assert len(zifstr) == 5
-        self.cmd('p', zifstr)
+        assert 0 <= val <= 0xFFFFFFFFFF
+        self.cmd('p', '%010X' %  val)
 
     '''
     VDD
@@ -74,38 +74,38 @@ class Tl866Driver():
         assert val in VDDS
         self.cmd('D', val)
 
-    def vdd_pins(self, zifstr):
+    def vdd_pins(self, val):
         '''VDD: set active pins'''
-        assert len(zifstr) == 5
-        self.cmd('d', zifstr)
+        assert 0 <= val <= 0xFFFFFFFFFF
+        self.cmd('d', '%010X' %  val)
 
     '''
     GND
     '''
 
-    def gnd_pins(self, zifstr):
+    def gnd_pins(self, val):
         '''VDD: set active pins'''
-        assert len(zifstr) == 5
-        self.cmd('g', zifstr)
+        assert 0 <= val <= 0xFFFFFFFFFF
+        self.cmd('g', '%010X' %  val)
 
     '''
     I/O
     '''
 
-    def io_tri(self, zifstr):
+    def io_tri(self, val):
         '''write ZIF tristate setting'''
-        assert len(zifstr) == 5
-        self.cmd('t', zifstr)
+        assert 0 <= val <= 0xFFFFFFFFFF
+        self.cmd('t', '%010X' %  val)
 
     def io_trir(self):
         '''read ZIF tristate setting'''
         self.cmd('T')
         assert 0, 'FIXME: read'
 
-    def io_w(self, zifstr):
+    def io_w(self, val):
         '''write ZIF pins'''
-        assert len(zifstr) == 5
-        self.cmd('z', zifstr)
+        assert 0 <= val <= 0xFFFFFFFFFF
+        self.cmd('z', '%010X' %  val)
 
     def io_r(self):
         '''read ZIF pins'''

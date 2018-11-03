@@ -1,18 +1,32 @@
 #!/usr/bin/env python3
 
-import pytl866
-import sys
+from otl866 import driver, util
+import binascii
 
-if len(sys.argv) < 2:
-    print("Usage: pin_test.py [port]")
-    exit(-1)
+def run(port):
+    tl = driver.OTL866(port)
 
-with pytl866.Tl866Context(sys.argv[1]) as tl:
-    tl.cmd_echo_off()
     tl.cmd_zif_dir(0)
-    masks = [i << j for j in range(0, 40, 8) for i in range(256)]
 
-    for m in masks:
-        tl.cmd_zif_write(m)
-        print("Write: ", format(m, "010X"))
-        print("Read: ", format(tl.cmd_zif_read(), "010X"))
+    for pin in range(40):
+        pin_off = pin // 8
+        pin_mask = 1 << (pin % 8)
+
+        buff_w = bytearray(5)
+        buff_w[pin_off] = pin_mask
+
+        tl.io_w(buff_w)
+        print("Write: %s" % binascii.hexlify(buff_w))
+        print("Read: %s" % binascii.hexlify(tl.io_r()))
+
+def main():
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Write pins and read back value')
+    parser.add_argument('--port', default=util.default_port(), help='Device serial port')
+    args = parser.parse_args()
+    
+    run(args.port)
+
+if __name__ == "__main__":
+    main()
