@@ -1,106 +1,130 @@
+'''
+Exposes low level primitives and nothing more
+'''
+
 import re
 import serial
 from time import sleep
 
-(VPP_98, VPP_126, VPP_140, VPP_166, VPP_144, VPP_171, VPP_185, VPP_212) = range(8)
+VPPS = (VPP_98, VPP_126, VPP_140, VPP_166, VPP_144, VPP_171, VPP_185, VPP_212) = range(8)
 # My measurements: 9.83, 12.57, 14.00, 16.68, 14.46, 17.17, 18.56, 21.2
 
-(VDD_30, VDD_35, VDD_46, VDD_51, VDD_43, VDD_48, VDD_60, VDD_65) = range(8)
+VDDS = (VDD_30, VDD_35, VDD_46, VDD_51, VDD_43, VDD_48, VDD_60, VDD_65) = range(8)
 # My measurements: 2.99, 3.50, 4.64, 5.15, 4.36, 4.86, 6.01, 6.52
 
 class Tl866Driver():
-    def __init__(self, device, baud_rate=115200, ignore_fail=True):
-        self.read_re = re.compile(rb"(?:Ok|Fail)\s*([0-9A-F]{1,10})(?:\n|\r\n)")
-        self.handle = serial.Serial(device, baud_rate)
-        self.ignore_fail = True  # Not used right now, but perhaps check whether command errored out?
+    def __init__(self, device, ser_timeout=1.0, verbose=False):
+        self.handle = serial.Serial(device, timeout=ser_timeout, baudrate=115200, writeTimeout=0)
+        self.ser.flushInput()
+        self.ser.flushOutput()
+        self.verbose = verbose
 
-    # Create a command without actually sending it. Useful for sending
-    # commands in bulk.
-    def mk_cmd(self, cmd, val):
-        return (cmd + " " + format(val, "010X") + "\n").encode("utf-8")
+    def expect(self, s, timeout=3.0):
+        return self.e.expect(s, timeout=timeout)
 
-    def get_retval(self):
-        ret = self.handle.readline()
-        match = self.read_re.match(ret)
+    def cmd(self, cmd, *args):
+        '''Send raw command and get string result'''
+        cmd = str(cmd)
+        if len(cmd) != 1:
+            raise ValueError('Invalid cmd %s' % cmd)
+        # So far no commands have more than one arg
+        if len(args) > 1:
+            raise ValueError('cmd must take no more than 1 arg')
+        self.ser.write(cmd + ''.join([str(arg) for arg in args]) + "\r\n")
+        self.ser.flush()
 
-        if match is None:
-            raise DriverError(ret, "Unexpected response from Tl866.")
-        else:
-            return int(match.group(1), 16)
-
-    def mk_and_send_cmd(self, cmd, val):
-        cmd_str = self.mk_cmd(cmd, val)
-        self.handle.write(cmd_str)
-        return self.get_retval()
-
-    # Thin command wrappers
-    def cmd_vdd_disable(self):
-        return self.mk_and_send_cmd("dd", 0)
-
-    def cmd_vdd_enable(self):
-        return self.mk_and_send_cmd("de", 0)
-
-    def cmd_vdd_set(self, val):
-        return self.mk_and_send_cmd("ds", val)
-
-    def cmd_vdd_write(self, val):
-        return self.mk_and_send_cmd("dw", val)
-
-    def cmd_echo_on(self):
-        return self.mk_and_send_cmd("ee", 0)
-
-    def cmd_echo_off(self):
-        return self.mk_and_send_cmd("eo", 0)
-
-    def cmd_gnd_write(self, val):
-        return self.mk_and_send_cmd("gw", val)
-
-    def cmd_led_on(self):
-        return self.mk_and_send_cmd("ll", 0)
-
-    def cmd_led_off(self):
-        return self.mk_and_send_cmd("lo", 0)
-
-    def cmd_led_query(self):
-        return self.mk_and_send_cmd("lq", 0)
-
-    def cmd_mystery_on(self):
-        return self.mk_and_send_cmd("mm", 0)
-
-    def cmd_mystery_off(self):
-        return self.mk_and_send_cmd("mo", 0)
-
-    def cmd_vpp_disable(self):
-        return self.mk_and_send_cmd("pd", 0)
-
-    def cmd_vpp_enable(self):
-        return self.mk_and_send_cmd("pe", 0)
-
-    def cmd_vpp_set(self, val):
-        return self.mk_and_send_cmd("ps", val)
-
-    def cmd_vpp_write(self, val):
-        return self.mk_and_send_cmd("pw", val)
-
-    def cmd_zif_dir(self, val):
-        return self.mk_and_send_cmd("zd", val)
-
-    def cmd_zif_dir_read(self):
-        return self.mk_and_send_cmd("ze", 0)
-
-    def cmd_zif_read(self):
-        return self.mk_and_send_cmd("zr", 0)
-
-    def cmd_zif_write(self, val):
-        return self.mk_and_send_cmd("zw", val)
-
-    def cmd_reset_to_bootloader(self):
-        cmd = self.mk_cmd("rb", 0)
-        self.handle.write(cmd)
-        self.handle.close()
+        self.expect('CMD>')
+        if self.verbose:
+            print('cmd %s: before %s' % (cmd, self.e.before.strip()))
+        return self.e.before
 
 
-class DriverError(Exception):
-    def __init__(self, str, message):
-        self.str = str
-        self.message = message
+    '''
+    VPP
+    '''
+
+    def vpp_en(self, enable=True):
+        '''VPP: enable and/or disable'''
+        self.cmd('E', int(bool(enable)))
+
+    def vpp_volt(self, val):
+        '''VPP: set voltage enum'''
+        assert val in VPPS
+        self.cmd('P', val)
+
+    def vpp_pins(self, zifstr):
+        '''VPP: set active pins'''
+        assert len(zifstr) == 5
+        self.cmd('p', zifstr)
+
+    '''
+    VDD
+    '''
+
+    def vdd_en(self, enable=True):
+        '''VDD: enable and/or disable'''
+        self.cmd('e', int(bool(enable)))
+
+    def vdd_volt(self, val):
+        '''VDD: set voltage enum'''
+        assert val in VDDS
+        self.cmd('D', val)
+
+    def vdd_pins(self, zifstr):
+        '''VDD: set active pins'''
+        assert len(zifstr) == 5
+        self.cmd('d', zifstr)
+
+    '''
+    GND
+    '''
+
+    def gnd_pins(self, zifstr):
+        '''VDD: set active pins'''
+        assert len(zifstr) == 5
+        self.cmd('g', zifstr)
+
+    '''
+    I/O
+    '''
+
+    def io_tri(self, zifstr):
+        '''write ZIF tristate setting'''
+        assert len(zifstr) == 5
+        self.cmd('t', zifstr)
+
+    def io_trir(self):
+        '''read ZIF tristate setting'''
+        self.cmd('T')
+        assert 0, 'FIXME: read'
+
+    def io_w(self, zifstr):
+        '''write ZIF pins'''
+        assert len(zifstr) == 5
+        self.cmd('z', zifstr)
+
+    def io_r(self):
+        '''read ZIF pins'''
+        self.cmd('Z')
+        assert 0, 'FIXME: read'
+
+    '''
+    Misc
+    '''
+
+    def led(self, val):
+        '''Write LED on/off'''
+        self.cmd('l', int(bool(val)))
+
+    def ledr(self):
+        '''Read LED state'''
+        self.cmd('L')
+        assert 0, 'FIXME: read'
+
+    def pupd(self, val):
+        '''pullup/pulldown'''
+        self.cmd('m')
+
+    def bootloader(self):
+        '''reset to bootloader'''
+        self.cmd('b')

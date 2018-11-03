@@ -1,6 +1,8 @@
+#!/usr/bin/env python3
+
 import argparse
 
-import pytl866.bootloader.cli
+import ot866.bootloader.cli
 
 
 def main():
@@ -9,7 +11,7 @@ def main():
     )
 
     subgroup = parser.add_subparsers()
-    pytl866.bootloader.cli.build_argparse(subgroup)
+    ot866.bootloader.cli.build_argparse(subgroup)
 
     args = parser.parse_args()
     args.func(args)
