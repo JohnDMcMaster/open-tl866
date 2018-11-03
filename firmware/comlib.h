@@ -20,6 +20,12 @@ void com_println(const char * str);
 //xc18 can't handle 
 //#define com_printfln(s, ...) printf(s "\r\n", __VA_ARGS__)
 
+/*
+Return a mutable buffer than can be used until the next call
+Intended to be used with strtok() type functions
+*/
+char *com_cmd_prompt(void);
+
 extern unsigned comblib_drops;
 
 #endif

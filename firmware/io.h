@@ -84,7 +84,7 @@ Maybe a DAC?
 */
 #define PUPD_PORT PORTBbits.RB1
 #define PUPD_TRIS TRISBbits.TRISB1
-#define MYSTERY BUS_PUPD
+#define MYSTERY PUPD_PORT
 
 
 // Prototypes

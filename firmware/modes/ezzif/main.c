@@ -173,53 +173,53 @@ static inline void eval_command(unsigned char * cmd)
 
     ezzif_reset();
     switch (cmd_t[0]) {
-        case '0':
-            test_io();
-            break;
+    case '0':
+        test_io();
+        break;
 
-        case '1':
-            test_bus();
-            break;
+    case '1':
+        test_bus();
+        break;
 
-        case '2':
-            test_vpp();
-            break;
+    case '2':
+        test_vpp();
+        break;
 
-        case '3':
-            test_vdd();
-            break;
+    case '3':
+        test_vdd();
+        break;
 
-        case '4':
-            test_rails();
-            break;
+    case '4':
+        test_rails();
+        break;
 
-        case '5':
-            test_gnd();
-            break;
+    case '5':
+        test_gnd();
+        break;
 
-        case 'd': {
-            main_debug = 1;
-            ezzif_print_debug();
-            break;
-        }
+    case 'd': {
+        main_debug = 1;
+        ezzif_print_debug();
+        break;
+    }
 
-        case 'D': {
-            main_debug = 0;
-            break;
-        }
+    case 'D': {
+        main_debug = 0;
+        break;
+    }
 
-        case '?':
-        case 'h':
-            print_help();
-            break;
-        case 'V':
-            //print_version();
-            break;
-        //empty command
-        case 0:
-            break;
-        default:
-            printf("Error: Unknown command.");
+    case '?':
+    case 'h':
+        print_help();
+        break;
+    case 'V':
+        //print_version();
+        break;
+    //empty command
+    case 0:
+        break;
+    default:
+        printf("Error: Unknown command.");
     }
     ezzif_reset();
 }
@@ -234,9 +234,10 @@ void mode_main(void) {
     print_help();
     enable_echo();
 
-    unsigned char * cmd;
 
     while(1) {
+        unsigned char * cmd;
+
         printf("\r\nCMD> ");
         cmd = com_readline();
         com_println("");

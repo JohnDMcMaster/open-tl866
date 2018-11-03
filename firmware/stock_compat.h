@@ -1,6 +1,8 @@
 #ifndef _STOCK_COMPAT_H
 #define _STOCK_COMPAT_H
 
+#include <stdint.h>
+
 #define STOCK_ENDPOINT 1
 
 extern struct serial_block_t {

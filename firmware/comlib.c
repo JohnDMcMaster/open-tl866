@@ -155,3 +155,12 @@ void putch(const unsigned char c)
     send_char_sync(COM_ENDPOINT, c);
 }
 
+char *com_cmd_prompt(void) {
+    char *cmd;
+
+    printf("\r\nCMD> ");
+    cmd = com_readline();
+    com_println("");
+    return cmd;
+}
+
