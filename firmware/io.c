@@ -615,8 +615,6 @@ void set_gnd(const_zif_bits_t zif)
 
 void vpp_val(unsigned char setting)
 {
-    setting &= 0x07;
-
     VID_10 = (setting & 0x01) ? 1 : 0;
     VID_11 = (setting & 0x02) ? 1 : 0;
     VID_12 = (setting & 0x04) ? 1 : 0;
@@ -626,8 +624,6 @@ void vpp_val(unsigned char setting)
 
 void vdd_val(unsigned char setting)
 {
-    setting &= 0x07;
-
     VID_00 = (setting & 0x01) ? 1 : 0;
     VID_01 = (setting & 0x02) ? 1 : 0;
     VID_02 = (setting & 0x04) ? 1 : 0;
