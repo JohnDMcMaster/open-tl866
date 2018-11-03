@@ -1,6 +1,6 @@
 #include "comlib.h"
 
-int echo = 0;
+int echo = 1;
 unsigned comblib_drops = 0;
 
 inline void enable_echo()
