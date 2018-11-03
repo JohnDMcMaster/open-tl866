@@ -4,13 +4,13 @@ from setuptools import setup
 
 
 setup(
-    name="pytl866",
+    name="otl866",
     version=0.1,
     description="Python Interface to Open-TL866 ASCII protocol",
     author="William D. Jones",
     author_email="thor0505@comcast.net",
     license="BSD",
-    packages=["pytl866", "pytl866/bootloader"],
+    packages=["otl866", "otl866/bootloader"],
     install_requires=[
         "intelhex",
         "pyserial",
@@ -18,7 +18,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            "tl866=pytl866.cli:main",
+            "otl866=otl866.cli:main",
         ],
     },
 )
