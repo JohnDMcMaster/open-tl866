@@ -1,4 +1,3 @@
-
 from ctypes import *
 import itertools
 import time
@@ -15,12 +14,8 @@ class GUID(Structure):
 
     @staticmethod
     def from_uuid(value):
-        return GUID(
-            value.time_low,
-            value.time_mid,
-            value.time_hi_version,
-            (c_byte * 8).from_buffer_copy(value.bytes[8:])
-        )
+        return GUID(value.time_low, value.time_mid, value.time_hi_version,
+                    (c_byte * 8).from_buffer_copy(value.bytes[8:]))
 
 
 ERROR_NO_MORE_ITEMS = 259
@@ -28,9 +23,7 @@ ERROR_INSUFFICIENT_BUFFER = 122
 
 INVALID_HANDLE_VALUE = -1
 
-
 setupapi = windll.setupapi
-
 
 HDEVINFO = c_void_p
 
@@ -139,9 +132,8 @@ def iter_SetupDiEnumDeviceInterfaces(devinfoset, devinfo, classguid):
     for idx in itertools.count():
         data = SP_DEVICE_INTERFACE_DATA()
         data.cbSize = sizeof(data)
-        ok = SetupDiEnumDeviceInterfaces(
-            devinfoset, devinfo, classguid, idx, data
-        )
+        ok = SetupDiEnumDeviceInterfaces(devinfoset, devinfo, classguid, idx,
+                                         data)
         if ok:
             yield data
         else:
@@ -184,9 +176,9 @@ def call_SetupDiGetDeviceInterfaceDetail(devinfoset, iface):
         devinfoset,
         iface,
         None,  # DeviceInterfaceDetailData
-        0,     # DeviceInterfaceDetailDataSize
+        0,  # DeviceInterfaceDetailDataSize
         size,
-        None   # DeviceInfoData
+        None  # DeviceInfoData
     )
     if not ok:
         err = GetLastError()
@@ -205,7 +197,7 @@ def call_SetupDiGetDeviceInterfaceDetail(devinfoset, iface):
         data,
         size,
         None,  # RequiredSize
-        None   # DeviceInfoData
+        None  # DeviceInfoData
     )
     if not ok:
         raise WinError()
@@ -215,7 +207,6 @@ def call_SetupDiGetDeviceInterfaceDetail(devinfoset, iface):
 
 
 kernel32 = windll.kernel32
-
 
 GENERIC_READ = 0x80000000
 GENERIC_WRITE = 0x40000000
@@ -302,9 +293,7 @@ def call_DeviceIoControl(*args):
         raise WinError()
 
 
-TL866_GUID = GUID.from_uuid(
-    UUID('{85980D83-32B9-4ba1-8FDF-12A711B99CA2}')
-)
+TL866_GUID = GUID.from_uuid(UUID('{85980D83-32B9-4ba1-8FDF-12A711B99CA2}'))
 
 TL866_IOCTL_READ = 0x00222004
 TL866_IOCTL_WRITE = 0x00222000
@@ -317,13 +306,11 @@ def list_devices():
         TL866_GUID,
         None,  # Enumerator
         None,  # hwndParent
-        DIGCF_PRESENT | DIGCF_DEVICEINTERFACE
-    )
+        DIGCF_PRESENT | DIGCF_DEVICEINTERFACE)
 
     try:
-        interfaces = iter_SetupDiEnumDeviceInterfaces(
-            devinfoset, None, TL866_GUID
-        )
+        interfaces = iter_SetupDiEnumDeviceInterfaces(devinfoset, None,
+                                                      TL866_GUID)
         for iface in interfaces:
             path = call_SetupDiGetDeviceInterfaceDetail(devinfoset, iface)
             devices.append(WindowsDevice(path))
@@ -349,7 +336,7 @@ class WindowsDevice():
             None,  # lpSecurityAttributes
             OPEN_EXISTING,
             FILE_ATTRIBUTE_NORMAL,
-            None   # hTemplateFile
+            None  # hTemplateFile
         )
 
     def close(self):
@@ -398,5 +385,5 @@ class WindowsDevice():
             out_buffer,
             sizeof(out_buffer),
             None,  # lpBytesReturned
-            None   # lpOverlapped
+            None  # lpOverlapped
         )

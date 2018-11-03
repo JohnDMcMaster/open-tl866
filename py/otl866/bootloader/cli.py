@@ -26,9 +26,8 @@ def cmd_identify(args):
     report = dev.report()
 
     if report.status == dev.STATUS_BOOTLOADER:
-        sys.stdout.write("TL866%s Bootloader\n" % (
-            'A' if report.model == dev.MODEL_TL866A else 'CS',
-        ))
+        sys.stdout.write("TL866%s Bootloader\n" %
+                         ('A' if report.model == dev.MODEL_TL866A else 'CS', ))
 
     elif report.hardware_version == 255:
         sys.stdout.write("TL866%s Open Firmware v%d.%d\n" % (
@@ -125,7 +124,7 @@ def cmd_update(args):
     addr = 0x1800
     cryptbuf = image.encrypt(target_key)
     for off in range(0, len(cryptbuf), 80):
-        dev.write(addr, 80, cryptbuf[off:off+80])
+        dev.write(addr, 80, cryptbuf[off:off + 80])
         addr += 64
 
     sys.stdout.write("success!\n")
@@ -156,7 +155,8 @@ def build_argparse(parent):
     )
 
     update.add_argument(
-        '--stock', '-s',
+        '--stock',
+        '-s',
         help="Load a stock update.dat file instead of Intel Hex.",
         action='store_true',
     )

@@ -17,6 +17,7 @@ ce = 20
 oe = 22
 pgm = 27
 
+
 # 1-based index
 def zif_to_int(ls):
     i = 0
@@ -24,10 +25,12 @@ def zif_to_int(ls):
         i = i + 2**(bit - 1)
     return i
 
+
 # 1-based index
 def eprom_to_int(pins):
     zif = [eprom_to_zif[p - 1] for p in pins]
     return zif_to_int(zif)
+
 
 def addr_bits(adr):
     tmp = adr
@@ -57,8 +60,10 @@ def get_data(read_val):
 
     return data_val
 
+
 def idle():
     return eprom_to_int([ce, oe])
+
 
 def print_zif(v):
     print(format(v, "010X"))
@@ -83,9 +88,11 @@ with pytl866.Tl866Context(sys.argv[1]) as tl:
 
     start = timer()
     for i in range(8192):
-        tl.cmd_zif_write(addr_bits(i) | eprom_to_int([pgm, ce, oe])) # Set up addr
-        tl.cmd_zif_write(addr_bits(i) | eprom_to_int([pgm, oe])) # CE low
-        tl.cmd_zif_write((addr_bits(i) & ~eprom_to_int([oe, ce])) | eprom_to_int([pgm])) # OE low
+        tl.cmd_zif_write(
+            addr_bits(i) | eprom_to_int([pgm, ce, oe]))  # Set up addr
+        tl.cmd_zif_write(addr_bits(i) | eprom_to_int([pgm, oe]))  # CE low
+        tl.cmd_zif_write((addr_bits(i) & ~eprom_to_int([oe, ce]))
+                         | eprom_to_int([pgm]))  # OE low
 
         res += get_data(tl.cmd_zif_read()).to_bytes(1, byteorder="little")
     end = timer()
@@ -94,4 +101,5 @@ with pytl866.Tl866Context(sys.argv[1]) as tl:
         fp.write(res)
 
     elapsed = end - start
-    print("Done. Read 8192 bytes in {} seconds ({} bytes/sec)".format(elapsed, 8192/elapsed))
+    print("Done. Read 8192 bytes in {} seconds ({} bytes/sec)".format(
+        elapsed, 8192 / elapsed))

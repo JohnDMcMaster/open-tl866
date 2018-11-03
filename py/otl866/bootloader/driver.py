@@ -8,7 +8,6 @@ import usb.util
 if sys.platform == 'win32':
     from pytl866.bootloader import windows
 
-
 USB_VENDOR = 0x04D8
 USB_PRODUCT = 0xE11C
 
@@ -18,8 +17,7 @@ def list_devices():
 
     try:
         devices.extend([
-            UsbDevice(d)
-            for d in usb.core.find(
+            UsbDevice(d) for d in usb.core.find(
                 idVendor=USB_VENDOR,
                 idProduct=USB_PRODUCT,
                 find_all=True,
@@ -54,15 +52,15 @@ class UsbDevice():
             time.sleep(0.100)  # interval = 100ms
             dev = usb.core.find(
                 port_numbers=self.device.port_numbers,
-                custom_match=lambda d: d.address != self.device.address
-            )
+                custom_match=lambda d: d.address != self.device.address)
 
         if dev is None:
             raise RuntimeError("device did not reconnect after reset")
 
         if dev.idVendor != USB_VENDOR or dev.idProduct != USB_PRODUCT:
-            raise RuntimeError("wrong device reconnected after reset (exp: %04X:%04X, got %04X:%04X)" %
-                    (USB_VENDOR, USB_PRODUCT, dev.idVendor, dev.idProduct))
+            raise RuntimeError(
+                "wrong device reconnected after reset (exp: %04X:%04X, got %04X:%04X)"
+                % (USB_VENDOR, USB_PRODUCT, dev.idVendor, dev.idProduct))
 
         self.device = dev
 
@@ -139,9 +137,11 @@ class BootloaderDriver():
         self.device.write(
             # struct doesn't support 3-byte fields, so pack it by hand...
             bytes([
-                self.CMD_WRITE & 0xFF, (self.CMD_WRITE >> 8) & 0xFF,
-                length & 0xFF, (length >> 8) & 0xFF,
-                address & 0xFF, (address >> 8) & 0xFF,
+                self.CMD_WRITE & 0xFF,
+                (self.CMD_WRITE >> 8) & 0xFF,
+                length & 0xFF,
+                (length >> 8) & 0xFF,
+                address & 0xFF,
+                (address >> 8) & 0xFF,
                 (address >> 16) & 0xFF,
-            ]) + bytes(data)
-        )
+            ]) + bytes(data))

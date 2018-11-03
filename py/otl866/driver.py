@@ -6,15 +6,20 @@ import re
 import serial
 from time import sleep
 
-VPPS = (VPP_98, VPP_126, VPP_140, VPP_166, VPP_144, VPP_171, VPP_185, VPP_212) = range(8)
+VPPS = (VPP_98, VPP_126, VPP_140, VPP_166, VPP_144, VPP_171, VPP_185,
+        VPP_212) = range(8)
 # My measurements: 9.83, 12.57, 14.00, 16.68, 14.46, 17.17, 18.56, 21.2
 
-VDDS = (VDD_30, VDD_35, VDD_46, VDD_51, VDD_43, VDD_48, VDD_60, VDD_65) = range(8)
+VDDS = (VDD_30, VDD_35, VDD_46, VDD_51, VDD_43, VDD_48, VDD_60,
+        VDD_65) = range(8)
+
 # My measurements: 2.99, 3.50, 4.64, 5.15, 4.36, 4.86, 6.01, 6.52
+
 
 class Tl866Driver():
     def __init__(self, device, ser_timeout=1.0, verbose=False):
-        self.handle = serial.Serial(device, timeout=ser_timeout, baudrate=115200, writeTimeout=0)
+        self.handle = serial.Serial(
+            device, timeout=ser_timeout, baudrate=115200, writeTimeout=0)
         self.ser.flushInput()
         self.ser.flushOutput()
         self.verbose = verbose
@@ -37,7 +42,6 @@ class Tl866Driver():
         if self.verbose:
             print('cmd %s: before %s' % (cmd, self.e.before.strip()))
         return self.e.before
-
 
     '''
     VPP

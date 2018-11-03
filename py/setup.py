@@ -2,7 +2,6 @@
 from setuptools import setup
 # To use a consistent encoding
 
-
 setup(
     name="otl866",
     version=0.1,
