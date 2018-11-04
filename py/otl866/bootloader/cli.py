@@ -4,6 +4,7 @@ from intelhex import IntelHex
 
 from otl866.bootloader import driver, firmware
 from otl866.bitbang import Bitbang
+from otl866 import util
 
 
 def find_dev():
@@ -116,9 +117,10 @@ def load_keys(args, stock, image, model_a):
 
 
 def cmd_update(args):
-    if args.reset_tty:
+    reset_tty = args.reset_tty or util.default_port()
+    if reset_tty:
         sys.stdout.write("resetting to bootloader via serial\n")
-        otl866_reset(args.reset_tty)
+        otl866_reset(reset_tty)
 
     dev = find_dev()
 
