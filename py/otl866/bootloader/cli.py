@@ -71,6 +71,7 @@ def reset_to_bootloader(dev):
         sys.stderr.write("device did not reset to booloader\n")
         sys.exit(2)
 
+
 def read_fw(args, model_a):
     # load the firmware image
     stock = None
@@ -90,6 +91,7 @@ def read_fw(args, model_a):
                 encrypted=False,
             )
     return stock, image
+
 
 def load_keys(args, stock, image, model_a):
     # load encryption and erase keys
@@ -119,12 +121,11 @@ def cmd_update(args):
         otl866_reset(args.reset_tty)
 
     dev = find_dev()
-    print(dev)
 
     report = dev.report()
     model_a = (report.model == dev.MODEL_TL866A)
     if report.status != dev.STATUS_BOOTLOADER:
-        reset_to_bootloader()
+        reset_to_bootloader(dev)
 
     stock, image = read_fw(args, model_a)
     target_key, target_erase = load_keys(args, stock, image, model_a)
@@ -142,9 +143,8 @@ def cmd_update(args):
         dev.write(addr, 80, cryptbuf[off:off + 80])
         addr += 64
 
-
     report = dev.report()
-    sys.stdout.write("done, result: %s\n" % (report.status,))
+    sys.stdout.write("done, result: %s\n" % (report.status, ))
     # On failure does it exit bootloader?
     if report.status != dev.STATUS_NORMAL:
         sys.stdout.write("MCU reset\n")

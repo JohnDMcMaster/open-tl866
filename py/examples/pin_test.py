@@ -3,6 +3,7 @@
 from otl866 import bitbang, util
 import binascii
 
+
 def run(port):
     tl = bitbang.Bitbang(port)
 
@@ -19,14 +20,18 @@ def run(port):
         print("Write: %s" % binascii.hexlify(buff_w))
         print("Read: %s" % binascii.hexlify(tl.io_r()))
 
+
 def main():
     import argparse
 
-    parser = argparse.ArgumentParser(description='Write pins and read back value')
-    parser.add_argument('--port', default=util.default_port(), help='Device serial port')
+    parser = argparse.ArgumentParser(
+        description='Write pins and read back value')
+    parser.add_argument(
+        '--port', default=util.default_port(), help='Device serial port')
     args = parser.parse_args()
-    
+
     run(args.port)
+
 
 if __name__ == "__main__":
     main()

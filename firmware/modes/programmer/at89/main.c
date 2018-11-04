@@ -767,6 +767,8 @@ static inline void eval_command(unsigned char * cmd)
     case 'b':
         stock_reset_to_bootloader();
         break;
+    case 0:
+        break;
     default:
         printf("Error: Unknown command.");
     }

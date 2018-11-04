@@ -63,27 +63,28 @@ def idle():
 def print_zif(v):
     print(format(v, "010X"))
 
+
 def run(port, fn_out=None):
     size = 8192
 
     tl = bitbang.Bitbang(util.default_port())
 
     tl.cmd_echo_off()
-    
+
     # Default direction (all output).
     tl.cmd_zif_dir(0)
-    
+
     # Set voltages
     tl.cmd_vpp_write(0)
     tl.cmd_gnd_write(0x0000002000)
     tl.cmd_vdd_write(1 << 39)
     tl.cmd_vdd_set(3)
-    
+
     # Set data lines as input.
     tl.cmd_zif_dir(eprom_to_int(d_lines))
     res = bytearray()
     print("Initialization done. Starting read loop...")
-    
+
     start = timer()
     for i in range(size):
         tl.cmd_zif_write(
@@ -91,26 +92,29 @@ def run(port, fn_out=None):
         tl.cmd_zif_write(addr_bits(i) | eprom_to_int([pgm, oe]))  # CE low
         tl.cmd_zif_write((addr_bits(i) & ~eprom_to_int([oe, ce]))
                          | eprom_to_int([pgm]))  # OE low
-    
+
         res += get_data(tl.cmd_zif_read()).to_bytes(1, byteorder="little")
     end = timer()
 
     if fn_out:
         with open(fn_out, "wb") as f:
             f.write(res)
-    
+
     elapsed = end - start
     print("Done. Read 8192 bytes in {} seconds ({} bytes/sec)".format(
         elapsed, size / elapsed))
+
 
 def main():
     import argparse
 
     parser = argparse.ArgumentParser(description='Read EPROM')
-    parser.add_argument('--port', default=util.default_port(), help='Device serial port')
+    parser.add_argument(
+        '--port', default=util.default_port(), help='Device serial port')
     args = parser.parse_args()
-    
+
     run(args.port)
+
 
 if __name__ == "__main__":
     main()

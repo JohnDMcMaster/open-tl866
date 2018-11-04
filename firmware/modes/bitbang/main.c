@@ -168,6 +168,8 @@ static inline void eval_command(char * cmd)
         print_help();
         break;
 
+    case 0:
+        break;
     default:
         com_print("Error: Unknown command\r\n");
         break;

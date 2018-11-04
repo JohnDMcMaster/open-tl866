@@ -23,14 +23,14 @@ O_USB_PRODUCT = 0x8661
 
 VIDS_PIDS = [(AE_USB_VENDOR, AE_USB_PRODUCT), (O_USB_VENDOR, O_USB_PRODUCT)]
 
+
 def list_devices():
     devices = list()
 
     for (vid, pid) in VIDS_PIDS:
         try:
             devices.extend([
-                UsbDevice(d)
-                for d in usb.core.find(
+                UsbDevice(d) for d in usb.core.find(
                     idVendor=vid,
                     idProduct=pid,
                     find_all=True,
@@ -42,8 +42,6 @@ def list_devices():
 
     if sys.platform == 'win32':
         devices.extend(windows.list_devices())
-
-    print(devices)
 
     return devices
 
@@ -74,10 +72,10 @@ class UsbDevice():
         if dev is None:
             raise RuntimeError("device did not reconnect after reset")
 
-        if (dev.idVendor, dev.idProduct) != (O_USB_VENDOR, O_USB_PRODUCT):
+        if (dev.idVendor, dev.idProduct) not in VIDS_PIDS:
             raise RuntimeError(
-                "wrong device reconnected after reset (exp: %04X:%04X, got %04X:%04X)" %
-                (O_USB_VENDOR, O_USB_PRODUCT, dev.idVendor, dev.idProduct))
+                "wrong device reconnected after reset (exp: %04X:%04X, got %04X:%04X)"
+                % (O_USB_VENDOR, O_USB_PRODUCT, dev.idVendor, dev.idProduct))
 
         self.device = dev
 

@@ -5,6 +5,7 @@ Exposes low level primitives and nothing more
 import re
 import serial
 from time import sleep
+import pexpect
 import pexpect.fdpexpect
 
 VPPS = (VPP_98, VPP_126, VPP_140, VPP_166, VPP_144, VPP_171, VPP_185,
@@ -39,7 +40,7 @@ class Bitbang:
         if len(args) > 1:
             raise ValueError('cmd must take no more than 1 arg')
         strout = cmd + ''.join([str(arg) for arg in args]) + "\n"
-        
+
         self.ser.write(strout.encode('ascii', 'ignore'))
         self.ser.flush()
 
@@ -68,7 +69,7 @@ class Bitbang:
     def vpp_pins(self, val):
         '''VPP: set active pins'''
         assert 0 <= val <= 0xFFFFFFFFFF
-        self.cmd('p', '%010X' %  val)
+        self.cmd('p', '%010X' % val)
 
     '''
     VDD
@@ -86,7 +87,7 @@ class Bitbang:
     def vdd_pins(self, val):
         '''VDD: set active pins'''
         assert 0 <= val <= 0xFFFFFFFFFF
-        self.cmd('d', '%010X' %  val)
+        self.cmd('d', '%010X' % val)
 
     '''
     GND
@@ -95,7 +96,7 @@ class Bitbang:
     def gnd_pins(self, val):
         '''VDD: set active pins'''
         assert 0 <= val <= 0xFFFFFFFFFF
-        self.cmd('g', '%010X' %  val)
+        self.cmd('g', '%010X' % val)
 
     '''
     I/O
@@ -104,7 +105,7 @@ class Bitbang:
     def io_tri(self, val):
         '''write ZIF tristate setting'''
         assert 0 <= val <= 0xFFFFFFFFFF
-        self.cmd('t', '%010X' %  val)
+        self.cmd('t', '%010X' % val)
 
     def io_trir(self):
         '''read ZIF tristate setting'''
@@ -114,7 +115,7 @@ class Bitbang:
     def io_w(self, val):
         '''write ZIF pins'''
         assert 0 <= val <= 0xFFFFFFFFFF
-        self.cmd('z', '%010X' %  val)
+        self.cmd('z', '%010X' % val)
 
     def io_r(self):
         '''read ZIF pins'''
@@ -140,4 +141,7 @@ class Bitbang:
 
     def bootloader(self):
         '''reset to bootloader'''
-        self.cmd('b')
+        try:
+            self.cmd('b')
+        except pexpect.exceptions.EOF:
+            pass

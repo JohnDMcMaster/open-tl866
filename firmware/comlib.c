@@ -158,7 +158,7 @@ void putch(const unsigned char c)
 char *com_cmd_prompt(void) {
     char *cmd;
 
-    printf("\r\nCMD> ");
+    printf("CMD> ");
     cmd = com_readline();
     com_println("");
     return cmd;
