@@ -19,27 +19,21 @@ static zif_bits_t gnd        = {0, 0, 0x8, 0, 0};
 static zif_bits_t vdd        = {0, 0, 0, 0, 0x80};
 static zif_bits_t vpp        = {0, 0, 0, 0x40, 0};
 
-static inline void print_banner(void)
-{
-    com_println("   | |");
-    com_println(" ==[+]==  open-tl866 Programmer Mode (AT89)");
-    com_println("   | |    EXTREME EDITION.");
-}
-
 static inline void print_help(void)
 {
-    com_println("Commands:");
-    com_println("  r addr range Read from target");
-    com_println("  w addr       Write to target");
-    com_println("  R addr       Read sysflash from target");
-    com_println("  e            Erase target");
-    com_println("  l mode       Set lock bits to MODE");
-    com_println("  s            Print signature bytes");
-    com_println("  B            Blank check");
-    com_println("  T            Run some tests");
-    com_println("  h            Print help");
-    com_println("  v            Reset VPP");
-    com_println("  V            Print version(s)");
+    com_println("open-tl866 (AT89)");
+    com_println("r addr range   Read from target");
+    com_println("w addr         Write to target");
+    com_println("R addr         Read sysflash from target");
+    com_println("e              Erase target");
+    com_println("l mode         Set lock bits to MODE");
+    com_println("s              Print signature bytes");
+    com_println("B              Blank check");
+    com_println("T              Run some tests");
+    com_println("h              Print help");
+    com_println("v              Reset VPP");
+    com_println("V              Print version(s)");
+    com_println("b              reset to bootloader");
     com_println("addr, range in hex:");
 }
 
@@ -781,20 +775,7 @@ static inline void eval_command(unsigned char * cmd)
 void mode_main(void) {
     vpp_dis();
     
-    // Wait for user interaction (press enter).
-    com_readline();
-    
-    print_banner();
-    print_help();
-    enable_echo();
-    
-    unsigned char * cmd;
-    
-    while(1) {
-        printf("\r\nCMD> ");
-        cmd = com_readline();
-        com_println("");
-        eval_command(cmd);
+     while(1) {
+        eval_command(com_cmd_prompt());
     }
-    
 }

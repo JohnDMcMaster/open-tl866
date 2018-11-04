@@ -34,29 +34,13 @@ static void prompt_enter(void) {
     prompt_msg("Press enter to continue");
 }
 
-static inline void print_banner(void)
-{
-    com_println("   | |");
-    com_println(" ==[+]==  open-tl866 Programmer Mode (EPROM-V)");
-    com_println("   | |    OMGBBQ EDITION.");
-}
 static inline void print_help(void)
 {
-    com_println("\r\nCommands:\r\n");
-    com_println("  r <ADDR (hex)> [RANGE (hex)]\tRead from target");
-    com_println("  w <ADDR (hex)> <BYTE (hex)>\tWrite to target");
-    com_println("  R <ADDR (hex)> [RANGE (hex)]\tRead sysflash from target");
-    //com_println("  s\t\t\t\tPrint signature bytes");
-    com_println("  b\t\t\t\tBlank check");
-    com_println("  h\t\t\t\tPrint help");
-    com_println("  V\t\t\t\tPrint version(s)");
-}
-
-static inline void print_version()
-{
-    com_println("Programmer Mode - EPROMV version: 0.0.1");
-    com_println("open-tl866 lib version: UNIMPLEMENTED");
-    com_println("");
+    com_println("open-tl866 (eprom-v)");
+    com_println("r addr range   Read from target");
+    com_println("h              Print help");
+    com_println("V              Print version(s)");
+    com_println("b              reset to bootloader");
 }
 
 static void dev_addr(int n) {
@@ -117,9 +101,6 @@ static inline void eval_command(unsigned char * cmd)
     case 'h':
         print_help();
         break;
-    case 'V':
-        print_version();
-        break;
     case 'b':
         stock_reset_to_bootloader();
         break;
@@ -131,20 +112,8 @@ static inline void eval_command(unsigned char * cmd)
 void mode_main(void) {
     ezzif_reset();
     
-    // Wait for user interaction (press enter).
-    com_readline();
-    
-    print_banner();
-    print_help();
-    enable_echo();
-    
-    unsigned char * cmd;
-    
     while(1) {
-        printf("\r\nCMD> ");
-        cmd = com_readline();
-        com_println("");
-        eval_command(cmd);
-    }    
+        eval_command(com_cmd_prompt());
+    }
 }
 

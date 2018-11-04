@@ -62,25 +62,16 @@ def otl866_reset(reset_tty):
         devs = driver.list_devices()
 
 
-def cmd_update(args):
-    if args.reset_tty:
-        sys.stdout.write("resetting to bootloader via serial\n")
-        otl866_reset(args.reset_tty)
-
-    dev = find_dev()
+def reset_to_bootloader(dev):
+    sys.stdout.write("resetting to bootloader\n")
+    dev.reset()
 
     report = dev.report()
     if report.status != dev.STATUS_BOOTLOADER:
-        sys.stdout.write("resetting to bootloader\n")
-        dev.reset()
+        sys.stderr.write("device did not reset to booloader\n")
+        sys.exit(2)
 
-        report = dev.report()
-        if report.status != dev.STATUS_BOOTLOADER:
-            sys.stderr.write("device did not reset to booloader\n")
-            sys.exit(2)
-
-    model_a = (report.model == dev.MODEL_TL866A)
-
+def read_fw(args, model_a):
     # load the firmware image
     stock = None
     image = None
@@ -98,7 +89,9 @@ def cmd_update(args):
                 hexfile.tobinstr(start=0x1800, end=0x1FBFF),
                 encrypted=False,
             )
+    return stock, image
 
+def load_keys(args, stock, image, model_a):
     # load encryption and erase keys
     target_key = None
     target_erase = None
@@ -117,6 +110,24 @@ def cmd_update(args):
     else:
         target_key = firmware.KEY_A if model_a else firmware.KEY_CS
         target_erase = firmware.ERASE_A if model_a else firmware.ERASE_CS
+    return target_key, target_erase
+
+
+def cmd_update(args):
+    if args.reset_tty:
+        sys.stdout.write("resetting to bootloader via serial\n")
+        otl866_reset(args.reset_tty)
+
+    dev = find_dev()
+    print(dev)
+
+    report = dev.report()
+    model_a = (report.model == dev.MODEL_TL866A)
+    if report.status != dev.STATUS_BOOTLOADER:
+        reset_to_bootloader()
+
+    stock, image = read_fw(args, model_a)
+    target_key, target_erase = load_keys(args, stock, image, model_a)
 
     if not image.valid:
         raise RuntimeError("firmware image invalid")
@@ -131,11 +142,12 @@ def cmd_update(args):
         dev.write(addr, 80, cryptbuf[off:off + 80])
         addr += 64
 
-    sys.stdout.write("success!\n")
 
     report = dev.report()
+    sys.stdout.write("done, result: %s\n" % (report.status,))
+    # On failure does it exit bootloader?
     if report.status != dev.STATUS_NORMAL:
-        sys.stdout.write("resetting to firmware\n")
+        sys.stdout.write("MCU reset\n")
         dev.reset()
 
 

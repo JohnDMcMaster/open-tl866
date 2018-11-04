@@ -9,16 +9,9 @@
 
 int main_debug = 0;
 
-static inline void print_banner(void)
-{
-    com_println("   | |");
-    com_println(" ==[+]==  open-tl866 Programmer Mode (EZZIF)");
-    com_println("   | |    TASTY SNACK EDITION.");
-}
-
 static inline void print_help(void)
 {
-    com_println("Commands:");
+    com_println("open-tl866 (ezzif)");
     com_println("0      digital I/O test");
     com_println("1      bus I/O test");
     com_println("2      VPP sweep test");
@@ -26,7 +19,7 @@ static inline void print_help(void)
     com_println("4      multiple voltage rail test");
     com_println("5      no ground test");
     com_println("d      debug status");
-    com_println("b      reset to bootloader (RESET_BOOTLOADER)");
+    com_println("b      reset to bootloader");
 }
 
 static void prompt_msg(const char *msg) {
@@ -214,9 +207,6 @@ static inline void eval_command(unsigned char * cmd)
     case 'h':
         print_help();
         break;
-    case 'V':
-        //print_version();
-        break;
     case 'b':
         stock_reset_to_bootloader();
         break;
@@ -228,22 +218,9 @@ static inline void eval_command(unsigned char * cmd)
 
 void mode_main(void) {
     ezzif_reset();
-    
-    // Wait for user interaction (press enter).
-    com_readline();
-
-    print_banner();
-    print_help();
-    enable_echo();
-
 
     while(1) {
-        unsigned char * cmd;
-
-        printf("\r\nCMD> ");
-        cmd = com_readline();
-        com_println("");
-        eval_command(cmd);
-    }    
+        eval_command(com_cmd_prompt());
+    }
 }
 

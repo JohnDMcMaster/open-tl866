@@ -13,7 +13,7 @@
 
 static inline void print_help(void)
 {
-    com_println("Commands:");
+    com_println("open-tl866 (bitbang)");
     com_println("VPP");
     com_println("E val      VPP: enable and/or disable (VPP_DISABLE/VPP_ENABLE)");
     com_println("P val      VPP: set voltage enum (VPP_SET)");

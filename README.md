@@ -62,7 +62,7 @@ The Python client library provides a command-line client for the stock
 bootloader which can be used to flash any firmware to the TL866.
 To install the CLI tool, run:
 
-```cd pytl866 && python3 setup.py install```
+```cd py && python3 setup.py install```
 
 ### Resetting to the Bootloader
 
@@ -83,8 +83,8 @@ the hardware method below.
 If your TL866 is running the open firmware the update tool can trigger
 a reset into the bootloader, but it needs to be told which serial port
 to use to talk to the TL866. You can do that with the `--reset-tty`
-option, for example `--reset-tty COM6` on Windows or
-`--reset-tty /dev/ttyACM0` on Linux.
+option, for example `otl866 --reset-tty COM6` on Windows or
+`otl866 --reset-tty /dev/ttyACM0` on Linux.
 
 If you flashed the open firmware using an ICSP programmer the bootloader
 has been erased from your TL866. In order to use the update tool you'll

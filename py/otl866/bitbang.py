@@ -5,6 +5,7 @@ Exposes low level primitives and nothing more
 import re
 import serial
 from time import sleep
+import pexpect.fdpexpect
 
 VPPS = (VPP_98, VPP_126, VPP_140, VPP_166, VPP_144, VPP_171, VPP_185,
         VPP_212) = range(8)
@@ -18,10 +19,11 @@ VDDS = (VDD_30, VDD_35, VDD_46, VDD_51, VDD_43, VDD_48, VDD_60,
 
 class Bitbang:
     def __init__(self, device, ser_timeout=0.5, verbose=False):
-        self.handle = serial.Serial(
+        self.ser = serial.Serial(
             device, timeout=ser_timeout, baudrate=115200, writeTimeout=0)
         self.ser.flushInput()
         self.ser.flushOutput()
+        self.e = pexpect.fdpexpect.fdspawn(self.ser.fileno())
         self.verbose = verbose
         self.assert_ver()
 
@@ -36,7 +38,9 @@ class Bitbang:
         # So far no commands have more than one arg
         if len(args) > 1:
             raise ValueError('cmd must take no more than 1 arg')
-        self.ser.write(cmd + ''.join([str(arg) for arg in args]) + "\r\n")
+        strout = cmd + ''.join([str(arg) for arg in args]) + "\n"
+        
+        self.ser.write(strout.encode('ascii', 'ignore'))
         self.ser.flush()
 
         self.expect('CMD>')
