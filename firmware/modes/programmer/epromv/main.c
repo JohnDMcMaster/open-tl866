@@ -83,9 +83,14 @@ static void eprom_read(unsigned int addr, unsigned int range)
     ezzif_reset();
 }
 
-static inline void eval_command(unsigned char * cmd)
+static inline void eval_command(char *cmd)
 {
-    unsigned char * cmd_t = strtok(cmd, " ");
+    unsigned char *cmd_t = strtok(cmd, " ");
+
+    if (cmd_t == NULL) {
+        return;
+    }
+
     switch (cmd_t[0]) {
     case 'r':
     {
@@ -104,10 +109,10 @@ static inline void eval_command(unsigned char * cmd)
     case 'b':
         stock_reset_to_bootloader();
         break;
-    case 0:
-        break;
+
     default:
-        printf("Error: Unknown command.");
+        printf("Error: Unknown command 0x%02X (%c)\r\n", cmd_t[0], cmd_t[0]);
+        break;
     }
 }
 

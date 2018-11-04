@@ -37,14 +37,6 @@ static inline void print_help(void)
     com_println("addr, range in hex:");
 }
 
-static inline void print_version()
-{
-    // All these should be defined in some config header files. TODO
-    com_println("Programmer Mode - AT89 version: 0.0.1");
-    com_println("open-tl866 lib version: UNIMPLEMENTED");
-    com_println("");
-}
-
 // Neat trick taken from a stack overflow answer.
 static inline unsigned char invert_bit_endianness(unsigned char byte)
 {
@@ -671,9 +663,14 @@ static void print_sig(void)
     printf("Name: %s\r\n", name);
 }
 
-static inline void eval_command(unsigned char * cmd)
+static inline void eval_command(char *cmd)
 {
-    unsigned char * cmd_t = strtok(cmd, " ");
+    unsigned char *cmd_t = strtok(cmd, " ");
+
+    if (cmd_t == NULL) {
+        return;
+    }
+
     switch (cmd_t[0]) {
     case 'r':
     {
@@ -757,20 +754,19 @@ static inline void eval_command(unsigned char * cmd)
         read_sig(0);
         printf("done.");
         break;
+
     case '?':
     case 'h':
         print_help();
         break;
-    case 'V':
-        print_version();
-        break;
+
     case 'b':
         stock_reset_to_bootloader();
         break;
-    case 0:
-        break;
+
     default:
-        printf("Error: Unknown command.");
+        printf("Error: Unknown command 0x%02X (%c)\r\n", cmd_t[0], cmd_t[0]);
+        break;
     }
 }
 

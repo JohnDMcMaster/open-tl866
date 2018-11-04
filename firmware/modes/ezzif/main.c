@@ -166,6 +166,10 @@ static inline void eval_command(unsigned char * cmd)
 {
     unsigned char * cmd_t = strtok(cmd, " ");
 
+    if (cmd_t == NULL) {
+        return;
+    }
+
     ezzif_reset();
     switch (cmd_t[0]) {
     case '0':
@@ -207,13 +211,14 @@ static inline void eval_command(unsigned char * cmd)
     case 'h':
         print_help();
         break;
+
     case 'b':
         stock_reset_to_bootloader();
         break;
-    case 0:
-        break;
+
     default:
-        printf("Error: Unknown command.");
+        printf("Error: Unknown command 0x%02X (%c)\r\n", cmd_t[0], cmd_t[0]);
+        break;
     }
     ezzif_reset();
 }

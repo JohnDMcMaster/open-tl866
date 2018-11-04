@@ -36,9 +36,13 @@ static inline void print_help(void)
     com_println("b          reset to bootloader (RESET_BOOTLOADER)");
 }
 
-static inline void eval_command(char * cmd)
+static inline void eval_command(char *cmd)
 {
-    unsigned char * cmd_t = strtok(cmd, " ");
+    unsigned char *cmd_t = strtok(cmd, " ");
+
+    if (cmd_t == NULL) {
+        return;
+    }
 
     switch (cmd_t[0]) {
     /*
@@ -159,19 +163,17 @@ static inline void eval_command(char * cmd)
         PUPD_PORT = arg_bit();
         break;
 
-    case 'b':
-        stock_reset_to_bootloader();
-        break;
-
     case '?':
     case 'h':
         print_help();
         break;
 
-    case 0:
+    case 'b':
+        stock_reset_to_bootloader();
         break;
+
     default:
-        com_print("Error: Unknown command\r\n");
+        printf("Error: Unknown command 0x%02X (%c)\r\n", cmd_t[0], cmd_t[0]);
         break;
     }
 }
