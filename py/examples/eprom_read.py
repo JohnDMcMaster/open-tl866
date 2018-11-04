@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
-from otl866 import driver, util
-import sys
+from otl866 import bitbang, util
 from timeit import default_timer as timer
 
 DATA_BUS2ZIF = [1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, \
@@ -67,7 +66,7 @@ def print_zif(v):
 def run(port, fn_out=None):
     size = 8192
 
-    tl = driver.OTL866(port)
+    tl = bitbang.Bitbang(util.default_port())
 
     tl.cmd_echo_off()
     
@@ -103,3 +102,15 @@ def run(port, fn_out=None):
     elapsed = end - start
     print("Done. Read 8192 bytes in {} seconds ({} bytes/sec)".format(
         elapsed, size / elapsed))
+
+def main():
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Read EPROM')
+    parser.add_argument('--port', default=util.default_port(), help='Device serial port')
+    args = parser.parse_args()
+    
+    run(args.port)
+
+if __name__ == "__main__":
+    main()

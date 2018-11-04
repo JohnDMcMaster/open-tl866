@@ -3,6 +3,7 @@
 //#include "epromv.h"
 #include "../../mode.h"
 #include "../../comlib.h"
+#include "../../stock_compat.h"
 
 #include "ezzif.h"
 
@@ -18,13 +19,14 @@ static inline void print_banner(void)
 static inline void print_help(void)
 {
     com_println("Commands:");
-    com_println("  0: digital I/O test");
-    com_println("  1: bus I/O test");
-    com_println("  2: VPP sweep test");
-    com_println("  3: VDD sweep test");
-    com_println("  4: multiple voltage rail test");
-    com_println("  5: no ground test");
-    com_println("  d: debug status");
+    com_println("0      digital I/O test");
+    com_println("1      bus I/O test");
+    com_println("2      VPP sweep test");
+    com_println("3      VDD sweep test");
+    com_println("4      multiple voltage rail test");
+    com_println("5      no ground test");
+    com_println("d      debug status");
+    com_println("b      reset to bootloader (RESET_BOOTLOADER)");
 }
 
 static void prompt_msg(const char *msg) {
@@ -215,8 +217,8 @@ static inline void eval_command(unsigned char * cmd)
     case 'V':
         //print_version();
         break;
-    //empty command
-    case 0:
+    case 'b':
+        stock_reset_to_bootloader();
         break;
     default:
         printf("Error: Unknown command.");

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-from otl866 import driver, util
+from otl866 import bitbang, util
 import binascii
 
 def run(port):
-    tl = driver.OTL866(port)
+    tl = bitbang.Bitbang(port)
 
     tl.cmd_zif_dir(0)
 

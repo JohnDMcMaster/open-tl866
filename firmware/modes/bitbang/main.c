@@ -163,6 +163,11 @@ static inline void eval_command(char * cmd)
         stock_reset_to_bootloader();
         break;
 
+    case '?':
+    case 'h':
+        print_help();
+        break;
+
     default:
         com_print("Error: Unknown command\r\n");
         break;

@@ -6,7 +6,7 @@ import usb.core
 import usb.util
 
 if sys.platform == 'win32':
-    from pytl866.bootloader import windows
+    from otl866.bootloader import windows
 
 USB_VENDOR = 0x04D8
 USB_PRODUCT = 0xE11C

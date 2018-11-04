@@ -2,8 +2,8 @@ import sys
 import time
 from intelhex import IntelHex
 
-from pytl866.driver import Tl866Driver
-from pytl866.bootloader import driver, firmware
+from otl866.bootloader import driver, firmware
+from otl866.bitbang import Bitbang
 
 
 def find_dev():
@@ -50,18 +50,22 @@ def cmd_identify(args):
     ))
 
 
+def otl866_reset(reset_tty):
+    serial = Bitbang(reset_tty)
+    serial.bootloader()
+
+    # wait for the device to show up
+    devs = None
+    stop_time = time.time() + 5  # timeout 5s
+    while not devs and time.time() < stop_time:
+        time.sleep(0.100)
+        devs = driver.list_devices()
+
+
 def cmd_update(args):
     if args.reset_tty:
         sys.stdout.write("resetting to bootloader via serial\n")
-        serial = Tl866Driver(args.reset_tty)
-        serial.cmd_reset_to_bootloader()
-
-        # wait for the device to show up
-        devs = None
-        stop_time = time.time() + 5  # timeout 5s
-        while not devs and time.time() < stop_time:
-            time.sleep(0.100)
-            devs = driver.list_devices()
+        otl866_reset(args.reset_tty)
 
     dev = find_dev()
 

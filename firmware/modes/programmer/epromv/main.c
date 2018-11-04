@@ -7,6 +7,7 @@
 //#include "epromv.h"
 #include "../../../mode.h"
 #include "../../../comlib.h"
+#include "../../../stock_compat.h"
 
 #define EZZIF_DIP28
 #include "ezzif.h"
@@ -102,25 +103,28 @@ static inline void eval_command(unsigned char * cmd)
 {
     unsigned char * cmd_t = strtok(cmd, " ");
     switch (cmd_t[0]) {
-        case 'r':
-        {
-            //unsigned int addr  = xtoi(strtok(NULL, " "));
-            //unsigned int range = xtoi(strtok(NULL, " "));
-            unsigned int addr  = 0;
-            unsigned int range = 0x20;
-            eprom_read(addr, range);
-            break;
-        }
+    case 'r':
+    {
+        //unsigned int addr  = xtoi(strtok(NULL, " "));
+        //unsigned int range = xtoi(strtok(NULL, " "));
+        unsigned int addr  = 0;
+        unsigned int range = 0x20;
+        eprom_read(addr, range);
+        break;
+    }
 
-        case '?':
-        case 'h':
-            print_help();
-            break;
-        case 'V':
-            print_version();
-            break;
-        default:
-            printf("Error: Unknown command.");
+    case '?':
+    case 'h':
+        print_help();
+        break;
+    case 'V':
+        print_version();
+        break;
+    case 'b':
+        stock_reset_to_bootloader();
+        break;
+    default:
+        printf("Error: Unknown command.");
     }
 }
 

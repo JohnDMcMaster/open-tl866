@@ -16,13 +16,14 @@ VDDS = (VDD_30, VDD_35, VDD_46, VDD_51, VDD_43, VDD_48, VDD_60,
 # My measurements: 2.99, 3.50, 4.64, 5.15, 4.36, 4.86, 6.01, 6.52
 
 
-class OTL866:
+class Bitbang:
     def __init__(self, device, ser_timeout=0.5, verbose=False):
         self.handle = serial.Serial(
             device, timeout=ser_timeout, baudrate=115200, writeTimeout=0)
         self.ser.flushInput()
         self.ser.flushOutput()
         self.verbose = verbose
+        self.assert_ver()
 
     def expect(self, s, timeout=0.5):
         return self.e.expect(s, timeout=timeout)
@@ -42,6 +43,10 @@ class OTL866:
         if self.verbose:
             print('cmd %s: before %s' % (cmd, self.e.before.strip()))
         return self.e.before
+
+    def assert_ver(self):
+        # FIXME: veirfy we are in the bitbang app
+        pass
 
     '''
     VPP
