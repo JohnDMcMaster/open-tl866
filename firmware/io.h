@@ -43,8 +43,8 @@ typedef struct latch_info {
 #define SR_CLK PORTHbits.RH3
 #define SR_DAT PORTHbits.RH2
 
-#define OE_VPP PORTGbits.RG4
-#define OE_VDD PORTAbits.RA4
+#define nOE_VPP PORTGbits.RG4
+#define nOE_VDD PORTAbits.RA4
 
 #define LE0 PORTHbits.RH0
 #define LE1 PORTHbits.RH1

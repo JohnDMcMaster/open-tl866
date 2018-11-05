@@ -215,7 +215,7 @@ static inline void eval_command(char *cmd)
     //Misc status
     case 's':
         printf("Result nVPP_EN:%u nVDD_EN:%u LED:%u PUPD:Z%uV%u\r\n",
-                OE_VPP, OE_VDD, LED, PUPD_TRIS, PUPD_PORT);
+                nOE_VPP, nOE_VDD, LED, PUPD_TRIS, PUPD_PORT);
         break;
 
     //Help

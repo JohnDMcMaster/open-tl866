@@ -493,32 +493,32 @@ void write_shreg(unsigned char in)
 
 void vpp_en(void)
 {
-    OE_VPP = 0;
+    nOE_VPP = 0;
 }
 
 void vpp_dis(void)
 {
-    OE_VPP = 1;
+    nOE_VPP = 1;
 }
 
 int vpp_state(void)
 {
-    return OE_VPP;
+    return nOE_VPP;
 }
 
 void vdd_en(void)
 {
-    OE_VDD = 0;
+    nOE_VDD = 0;
 }
 
 void vdd_dis(void)
 {
-    OE_VDD = 1;
+    nOE_VDD = 1;
 }
 
 int vdd_state(void)
 {
-    return OE_VDD;
+    return nOE_VDD;
 }
 
 
