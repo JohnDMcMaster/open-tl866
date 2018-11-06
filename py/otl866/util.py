@@ -14,7 +14,12 @@ def default_port():
         return None
 
 
-def hexdump(data, label=None, indent='', address_width=8, f=sys.stdout):
+def hexdump(data,
+            label=None,
+            indent='',
+            address_width=8,
+            f=sys.stdout,
+            pos_offset=0):
     def isprint(c):
         return c >= ' ' and c <= '~'
 
@@ -42,7 +47,7 @@ def hexdump(data, label=None, indent='', address_width=8, f=sys.stdout):
         row_start = pos
         f.write(indent)
         if address_width:
-            f.write(('%%0%dX  ' % address_width) % pos)
+            f.write(('%%0%dX  ' % address_width) % (pos + pos_offset))
         pos = hexdump_half_row(pos)
         pos = hexdump_half_row(pos)
         f.write("|")

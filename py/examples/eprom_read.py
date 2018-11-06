@@ -65,12 +65,7 @@ def print_zif(v):
     print(format(v, "010X"))
 
 
-def run(port, fn_out=None, verbose=False):
-    size = 8192
-    size = 16
-
-    tl = bitbang.Bitbang(util.default_port(), verbose=verbose)
-
+def eprom_r_init(tl):
     # Default direction (all output).
     tl.io_tri(0)
 
@@ -82,28 +77,46 @@ def run(port, fn_out=None, verbose=False):
 
     # Set data lines as input.
     tl.io_tri(eprom_to_int(d_lines))
-    res = bytearray()
-    print("Initialization done. Starting read loop...")
 
-    start = timer()
-    for i in range(size):
+
+def eprom_r_next(tl, addr, size):
+    res = bytearray()
+    for i in range(addr, addr + size):
         tl.io_w(addr_bits(i) | eprom_to_int([pgm, ce, oe]))  # Set up addr
         tl.io_w(addr_bits(i) | eprom_to_int([pgm, oe]))  # CE low
         tl.io_w((addr_bits(i) & ~eprom_to_int([oe, ce]))
                 | eprom_to_int([pgm]))  # OE low
 
         res += get_data(tl.io_r()).to_bytes(1, byteorder="little")
-    end = timer()
+    return res
+
+
+def run(port, addr, size, fn_out=None, verbose=False):
+    tl = bitbang.Bitbang(port, verbose=verbose)
+    eprom_r_init(tl)
+
+    print("Initialization done. Starting read loop...")
 
     if fn_out:
-        with open(fn_out, "wb") as f:
-            f.write(res)
+        f = open(fn_out, "wb")
+        printout = False
     else:
-        util.hexdump(res)
+        f = None
+        printout = True
+
+    start = timer()
+
+    for this_addr in range(addr, size, 16):
+        chunk = eprom_r_next(tl, this_addr, 16)
+        if f:
+            f.write(chunk)
+        if printout:
+            util.hexdump(chunk, pos_offset=this_addr)
+    end = timer()
 
     elapsed = end - start
-    print("Done. Read 8192 bytes in {} seconds ({} bytes/sec)".format(
-        elapsed, size / elapsed))
+    print("Done. Read 8192 bytes in %0.1f seconds (%0.1f bytes/sec)" %
+          (elapsed, size / elapsed))
 
 
 def main():
@@ -113,9 +126,14 @@ def main():
     parser.add_argument(
         '--port', default=util.default_port(), help='Device serial port')
     parser.add_argument("--verbose", action="store_true")
+    parser.add_argument("addr", default="0", help="Address")
+    parser.add_argument("size", default="8192", help="Size")
     args = parser.parse_args()
 
-    run(args.port, verbose=args.verbose)
+    addr = int(args.addr, 0)
+    size = int(args.size, 0)
+
+    run(args.port, addr, size, verbose=args.verbose)
 
 
 if __name__ == "__main__":
