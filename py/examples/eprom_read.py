@@ -96,7 +96,6 @@ def eprom_r_init(tl):
 
     # Set voltages
     tl.vpp_pins(0)  # none
-    # tl.gnd_pins(0x0000002000) # DIP28-14 => DIP40-14
     tl.gnd_pins(1 << (14 - 1))  # DIP28-14 => DIP40-14
     tl.vdd_pins(1 << (40 - 1))  # DIP28-28 => DIP40-40
     tl.vdd_volt(bitbang.VDD_51)
@@ -149,7 +148,7 @@ def run(port, addr, size, fn_out=None, verbose=False):
 def main():
     import argparse
 
-    parser = argparse.ArgumentParser(description='Read EPROM')
+    parser = argparse.ArgumentParser(description='Read 27C256 EPROM')
     parser.add_argument(
         '--port', default=util.default_port(), help='Device serial port')
     parser.add_argument("--verbose", action="store_true")
