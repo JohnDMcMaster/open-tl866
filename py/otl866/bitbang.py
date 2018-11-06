@@ -88,6 +88,10 @@ class Bitbang:
             if m:
                 return m
         else:
+            if self.verbose:
+                print("Failed lines")
+                for l in res.split('\n'):
+                    print("  %s" % l.strip())
             raise NoSuchLine("Failed to match re: %s" % a_re)
 
     def assert_ver(self):
@@ -104,7 +108,7 @@ class Bitbang:
         Result: 00 00 00 00 00
         CMD> 
         '''
-        hexstr = self.match_line(r"Result: \((.*)\)", res).group(1)
+        hexstr = self.match_line(r"Result: (.*)", res).group(1)
         return int(hexstr.replace(" ", ""), 16)
 
     '''

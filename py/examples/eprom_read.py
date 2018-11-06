@@ -2,6 +2,7 @@
 
 from otl866 import bitbang, util
 from timeit import default_timer as timer
+import binascii
 
 DATA_BUS2ZIF = [1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, \
                 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40]
@@ -64,41 +65,41 @@ def print_zif(v):
     print(format(v, "010X"))
 
 
-def run(port, fn_out=None):
+def run(port, fn_out=None, verbose=False):
     size = 8192
+    size = 16
 
-    tl = bitbang.Bitbang(util.default_port())
-
-    tl.cmd_echo_off()
+    tl = bitbang.Bitbang(util.default_port(), verbose=verbose)
 
     # Default direction (all output).
-    tl.cmd_zif_dir(0)
+    tl.io_tri(0)
 
     # Set voltages
-    tl.cmd_vpp_write(0)
-    tl.cmd_gnd_write(0x0000002000)
-    tl.cmd_vdd_write(1 << 39)
-    tl.cmd_vdd_set(3)
+    tl.vpp_pins(0)
+    tl.gnd_pins(0x0000002000)
+    tl.vdd_pins(1 << 39)
+    tl.vdd_volt(3)
 
     # Set data lines as input.
-    tl.cmd_zif_dir(eprom_to_int(d_lines))
+    tl.io_tri(eprom_to_int(d_lines))
     res = bytearray()
     print("Initialization done. Starting read loop...")
 
     start = timer()
     for i in range(size):
-        tl.cmd_zif_write(
-            addr_bits(i) | eprom_to_int([pgm, ce, oe]))  # Set up addr
-        tl.cmd_zif_write(addr_bits(i) | eprom_to_int([pgm, oe]))  # CE low
-        tl.cmd_zif_write((addr_bits(i) & ~eprom_to_int([oe, ce]))
-                         | eprom_to_int([pgm]))  # OE low
+        tl.io_w(addr_bits(i) | eprom_to_int([pgm, ce, oe]))  # Set up addr
+        tl.io_w(addr_bits(i) | eprom_to_int([pgm, oe]))  # CE low
+        tl.io_w((addr_bits(i) & ~eprom_to_int([oe, ce]))
+                | eprom_to_int([pgm]))  # OE low
 
-        res += get_data(tl.cmd_zif_read()).to_bytes(1, byteorder="little")
+        res += get_data(tl.io_r()).to_bytes(1, byteorder="little")
     end = timer()
 
     if fn_out:
         with open(fn_out, "wb") as f:
             f.write(res)
+    else:
+        util.hexdump(res)
 
     elapsed = end - start
     print("Done. Read 8192 bytes in {} seconds ({} bytes/sec)".format(
@@ -111,9 +112,10 @@ def main():
     parser = argparse.ArgumentParser(description='Read EPROM')
     parser.add_argument(
         '--port', default=util.default_port(), help='Device serial port')
+    parser.add_argument("--verbose", action="store_true")
     args = parser.parse_args()
 
-    run(args.port)
+    run(args.port, verbose=args.verbose)
 
 
 if __name__ == "__main__":
