@@ -157,6 +157,9 @@ void print_port_bits(const char *prefix, port_bits_t p_bits);
 void print_zif_bits(const char *prefix, zif_bits_t zif_val);
 void print_latch_bits(const char *prefix, latch_bits_t lb);
 
+//Reset all primitives to known values
+void io_init(void);
+
 #ifdef	__cplusplus
 }
 #endif

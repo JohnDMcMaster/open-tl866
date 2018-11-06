@@ -23,8 +23,23 @@ VDDS = (VDD_30, VDD_35, VDD_46, VDD_51, VDD_43, VDD_48, VDD_60,
 
 # My measurements: 2.99, 3.50, 4.64, 5.15, 4.36, 4.86, 6.01, 6.52
 
+# Package pin #
+VPP_PINS = set([1, 2, 3, 4, 9, 10, 30, 31, 32, 33, 34, 36, 37, 38, 39, 40])
+VDD_PINS = set([
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 21, 30, 32, 33, 34, 35, 36, 37,
+    38, 39, 40
+])
+
+# 0 indexed
+VPP_PINS0 = set([x - 1 for x in VPP_PINS])
+VDD_PINS0 = set([x - 1 for x in VDD_PINS])
+
 
 class NoSuchLine(Exception):
+    pass
+
+
+class Timeout(Exception):
     pass
 
 
@@ -209,6 +224,10 @@ class Bitbang:
     Misc
     '''
 
+    def init(self):
+        '''Re-initialize all internal state'''
+        self.cmd('i')
+
     def led(self, val):
         '''Write LED on/off'''
         self.cmd('l', int(bool(val)))
@@ -226,5 +245,6 @@ class Bitbang:
         '''reset to bootloader'''
         try:
             self.cmd('b')
-        except pexpect.exceptions.EOF:
+        # Doesn't wait to send response
+        except Timeout:
             pass
