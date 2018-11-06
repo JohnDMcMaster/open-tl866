@@ -11,6 +11,8 @@ import os
 import sys
 import errno
 import time
+import binascii
+import struct
 
 VPPS = (VPP_98, VPP_126, VPP_140, VPP_166, VPP_144, VPP_171, VPP_185,
         VPP_212) = range(8)
@@ -86,6 +88,7 @@ class Bitbang:
             l = l.strip()
             m = re.match(a_re, l)
             if m:
+                self.verbose and print("match: %s" % l)
                 return m
         else:
             if self.verbose:
@@ -102,14 +105,38 @@ class Bitbang:
         assert app == "bitbang"
         self.verbose and print("App type OK")
 
+    '''
+    NOTE
+    C code stores LSB first
+    Python formats as MSB first
+    '''
+
     def result_zif(self, res):
         '''
+        Grab CLI ZIF output and return as single integer
+
+        ZIF output is LSB first
+
          Z
         Result: 00 00 00 00 00
         CMD> 
         '''
-        hexstr = self.match_line(r"Result: (.*)", res).group(1)
-        return int(hexstr.replace(" ", ""), 16)
+        hexstr_raw = self.match_line(r"Result: (.*)", res).group(1)
+        hexstr_lsb = hexstr_raw.replace(" ", "")
+        ret = 0
+        for wordi, word in enumerate(binascii.unhexlify(hexstr_lsb)):
+            ret |= word << (wordi * 8)
+        return ret
+
+    def zif_str(self, val):
+        '''
+        Make ZIF CLI input from ZIF as a single integer
+        '''
+        ret = ""
+        for _wordi in range(5):
+            ret += "%02X" % (val & 0xFF, )
+            val = val >> 8
+        return ret
 
     '''
     VPP
@@ -127,7 +154,7 @@ class Bitbang:
     def vpp_pins(self, val):
         '''VPP: set active pins'''
         assert 0 <= val <= 0xFFFFFFFFFF
-        self.cmd('p', '%010X' % val)
+        self.cmd('p', self.zif_str(val))
 
     '''
     VDD
@@ -145,7 +172,7 @@ class Bitbang:
     def vdd_pins(self, val):
         '''VDD: set active pins'''
         assert 0 <= val <= 0xFFFFFFFFFF
-        self.cmd('d', '%010X' % val)
+        self.cmd('d', self.zif_str(val))
 
     '''
     GND
@@ -154,7 +181,7 @@ class Bitbang:
     def gnd_pins(self, val):
         '''VDD: set active pins'''
         assert 0 <= val <= 0xFFFFFFFFFF
-        self.cmd('g', '%010X' % val)
+        self.cmd('g', self.zif_str(val))
 
     '''
     I/O
@@ -162,8 +189,8 @@ class Bitbang:
 
     def io_tri(self, val):
         '''write ZIF tristate setting'''
-        assert 0 <= val <= 0xFFFFFFFFFF
-        self.cmd('t', '%010X' % val)
+        assert 0 <= val <= 0xFFFFFFFFFF, "%10X" % val
+        self.cmd('t', self.zif_str(val))
 
     def io_trir(self):
         '''read ZIF tristate setting'''
@@ -172,7 +199,7 @@ class Bitbang:
     def io_w(self, val):
         '''write ZIF pins'''
         assert 0 <= val <= 0xFFFFFFFFFF
-        self.cmd('z', '%010X' % val)
+        self.cmd('z', self.zif_str(val))
 
     def io_r(self):
         '''read ZIF pins'''

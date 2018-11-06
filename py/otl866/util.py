@@ -55,6 +55,7 @@ def hexdump(data,
         left = data_len - row_start
         real_data = min(bytes_per_row, left)
 
-        strline = data[row_start:row_start + real_data].decode("ascii")
+        strline = data[row_start:row_start + real_data].decode(
+            "ascii", "replace")
         f.write(''.join([c if isprint(c) else '.' for c in strline]))
         f.write((" " * (bytes_per_row - real_data)) + "|\n")
