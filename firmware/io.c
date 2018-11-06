@@ -656,3 +656,25 @@ void print_latch_bits(const char *prefix, latch_bits_t lb) {
             lb[4], lb[5], lb[6], lb[7]);
 }
 
+void io_init(void) {
+    zif_bits_t zif_val = {0, 0, 0, 0, 0};
+
+    //Idle power supplies
+    vpp_dis();
+    vdd_dis();
+    vpp_val(0);
+    vdd_val(0);
+    set_vpp(zif_val);
+    set_vdd(zif_val);
+    set_gnd(zif_val);
+
+    //Set default values
+    //LED?
+    zif_write(zif_val);
+
+    //Tristate
+    pupd(1, 0);
+    memset(zif_val, 0xFF, sizeof(zif_val));
+    dir_write(zif_val);
+}
+

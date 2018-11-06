@@ -36,6 +36,7 @@ static inline void print_help(void)
     com_println("l val      LED on/off (LED_ON/LED_OFF)");
     com_println("m z val    Set pullup/pulldown (MYSTERY_ON/MYSTERY_OFF}");
     com_println("s          Print misc status");
+    com_println("i          Re-initialize");
     com_println("b          Reset to bootloader (RESET_BOOTLOADER)");
 }
 
@@ -216,6 +217,11 @@ static inline void eval_command(char *cmd)
     case 's':
         printf("Result nVPP_EN:%u nVDD_EN:%u LED:%u PUPD:Z%uV%u\r\n",
                 nOE_VPP, nOE_VDD, LED, PUPD_TRIS, PUPD_PORT);
+        break;
+
+    //Re-initialize
+    case 'i':
+        io_init();
         break;
 
     //Help
