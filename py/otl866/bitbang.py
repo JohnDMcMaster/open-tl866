@@ -7,6 +7,10 @@ import serial
 from time import sleep
 import pexpect
 import pexpect.fdpexpect
+import os
+import sys
+import errno
+import time
 
 VPPS = (VPP_98, VPP_126, VPP_140, VPP_166, VPP_144, VPP_171, VPP_185,
         VPP_212) = range(8)
@@ -18,18 +22,45 @@ VDDS = (VDD_30, VDD_35, VDD_46, VDD_51, VDD_43, VDD_48, VDD_60,
 # My measurements: 2.99, 3.50, 4.64, 5.15, 4.36, 4.86, 6.01, 6.52
 
 
+class NoSuchLine(Exception):
+    pass
+
+
+# ASCII serial port to be compatible with expect
+class ASerial(serial.Serial):
+    def __init__(self, *args, **kwargs):
+        serial.Serial.__init__(self, *args, **kwargs)
+
+    def read(self, n):
+        ret = serial.Serial.read(self, n)
+        return ret.decode('ascii', 'ignore')
+
+    def write(self, data):
+        serial.Serial.write(self, data.encode('ascii', 'ignore'))
+
+
 class Bitbang:
-    def __init__(self, device, ser_timeout=0.5, verbose=False):
-        self.ser = serial.Serial(
-            device, timeout=ser_timeout, baudrate=115200, writeTimeout=0)
-        self.ser.flushInput()
-        self.ser.flushOutput()
-        self.e = pexpect.fdpexpect.fdspawn(self.ser.fileno())
+    def __init__(self, device, verbose=False):
         self.verbose = verbose
+        self.verbose and print("port: %s" % device)
+        self.ser = ASerial(device, timeout=0, baudrate=115200, writeTimeout=0)
+        self.ser.flushInput()
+        self.e = pexpect.fdpexpect.fdspawn(self.ser.fileno(), encoding="ascii")
         self.assert_ver()
 
     def expect(self, s, timeout=0.5):
-        return self.e.expect(s, timeout=timeout)
+        tstart = time.time()
+        buff = ""
+        while time.time() - tstart < timeout:
+            try:
+                self.e.expect(s, timeout=timeout)
+                buff += self.e.before
+                return buff
+            except pexpect.exceptions.EOF:
+                buff += self.e.before
+                continue
+        else:
+            raise Exception("timeout")
 
     def cmd(self, cmd, *args):
         '''Send raw command and get string result'''
@@ -39,19 +70,42 @@ class Bitbang:
         # So far no commands have more than one arg
         if len(args) > 1:
             raise ValueError('cmd must take no more than 1 arg')
-        strout = cmd + ''.join([str(arg) for arg in args]) + "\n"
-
-        self.ser.write(strout.encode('ascii', 'ignore'))
+        strout = cmd + " " + ''.join([str(arg) for arg in args]) + "\n"
+        self.verbose and print("cmd out: %s" % strout.strip())
+        self.ser.write(strout)
         self.ser.flush()
 
-        self.expect('CMD>')
-        if self.verbose:
-            print('cmd %s: before %s' % (cmd, self.e.before.strip()))
-        return self.e.before
+        ret = self.expect('CMD>')
+
+        self.verbose and print('cmd ret: chars %u' % (len(ret), ))
+        return ret
+
+    def match_line(self, a_re, res):
+        # print(len(self.e.before), len(self.e.after), len(res))
+        for l in res.split('\n'):
+            l = l.strip()
+            m = re.match(a_re, l)
+            if m:
+                return m
+        else:
+            raise NoSuchLine("Failed to match re: %s" % a_re)
 
     def assert_ver(self):
         # FIXME: veirfy we are in the bitbang app
-        pass
+        res = self.cmd('?')
+        # print(len(self.e.before), len(self.e.after), len(res))
+        app = self.match_line(r"open-tl866 \((.*)\)", res).group(1)
+        assert app == "bitbang"
+        self.verbose and print("App type OK")
+
+    def result_zif(self, res):
+        '''
+         Z
+        Result: 00 00 00 00 00
+        CMD> 
+        '''
+        hexstr = self.match_line(r"Result: \((.*)\)", res).group(1)
+        return int(hexstr.replace(" ", ""), 16)
 
     '''
     VPP
@@ -109,8 +163,7 @@ class Bitbang:
 
     def io_trir(self):
         '''read ZIF tristate setting'''
-        self.cmd('T')
-        assert 0, 'FIXME: read'
+        return self.result_zif(self.cmd('T'))
 
     def io_w(self, val):
         '''write ZIF pins'''
@@ -119,8 +172,7 @@ class Bitbang:
 
     def io_r(self):
         '''read ZIF pins'''
-        self.cmd('Z')
-        assert 0, 'FIXME: read'
+        return self.result_zif(self.cmd('Z'))
 
     '''
     Misc
