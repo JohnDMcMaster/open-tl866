@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+find . -name \*.py \
+    -and -not -path './build/*' \
+    -and -not -path './dist/*' \
+    -and -not -path './otl866.egg-info/*' \
+    -exec yapf -p -i {} \;
+
