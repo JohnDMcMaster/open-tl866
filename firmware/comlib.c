@@ -1,6 +1,6 @@
 #include "comlib.h"
 
-int echo = 0;
+int echo = 1;
 unsigned comblib_drops = 0;
 
 inline void enable_echo()
@@ -153,5 +153,14 @@ void putch(const unsigned char c)
     // TODO: Make a buffer and flush function to avoid sending one character
     // per USB packet.
     send_char_sync(COM_ENDPOINT, c);
+}
+
+char *com_cmd_prompt(void) {
+    char *cmd;
+
+    printf("CMD> ");
+    cmd = com_readline();
+    com_println("");
+    return cmd;
 }
 

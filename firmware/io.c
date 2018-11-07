@@ -493,32 +493,32 @@ void write_shreg(unsigned char in)
 
 void vpp_en(void)
 {
-    OE_VPP = 0;
+    nOE_VPP = 0;
 }
 
 void vpp_dis(void)
 {
-    OE_VPP = 1;
+    nOE_VPP = 1;
 }
 
 int vpp_state(void)
 {
-    return OE_VPP;
+    return nOE_VPP;
 }
 
 void vdd_en(void)
 {
-    OE_VDD = 0;
+    nOE_VDD = 0;
 }
 
 void vdd_dis(void)
 {
-    OE_VDD = 1;
+    nOE_VDD = 1;
 }
 
 int vdd_state(void)
 {
-    return OE_VDD;
+    return nOE_VDD;
 }
 
 
@@ -615,8 +615,6 @@ void set_gnd(const_zif_bits_t zif)
 
 void vpp_val(unsigned char setting)
 {
-    setting &= 0x07;
-
     VID_10 = (setting & 0x01) ? 1 : 0;
     VID_11 = (setting & 0x02) ? 1 : 0;
     VID_12 = (setting & 0x04) ? 1 : 0;
@@ -626,8 +624,6 @@ void vpp_val(unsigned char setting)
 
 void vdd_val(unsigned char setting)
 {
-    setting &= 0x07;
-
     VID_00 = (setting & 0x01) ? 1 : 0;
     VID_01 = (setting & 0x02) ? 1 : 0;
     VID_02 = (setting & 0x04) ? 1 : 0;

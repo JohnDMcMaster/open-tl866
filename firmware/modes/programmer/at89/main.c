@@ -1,39 +1,40 @@
-#include "at89.h"
+#include <xc.h>
+
+#include "../../../stock_compat.h"
 #include "../../../mode.h"
+#include "../../../comlib.h"
+#include "../../../arglib.h"
+#include "../../../io.h"
+#include "../../../system.h"
+
+
+#define ZIFMASK_XTAL1 4;
+#define ZIFMASK_GND 8;
+#define ZIFMASK_VDD 128;
+#define ZIFMASK_VPP 64;
+#define ZIFMASK_PROG 32;
 
 static zif_bits_t zbits_null = {0, 0, 0, 0, 0};
 static zif_bits_t gnd        = {0, 0, 0x8, 0, 0};
 static zif_bits_t vdd        = {0, 0, 0, 0, 0x80};
 static zif_bits_t vpp        = {0, 0, 0, 0x40, 0};
 
-static inline void print_banner(void)
-{
-    com_println("   | |");
-    com_println(" ==[+]==  open-tl866 Programmer Mode (AT89)");
-    com_println("   | |    EXTREME EDITION.");
-}
 static inline void print_help(void)
 {
-    com_println("\r\nCommands:\r\n");
-    com_println("  r <ADDR (hex)> [RANGE (hex)]\tRead from target");
-    com_println("  w <ADDR (hex)> <BYTE (hex)>\tWrite to target");
-    com_println("  R <ADDR (hex)> [RANGE (hex)]\tRead sysflash from target");
-    com_println("  e\t\t\t\tErase target");
-    com_println("  l <MODE (int)>\t\tSet lock bits to MODE");
-    com_println("  s\t\t\t\tPrint signature bytes");
-    com_println("  b\t\t\t\tBlank check");
-    com_println("  T\t\t\t\tRun some tests");
-    com_println("  h\t\t\t\tPrint help");
-    com_println("  v\t\t\t\tReset VPP");
-    com_println("  V\t\t\t\tPrint version(s)");
-}
-
-static inline void print_version()
-{
-    // All these should be defined in some config header files. TODO
-    com_println("Programmer Mode - AT89 version: 0.0.1");
-    com_println("open-tl866 lib version: UNIMPLEMENTED");
-    com_println("");
+    com_println("open-tl866 (AT89)");
+    com_println("r addr range   Read from target");
+    com_println("w addr         Write to target");
+    com_println("R addr         Read sysflash from target");
+    com_println("e              Erase target");
+    com_println("l mode         Set lock bits to MODE");
+    com_println("s              Print signature bytes");
+    com_println("B              Blank check");
+    com_println("T              Run some tests");
+    com_println("h              Print help");
+    com_println("v              Reset VPP");
+    com_println("V              Print version(s)");
+    com_println("b              reset to bootloader");
+    com_println("addr, range in hex:");
 }
 
 // Neat trick taken from a stack overflow answer.
@@ -98,6 +99,7 @@ static inline void pin_flip_clock()
     PORTE ^= 0x4;
 }
 
+/*
 static inline void print_zif_state(zif_bits_t op)
 {
     com_println("");
@@ -107,6 +109,7 @@ static inline void print_zif_state(zif_bits_t op)
     }
     com_println("");
 }
+*/
 
 static inline void clock_write(zif_bits_t op, unsigned int cycles)
 {
@@ -119,6 +122,7 @@ static inline void clock_write(zif_bits_t op, unsigned int cycles)
     }
 }
 
+/*
 // Very slow, but useful for prototyping when other
 // pins need to be changed alongside the clock
 static inline void zif_clock_write(zif_bits_t op_template, zif_bits_t op_clk,
@@ -130,6 +134,7 @@ static inline void zif_clock_write(zif_bits_t op_template, zif_bits_t op_clk,
         zif_write(op_clk);
     }
 }
+*/
 
 static unsigned char read_byte(unsigned int addr)
 {
@@ -658,121 +663,117 @@ static void print_sig(void)
     printf("Name: %s\r\n", name);
 }
 
-static inline void eval_command(unsigned char * cmd)
+static inline void eval_command(char *cmd)
 {
-    unsigned char * cmd_t = strtok(cmd, " ");
+    unsigned char *cmd_t = strtok(cmd, " ");
+
+    if (cmd_t == NULL) {
+        return;
+    }
+
     switch (cmd_t[0]) {
-        case 'r':
-        {
-            if (!sig_check()) {
-                break;
-            }
-            
-            unsigned int addr  = xtoi(strtok(NULL, " "));
-            unsigned int range = xtoi(strtok(NULL, " "));
-            read(addr, range);
+    case 'r':
+    {
+        if (!sig_check()) {
             break;
         }
-            
-        case 'w':
-        {
-            if (!sig_check()) {
-                break;
-            }
-            
-            unsigned int addr  = xtoi(strtok(NULL, " "));
-            unsigned char data = xtoi(strtok(NULL, " "));
-            write(addr, data);
+        
+        unsigned int addr  = xtoi(strtok(NULL, " "));
+        unsigned int range = xtoi(strtok(NULL, " "));
+        read(addr, range);
+        break;
+    }
+        
+    case 'w':
+    {
+        if (!sig_check()) {
             break;
         }
+        
+        unsigned int addr  = xtoi(strtok(NULL, " "));
+        unsigned char data = xtoi(strtok(NULL, " "));
+        write(addr, data);
+        break;
+    }
 
-        case 'R':
-        {
-            if (!sig_check()) {
-                break;
-            }
-            
-            unsigned int addr  = xtoi(strtok(NULL, " "));
-            unsigned int range = xtoi(strtok(NULL, " "));
-            print_sysflash(addr, range);
+    case 'R':
+    {
+        if (!sig_check()) {
             break;
         }
+        
+        unsigned int addr  = xtoi(strtok(NULL, " "));
+        unsigned int range = xtoi(strtok(NULL, " "));
+        print_sysflash(addr, range);
+        break;
+    }
 
-        case 'l':
-        {
-            if (!sig_check()) {
-                break;
-            }
-            
-            unsigned char mode = atoi(strtok(NULL, " "));
-            lock(mode);
+    case 'l':
+    {
+        if (!sig_check()) {
             break;
         }
-            
-        case 'e':
-            if (!sig_check()) {
-                break;
-            }
-            
-            erase();
+        
+        unsigned char mode = atoi(strtok(NULL, " "));
+        lock(mode);
+        break;
+    }
+        
+    case 'e':
+        if (!sig_check()) {
             break;
+        }
+        
+        erase();
+        break;
 
-        case 's':
-            print_sig();
+    case 's':
+        print_sig();
+        break;
+        
+    case 'T':
+        if (!sig_check()) {
             break;
-            
-        case 'T':
-            if (!sig_check()) {
-                break;
-            }
-            
-            self_test();
+        }
+        
+        self_test();
+        break;
+        
+    case 'B':
+        if (!sig_check()) {
             break;
-            
-        case 'b':
-            if (!sig_check()) {
-                break;
-            }
-            
-            blank_check();
-            break;
+        }
+        
+        blank_check();
+        break;
 
-        case 'v':
-            printf("Reseting Vdd... ");
-            vdd_dis();
-            vdd_en();
-            read_sig(0);
-            printf("done.");
-            break;
-        case '?':
-        case 'h':
-            print_help();
-            break;
-        case 'V':
-            print_version();
-            break;
-        default:
-            printf("Error: Unknown command.");
+    case 'v':
+        printf("Reseting Vdd... ");
+        vdd_dis();
+        vdd_en();
+        read_sig(0);
+        printf("done.");
+        break;
+
+    case '?':
+    case 'h':
+        print_help();
+        break;
+
+    case 'b':
+        stock_reset_to_bootloader();
+        break;
+
+    default:
+        printf("Error: Unknown command 0x%02X (%c)\r\n", cmd_t[0], cmd_t[0]);
+        break;
     }
 }
 
 void mode_main(void) {
     vpp_dis();
     
-    // Wait for user interaction (press enter).
-    com_readline();
-    
-    print_banner();
-    print_help();
-    enable_echo();
-    
-    unsigned char * cmd;
-    
-    while(1) {
-        printf("\r\nCMD> ");
-        cmd = com_readline();
-        com_println("");
-        eval_command(cmd);
+     while(1) {
+        eval_command(com_cmd_prompt());
     }
-    
 }

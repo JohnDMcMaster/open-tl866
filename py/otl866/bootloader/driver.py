@@ -1,3 +1,8 @@
+'''
+Both the open firmware and the original firmware follow the same protocol
+However, they have different vid/pid
+'''
+
 from collections import namedtuple
 import struct
 import sys
@@ -6,28 +11,34 @@ import usb.core
 import usb.util
 
 if sys.platform == 'win32':
-    from pytl866.bootloader import windows
+    from otl866.bootloader import windows
 
+# Autoelectric
+AE_USB_VENDOR = 0x04D8
+AE_USB_PRODUCT = 0xE11C
 
-USB_VENDOR = 0x04D8
-USB_PRODUCT = 0xE11C
+# Open
+O_USB_VENDOR = 0x1209
+O_USB_PRODUCT = 0x8661
+
+VIDS_PIDS = [(AE_USB_VENDOR, AE_USB_PRODUCT), (O_USB_VENDOR, O_USB_PRODUCT)]
 
 
 def list_devices():
     devices = list()
 
-    try:
-        devices.extend([
-            UsbDevice(d)
-            for d in usb.core.find(
-                idVendor=USB_VENDOR,
-                idProduct=USB_PRODUCT,
-                find_all=True,
-            )
-        ])
-    except usb.core.NoBackendError as caught:
-        if sys.platform != 'win32':
-            raise caught
+    for (vid, pid) in VIDS_PIDS:
+        try:
+            devices.extend([
+                UsbDevice(d) for d in usb.core.find(
+                    idVendor=vid,
+                    idProduct=pid,
+                    find_all=True,
+                )
+            ])
+        except usb.core.NoBackendError as caught:
+            if sys.platform != 'win32':
+                raise caught
 
     if sys.platform == 'win32':
         devices.extend(windows.list_devices())
@@ -46,6 +57,8 @@ class UsbDevice():
         usb.util.dispose_resources(self.device)
 
     def reopen(self):
+        '''Reopen after flashing from autoelectric to open bootloader'''
+
         self.close()
 
         dev = None
@@ -54,15 +67,15 @@ class UsbDevice():
             time.sleep(0.100)  # interval = 100ms
             dev = usb.core.find(
                 port_numbers=self.device.port_numbers,
-                custom_match=lambda d: d.address != self.device.address
-            )
+                custom_match=lambda d: d.address != self.device.address)
 
         if dev is None:
             raise RuntimeError("device did not reconnect after reset")
 
-        if dev.idVendor != USB_VENDOR or dev.idProduct != USB_PRODUCT:
-            raise RuntimeError("wrong device reconnected after reset (exp: %04X:%04X, got %04X:%04X)" %
-                    (USB_VENDOR, USB_PRODUCT, dev.idVendor, dev.idProduct))
+        if (dev.idVendor, dev.idProduct) not in VIDS_PIDS:
+            raise RuntimeError(
+                "wrong device reconnected after reset (exp: %04X:%04X, got %04X:%04X)"
+                % (O_USB_VENDOR, O_USB_PRODUCT, dev.idVendor, dev.idProduct))
 
         self.device = dev
 
@@ -139,9 +152,11 @@ class BootloaderDriver():
         self.device.write(
             # struct doesn't support 3-byte fields, so pack it by hand...
             bytes([
-                self.CMD_WRITE & 0xFF, (self.CMD_WRITE >> 8) & 0xFF,
-                length & 0xFF, (length >> 8) & 0xFF,
-                address & 0xFF, (address >> 8) & 0xFF,
+                self.CMD_WRITE & 0xFF,
+                (self.CMD_WRITE >> 8) & 0xFF,
+                length & 0xFF,
+                (length >> 8) & 0xFF,
+                address & 0xFF,
+                (address >> 8) & 0xFF,
                 (address >> 16) & 0xFF,
-            ]) + bytes(data)
-        )
+            ]) + bytes(data))

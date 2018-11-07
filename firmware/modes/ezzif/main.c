@@ -3,28 +3,23 @@
 //#include "epromv.h"
 #include "../../mode.h"
 #include "../../comlib.h"
+#include "../../stock_compat.h"
 
 #include "ezzif.h"
 
 int main_debug = 0;
 
-static inline void print_banner(void)
-{
-    com_println("   | |");
-    com_println(" ==[+]==  open-tl866 Programmer Mode (EZZIF)");
-    com_println("   | |    TASTY SNACK EDITION.");
-}
-
 static inline void print_help(void)
 {
-    com_println("Commands:");
-    com_println("  0: digital I/O test");
-    com_println("  1: bus I/O test");
-    com_println("  2: VPP sweep test");
-    com_println("  3: VDD sweep test");
-    com_println("  4: multiple voltage rail test");
-    com_println("  5: no ground test");
-    com_println("  d: debug status");
+    com_println("open-tl866 (ezzif)");
+    com_println("0      digital I/O test");
+    com_println("1      bus I/O test");
+    com_println("2      VPP sweep test");
+    com_println("3      VDD sweep test");
+    com_println("4      multiple voltage rail test");
+    com_println("5      no ground test");
+    com_println("d      debug status");
+    com_println("b      reset to bootloader");
 }
 
 static void prompt_msg(const char *msg) {
@@ -171,76 +166,68 @@ static inline void eval_command(unsigned char * cmd)
 {
     unsigned char * cmd_t = strtok(cmd, " ");
 
+    if (cmd_t == NULL) {
+        return;
+    }
+
     ezzif_reset();
     switch (cmd_t[0]) {
-        case '0':
-            test_io();
-            break;
+    case '0':
+        test_io();
+        break;
 
-        case '1':
-            test_bus();
-            break;
+    case '1':
+        test_bus();
+        break;
 
-        case '2':
-            test_vpp();
-            break;
+    case '2':
+        test_vpp();
+        break;
 
-        case '3':
-            test_vdd();
-            break;
+    case '3':
+        test_vdd();
+        break;
 
-        case '4':
-            test_rails();
-            break;
+    case '4':
+        test_rails();
+        break;
 
-        case '5':
-            test_gnd();
-            break;
+    case '5':
+        test_gnd();
+        break;
 
-        case 'd': {
-            main_debug = 1;
-            ezzif_print_debug();
-            break;
-        }
+    case 'd': {
+        main_debug = 1;
+        ezzif_print_debug();
+        break;
+    }
 
-        case 'D': {
-            main_debug = 0;
-            break;
-        }
+    case 'D': {
+        main_debug = 0;
+        break;
+    }
 
-        case '?':
-        case 'h':
-            print_help();
-            break;
-        case 'V':
-            //print_version();
-            break;
-        //empty command
-        case 0:
-            break;
-        default:
-            printf("Error: Unknown command.");
+    case '?':
+    case 'h':
+        print_help();
+        break;
+
+    case 'b':
+        stock_reset_to_bootloader();
+        break;
+
+    default:
+        printf("Error: Unknown command 0x%02X (%c)\r\n", cmd_t[0], cmd_t[0]);
+        break;
     }
     ezzif_reset();
 }
 
 void mode_main(void) {
     ezzif_reset();
-    
-    // Wait for user interaction (press enter).
-    com_readline();
-
-    print_banner();
-    print_help();
-    enable_echo();
-
-    unsigned char * cmd;
 
     while(1) {
-        printf("\r\nCMD> ");
-        cmd = com_readline();
-        com_println("");
-        eval_command(cmd);
-    }    
+        eval_command(com_cmd_prompt());
+    }
 }
 

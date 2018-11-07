@@ -25,11 +25,11 @@ add_library(core INTERFACE)
 target_sources(core INTERFACE
     ${CMAKE_SOURCE_DIR}/main.c
 
+    ${CMAKE_SOURCE_DIR}/arglib.c
     ${CMAKE_SOURCE_DIR}/comlib.c
     ${CMAKE_SOURCE_DIR}/configuration_bits.c
     ${CMAKE_SOURCE_DIR}/ezzif.c
     ${CMAKE_SOURCE_DIR}/io.c
-    ${CMAKE_SOURCE_DIR}/parse.c
     ${CMAKE_SOURCE_DIR}/stock_compat.c
     ${CMAKE_SOURCE_DIR}/usb/usb_descriptors.c
 )
@@ -74,7 +74,7 @@ endfunction()
 # </RESERVED FOR THIRD PARTY>
 
 add_tl866_mode(tl866-bitbang
-    ${CMAKE_SOURCE_DIR}/modes/bitbang/bitbang.c
+    ${CMAKE_SOURCE_DIR}/modes/bitbang/main.c
 )
 
 add_tl866_mode(tl866-ezzif
@@ -82,7 +82,7 @@ add_tl866_mode(tl866-ezzif
 )
 
 add_tl866_mode(tl866-at89
-    ${CMAKE_SOURCE_DIR}/modes/programmer/at89/at89.c
+    ${CMAKE_SOURCE_DIR}/modes/programmer/at89/main.c
 )
 
 add_tl866_mode(tl866-epromv

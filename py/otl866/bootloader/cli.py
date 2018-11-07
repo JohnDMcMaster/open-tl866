@@ -2,8 +2,9 @@ import sys
 import time
 from intelhex import IntelHex
 
-from pytl866.driver import Tl866Driver
-from pytl866.bootloader import driver, firmware
+from otl866.bootloader import driver, firmware
+from otl866.bitbang import Bitbang
+from otl866 import util
 
 
 def find_dev():
@@ -26,9 +27,8 @@ def cmd_identify(args):
     report = dev.report()
 
     if report.status == dev.STATUS_BOOTLOADER:
-        sys.stdout.write("TL866%s Bootloader\n" % (
-            'A' if report.model == dev.MODEL_TL866A else 'CS',
-        ))
+        sys.stdout.write("TL866%s Bootloader\n" %
+                         ('A' if report.model == dev.MODEL_TL866A else 'CS', ))
 
     elif report.hardware_version == 255:
         sys.stdout.write("TL866%s Open Firmware v%d.%d\n" % (
@@ -51,33 +51,29 @@ def cmd_identify(args):
     ))
 
 
-def cmd_update(args):
-    if args.reset_tty:
-        sys.stdout.write("resetting to bootloader via serial\n")
-        serial = Tl866Driver(args.reset_tty)
-        serial.cmd_reset_to_bootloader()
+def otl866_reset(reset_tty):
+    serial = Bitbang(reset_tty)
+    serial.bootloader()
 
-        # wait for the device to show up
-        devs = None
-        stop_time = time.time() + 5  # timeout 5s
-        while not devs and time.time() < stop_time:
-            time.sleep(0.100)
-            devs = driver.list_devices()
+    # wait for the device to show up
+    devs = None
+    stop_time = time.time() + 5  # timeout 5s
+    while not devs and time.time() < stop_time:
+        time.sleep(0.100)
+        devs = driver.list_devices()
 
-    dev = find_dev()
+
+def reset_to_bootloader(dev):
+    sys.stdout.write("resetting to bootloader\n")
+    dev.reset()
 
     report = dev.report()
     if report.status != dev.STATUS_BOOTLOADER:
-        sys.stdout.write("resetting to bootloader\n")
-        dev.reset()
+        sys.stderr.write("device did not reset to booloader\n")
+        sys.exit(2)
 
-        report = dev.report()
-        if report.status != dev.STATUS_BOOTLOADER:
-            sys.stderr.write("device did not reset to booloader\n")
-            sys.exit(2)
 
-    model_a = (report.model == dev.MODEL_TL866A)
-
+def read_fw(args, model_a):
     # load the firmware image
     stock = None
     image = None
@@ -95,7 +91,10 @@ def cmd_update(args):
                 hexfile.tobinstr(start=0x1800, end=0x1FBFF),
                 encrypted=False,
             )
+    return stock, image
 
+
+def load_keys(args, stock, image, model_a):
     # load encryption and erase keys
     target_key = None
     target_erase = None
@@ -114,6 +113,24 @@ def cmd_update(args):
     else:
         target_key = firmware.KEY_A if model_a else firmware.KEY_CS
         target_erase = firmware.ERASE_A if model_a else firmware.ERASE_CS
+    return target_key, target_erase
+
+
+def cmd_update(args):
+    reset_tty = args.reset_tty or util.default_port()
+    if reset_tty:
+        sys.stdout.write("resetting to bootloader via serial\n")
+        otl866_reset(reset_tty)
+
+    dev = find_dev()
+
+    report = dev.report()
+    model_a = (report.model == dev.MODEL_TL866A)
+    if report.status != dev.STATUS_BOOTLOADER:
+        reset_to_bootloader(dev)
+
+    stock, image = read_fw(args, model_a)
+    target_key, target_erase = load_keys(args, stock, image, model_a)
 
     if not image.valid:
         raise RuntimeError("firmware image invalid")
@@ -125,14 +142,14 @@ def cmd_update(args):
     addr = 0x1800
     cryptbuf = image.encrypt(target_key)
     for off in range(0, len(cryptbuf), 80):
-        dev.write(addr, 80, cryptbuf[off:off+80])
+        dev.write(addr, 80, cryptbuf[off:off + 80])
         addr += 64
 
-    sys.stdout.write("success!\n")
-
     report = dev.report()
+    sys.stdout.write("done, result: %s\n" % (report.status, ))
+    # On failure does it exit bootloader?
     if report.status != dev.STATUS_NORMAL:
-        sys.stdout.write("resetting to firmware\n")
+        sys.stdout.write("MCU reset\n")
         dev.reset()
 
 
@@ -156,7 +173,8 @@ def build_argparse(parent):
     )
 
     update.add_argument(
-        '--stock', '-s',
+        '--stock',
+        '-s',
         help="Load a stock update.dat file instead of Intel Hex.",
         action='store_true',
     )

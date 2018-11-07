@@ -62,7 +62,12 @@ The Python client library provides a command-line client for the stock
 bootloader which can be used to flash any firmware to the TL866.
 To install the CLI tool, run:
 
-```cd pytl866 && python3 setup.py install```
+```cd py && python3 setup.py install```
+
+And then TLDR: `otl866 self update firmware/dist/tl866-epromv.hex`
+
+If that doesn't work, read on.
+
 
 ### Resetting to the Bootloader
 
@@ -81,10 +86,9 @@ the hardware method below.
 #### From the Open Firmware
 
 If your TL866 is running the open firmware the update tool can trigger
-a reset into the bootloader, but it needs to be told which serial port
-to use to talk to the TL866. You can do that with the `--reset-tty`
-option, for example `--reset-tty COM6` on Windows or
-`--reset-tty /dev/ttyACM0` on Linux.
+a reset into the bootloader: `otl866 self update firmware/dist/tl866-epromv.hex`
+On Windows or if you multiple serial ports you may need to add
+`--reset-tty`(ex: `--reset-tty COM6` on Windows)
 
 If you flashed the open firmware using an ICSP programmer the bootloader
 has been erased from your TL866. In order to use the update tool you'll
@@ -93,6 +97,7 @@ You can find ICSP-ready images of the stock firmware in
 [Radioman's repository][stock-img].
 
 [stock-img]: https://github.com/radiomanV/TL866/tree/67487e2cd60fa8f755e977c9fc656559452f5092/TL866_Updater/C%23/firmware
+
 
 #### The Hardware Method
 

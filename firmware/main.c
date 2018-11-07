@@ -27,7 +27,7 @@ static inline void init(void) {
     WDTCONbits.ADSHR = 0;
 
     PORTA = 0x00;
-    TRISA = 0x00; // RA5-RA0: LE4, OE_VDD, LE5, LE2, LE7, LE3
+    TRISA = 0x00; // RA5-RA0: LE4, nOE_VDD, LE5, LE2, LE7, LE3
 
     PORTB = 0x00;
     TRISB = 0x01; // RB1: Controls resistors on P15-P24. P16/P21 act especially weird.
@@ -46,7 +46,7 @@ static inline void init(void) {
     TRISF = 0x00; // RF7-RF5: VID_02-00, RF2: VID_12
 
     PORTG = 0x00;
-    TRISG = 0x00; // RG4: OE_VPP,
+    TRISG = 0x00; // RG4: nOE_VPP,
 
     PORTH = 0x00;
     TRISH = 0x00; // RH7-6: VID_11-10
@@ -61,8 +61,8 @@ static inline void init(void) {
     TRISJ = 0x00;
 
     // Disable all pin drivers for initial "known" state.
-    OE_VPP = 1;
-    OE_VDD = 1;
+    nOE_VPP = 0;
+    nOE_VDD = 0;
 
     for(int i = 0; i < 2; i++)
     {
@@ -80,14 +80,11 @@ static inline void init(void) {
         write_latch(i, 0x00);
     }
 
-    OE_VPP = 0;
-    OE_VDD = 0;
-
     stock_load_serial_block();
     stock_disable_usb();
     usb_init();
 
-    PORTCbits.RC0 = 1;
+    LED = 1;
 }
 
 int main(void)

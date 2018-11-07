@@ -7,6 +7,7 @@
 //#include "epromv.h"
 #include "../../../mode.h"
 #include "../../../comlib.h"
+#include "../../../stock_compat.h"
 
 #define EZZIF_DIP28
 #include "ezzif.h"
@@ -33,29 +34,13 @@ static void prompt_enter(void) {
     prompt_msg("Press enter to continue");
 }
 
-static inline void print_banner(void)
-{
-    com_println("   | |");
-    com_println(" ==[+]==  open-tl866 Programmer Mode (EPROM-V)");
-    com_println("   | |    OMGBBQ EDITION.");
-}
 static inline void print_help(void)
 {
-    com_println("\r\nCommands:\r\n");
-    com_println("  r <ADDR (hex)> [RANGE (hex)]\tRead from target");
-    com_println("  w <ADDR (hex)> <BYTE (hex)>\tWrite to target");
-    com_println("  R <ADDR (hex)> [RANGE (hex)]\tRead sysflash from target");
-    //com_println("  s\t\t\t\tPrint signature bytes");
-    com_println("  b\t\t\t\tBlank check");
-    com_println("  h\t\t\t\tPrint help");
-    com_println("  V\t\t\t\tPrint version(s)");
-}
-
-static inline void print_version()
-{
-    com_println("Programmer Mode - EPROMV version: 0.0.1");
-    com_println("open-tl866 lib version: UNIMPLEMENTED");
-    com_println("");
+    com_println("open-tl866 (eprom-v)");
+    com_println("r addr range   Read from target");
+    com_println("h              Print help");
+    com_println("V              Print version(s)");
+    com_println("b              reset to bootloader");
 }
 
 static void dev_addr(int n) {
@@ -98,49 +83,44 @@ static void eprom_read(unsigned int addr, unsigned int range)
     ezzif_reset();
 }
 
-static inline void eval_command(unsigned char * cmd)
+static inline void eval_command(char *cmd)
 {
-    unsigned char * cmd_t = strtok(cmd, " ");
-    switch (cmd_t[0]) {
-        case 'r':
-        {
-            //unsigned int addr  = xtoi(strtok(NULL, " "));
-            //unsigned int range = xtoi(strtok(NULL, " "));
-            unsigned int addr  = 0;
-            unsigned int range = 0x20;
-            eprom_read(addr, range);
-            break;
-        }
+    unsigned char *cmd_t = strtok(cmd, " ");
 
-        case '?':
-        case 'h':
-            print_help();
-            break;
-        case 'V':
-            print_version();
-            break;
-        default:
-            printf("Error: Unknown command.");
+    if (cmd_t == NULL) {
+        return;
+    }
+
+    switch (cmd_t[0]) {
+    case 'r':
+    {
+        //unsigned int addr  = xtoi(strtok(NULL, " "));
+        //unsigned int range = xtoi(strtok(NULL, " "));
+        unsigned int addr  = 0;
+        unsigned int range = 0x20;
+        eprom_read(addr, range);
+        break;
+    }
+
+    case '?':
+    case 'h':
+        print_help();
+        break;
+    case 'b':
+        stock_reset_to_bootloader();
+        break;
+
+    default:
+        printf("Error: Unknown command 0x%02X (%c)\r\n", cmd_t[0], cmd_t[0]);
+        break;
     }
 }
 
 void mode_main(void) {
     ezzif_reset();
     
-    // Wait for user interaction (press enter).
-    com_readline();
-    
-    print_banner();
-    print_help();
-    enable_echo();
-    
-    unsigned char * cmd;
-    
     while(1) {
-        printf("\r\nCMD> ");
-        cmd = com_readline();
-        com_println("");
-        eval_command(cmd);
-    }    
+        eval_command(com_cmd_prompt());
+    }
 }
 
