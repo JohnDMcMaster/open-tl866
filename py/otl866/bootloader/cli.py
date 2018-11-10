@@ -3,7 +3,7 @@ import time
 from intelhex import IntelHex
 
 from otl866.bootloader import driver, firmware
-from otl866.bitbang import Bitbang
+from otl866.aclient import AClient
 from otl866 import util
 
 
@@ -52,7 +52,7 @@ def cmd_identify(args):
 
 
 def otl866_reset(reset_tty):
-    serial = Bitbang(reset_tty)
+    serial = AClient(reset_tty)
     serial.bootloader()
 
     # wait for the device to show up

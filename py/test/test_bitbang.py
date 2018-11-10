@@ -31,7 +31,7 @@ class BitbangTestCase(unittest.TestCase):
             self.tl.io_w(mask)
             readback = self.tl.io_r()
             self.verbose and print("%010X" % mask, "%010X" % readback)
-            self.assertEquals(mask, readback)
+            self.assertEqual(mask, readback)
 
     def test_vpp(self):
         """Set VPP out and verify its set via digital I/O"""
@@ -44,7 +44,7 @@ class BitbangTestCase(unittest.TestCase):
             readback = self.tl.io_r()
             readbackm = readback & mask
             self.verbose and print("%010X" % mask, "%010X" % readbackm)
-            self.assertEquals(mask, readbackm)
+            self.assertEqual(mask, readbackm)
 
     def test_vdd(self):
         """Set VDD out and verify its set via digital I/O"""
@@ -57,7 +57,7 @@ class BitbangTestCase(unittest.TestCase):
             readback = self.tl.io_r()
             readbackm = readback & mask
             self.verbose and print("%010X" % mask, "%010X" % readbackm)
-            self.assertEquals(mask, readbackm)
+            self.assertEqual(mask, readbackm)
 
 
 if __name__ == "__main__":
