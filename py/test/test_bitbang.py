@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
 
-from otl866 import bitbang, util
-from timeit import default_timer as timer
-import binascii
+from otl866 import bitbang, util, aclient
 import unittest
 import os
-import time
 
 
 class BitbangTestCase(unittest.TestCase):
@@ -37,8 +34,8 @@ class BitbangTestCase(unittest.TestCase):
         """Set VPP out and verify its set via digital I/O"""
         self.tl.vpp_en()
         # Any value really
-        self.tl.vpp_volt(bitbang.VPP_98)
-        for pini in bitbang.VPP_PINS0:
+        self.tl.vpp_volt(aclient.VPP_98)
+        for pini in aclient.VPP_PINS0:
             mask = 1 << pini
             self.tl.vpp_pins(mask)
             readback = self.tl.io_r()
@@ -50,8 +47,8 @@ class BitbangTestCase(unittest.TestCase):
         """Set VDD out and verify its set via digital I/O"""
         self.tl.vdd_en()
         # Any value really
-        self.tl.vdd_volt(bitbang.VDD_30)
-        for pini in bitbang.VDD_PINS0:
+        self.tl.vdd_volt(aclient.VDD_30)
+        for pini in aclient.VDD_PINS0:
             mask = 1 << pini
             self.tl.vdd_pins(mask)
             readback = self.tl.io_r()
