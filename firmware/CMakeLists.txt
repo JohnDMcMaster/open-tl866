@@ -26,6 +26,7 @@ target_sources(core INTERFACE
     ${CMAKE_SOURCE_DIR}/main.c
 
     ${CMAKE_SOURCE_DIR}/arglib.c
+    ${CMAKE_SOURCE_DIR}/at89.c
     ${CMAKE_SOURCE_DIR}/comlib.c
     ${CMAKE_SOURCE_DIR}/configuration_bits.c
     ${CMAKE_SOURCE_DIR}/ezzif.c
