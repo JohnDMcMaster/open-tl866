@@ -247,3 +247,8 @@ void mode_main(void) {
         eval_command(com_cmd_prompt());
     }
 }
+
+void interrupt high_priority isr()
+{
+    usb_service();
+}

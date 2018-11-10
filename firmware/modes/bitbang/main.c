@@ -249,3 +249,7 @@ void mode_main(void)
     }
 }
 
+void interrupt high_priority isr()
+{
+    usb_service();
+}

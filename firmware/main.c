@@ -94,7 +94,3 @@ int main(void)
     return 0;
 }
 
-void interrupt high_priority isr()
-{
-    usb_service();
-}
