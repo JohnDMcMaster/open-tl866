@@ -77,6 +77,10 @@ class NoSuchLine(Exception):
     pass
 
 
+class BadCommand(Exception):
+    pass
+
+
 class Timeout(Exception):
     pass
 
@@ -102,18 +106,27 @@ class AClient:
 
     def __init__(self, device, verbose=False):
         self.verbose = verbose
-        self.verbose = True
         self.verbose and print("port: %s" % device)
         self.ser = ASerial(device, timeout=0, baudrate=115200, writeTimeout=0)
-        self.ser.flushInput()
+        self.flushInput()
         self.e = pexpect.fdpexpect.fdspawn(self.ser.fileno(), encoding="ascii")
         self.assert_ver()
+
+    def flushInput(self):
+        # Try to get rid of previous command in progress, if any
+        tlast = time.time()
+        while time.time() - tlast < 0.1:
+            buf = self.ser.read(1024)
+            if buf:
+                tlast = time.time()
+
+        self.ser.flushInput()
 
     def expect(self, s, timeout=0.5):
         self.e.expect(s, timeout=timeout)
         return self.e.before
 
-    def cmd(self, cmd, reply=True, *args):
+    def cmd(self, cmd, *args, reply=True, check=True):
         '''Send raw command and get string result'''
         cmd = str(cmd)
         if len(cmd) != 1:
@@ -131,6 +144,10 @@ class AClient:
 
         ret = self.expect('CMD>')
         self.verbose and print('cmd ret: chars %u' % (len(ret), ))
+        if "ERROR: " in ret:
+            outterse = ret.strip().replace('\r', '').replace('\n', '; ')
+            raise BadCommand(
+                "Failed command: %s, got: %s" % (strout.strip(), outterse))
         return ret
 
     def match_line(self, a_re, res):
