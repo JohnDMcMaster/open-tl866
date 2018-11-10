@@ -5,9 +5,10 @@
 #include "system.h"
 
 //#include "epromv.h"
-#include "../../../mode.h"
-#include "../../../comlib.h"
-#include "../../../stock_compat.h"
+#include "../../mode.h"
+#include "../../comlib.h"
+#include "../../arglib.h"
+#include "../../stock_compat.h"
 
 #define EZZIF_DIP28
 #include "ezzif.h"

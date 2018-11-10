@@ -1,11 +1,11 @@
 #include <xc.h>
 
-#include "../../../stock_compat.h"
-#include "../../../mode.h"
-#include "../../../comlib.h"
-#include "../../../arglib.h"
-#include "../../../io.h"
-#include "../../../system.h"
+#include "../../stock_compat.h"
+#include "../../mode.h"
+#include "../../comlib.h"
+#include "../../arglib.h"
+#include "../../io.h"
+#include "../../system.h"
 
 
 #define ZIFMASK_XTAL1 4;
