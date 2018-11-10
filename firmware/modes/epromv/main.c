@@ -23,18 +23,6 @@ static const char ADDR_BUS[] = {
 };
 static const char DATA_BUS[] = {11, 12, 13, 15, 16, 17, 18, 19};
 
-static void prompt_msg(const char *msg) {
-    if (main_debug) {
-        ezzif_print_debug();
-    }
-    com_println(msg);
-    com_readline();
-}
-
-static void prompt_enter(void) {
-    prompt_msg("Press enter to continue");
-}
-
 static inline void print_help(void)
 {
     com_println("open-tl866 (eprom-v)");
