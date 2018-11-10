@@ -19,6 +19,8 @@ static zif_bits_t gnd        = {0, 0, 0x8, 0, 0};
 static zif_bits_t vdd        = {0, 0, 0, 0, 0x80};
 static zif_bits_t vpp        = {0, 0, 0, 0x40, 0};
 
+int checking_sig = 1;
+
 static inline void print_help(void)
 {
     com_println("open-tl866 (at89)");
@@ -28,6 +30,7 @@ static inline void print_help(void)
     com_println("e              Erase target");
     com_println("l mode         Set lock bits to MODE (2, 3, 4)");
     com_println("s              Print signature bytes");
+    com_println("S en           Enable signature check");
     com_println("B              Blank check");
     com_println("T              Run some tests");
     com_println("h              Print help");
@@ -582,16 +585,18 @@ static void print_sysflash(unsigned int addr, unsigned int range)
 {    
     printf("%03X ", addr);
 
-    
-    if (!range) { range = 1; } else {com_println("");}
     for (unsigned int byte_idx = 0; byte_idx < range; byte_idx++) {
-        printf("%02X ", read_sysflash(addr + byte_idx));
+        printf(" %02X", read_sysflash(addr + byte_idx));
     }
     printf("\r\n");
 }
 
 static bool sig_check()
 {
+    if (!checking_sig) {
+        return true;
+    }
+
     if (read_sig(0) == 0x1E && read_sig(1) == 0x51 && read_sig(2) == 0xFF) {
         return true;
     }
@@ -734,7 +739,13 @@ static inline void eval_command(char *cmd)
     case 's':
         print_sig();
         break;
-        
+
+    case 'S':
+        if (arg_bit()) {
+            checking_sig = last_bit;
+        }
+        break;
+
     case 'T':
         if (!sig_check()) {
             break;
