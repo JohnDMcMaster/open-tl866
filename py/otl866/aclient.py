@@ -77,6 +77,10 @@ class NoSuchLine(Exception):
     pass
 
 
+class BadCommand(Exception):
+    pass
+
+
 class Timeout(Exception):
     pass
 
@@ -100,28 +104,36 @@ class AClient:
     # Help menu printing: open-tl866 (APP)
     APP = None
 
-    def __init__(self, device, verbose=False):
+    def __init__(self, device, verbose=None):
+        if verbose is None:
+            verbose = os.getenv("VERBOSE", "N") == "Y"
         self.verbose = verbose
-        self.verbose = True
         self.verbose and print("port: %s" % device)
         self.ser = ASerial(device, timeout=0, baudrate=115200, writeTimeout=0)
-        self.ser.flushInput()
+        self.flushInput()
         self.e = pexpect.fdpexpect.fdspawn(self.ser.fileno(), encoding="ascii")
         self.assert_ver()
+
+    def flushInput(self):
+        # Try to get rid of previous command in progress, if any
+        tlast = time.time()
+        while time.time() - tlast < 0.1:
+            buf = self.ser.read(1024)
+            if buf:
+                tlast = time.time()
+
+        self.ser.flushInput()
 
     def expect(self, s, timeout=0.5):
         self.e.expect(s, timeout=timeout)
         return self.e.before
 
-    def cmd(self, cmd, reply=True, *args):
+    def cmd(self, cmd, *args, reply=True, check=True):
         '''Send raw command and get string result'''
         cmd = str(cmd)
         if len(cmd) != 1:
             raise ValueError('Invalid cmd %s' % cmd)
-        # So far no commands have more than one arg
-        if len(args) > 1:
-            raise ValueError('cmd must take no more than 1 arg')
-        strout = cmd + " " + ''.join([str(arg) for arg in args]) + "\n"
+        strout = cmd + " " + ' '.join([str(arg) for arg in args]) + "\n"
         self.verbose and print("cmd out: %s" % strout.strip())
         self.ser.write(strout)
         self.ser.flush()
@@ -131,11 +143,16 @@ class AClient:
 
         ret = self.expect('CMD>')
         self.verbose and print('cmd ret: chars %u' % (len(ret), ))
+        if "ERROR: " in ret:
+            outterse = ret.strip().replace('\r', '').replace('\n', '; ')
+            raise BadCommand(
+                "Failed command: %s, got: %s" % (strout.strip(), outterse))
         return ret
 
     def match_line(self, a_re, res):
         # print(len(self.e.before), len(self.e.after), len(res))
-        for l in res.split('\n'):
+        lines = res.split('\n')
+        for l in lines:
             l = l.strip()
             m = re.match(a_re, l)
             if m:
@@ -143,8 +160,8 @@ class AClient:
                 return m
         else:
             if self.verbose:
-                print("Failed lines")
-                for l in res.split('\n'):
+                print("Failed lines %d" % len(lines))
+                for l in lines:
                     print("  %s" % l.strip())
             raise NoSuchLine("Failed to match re: %s" % a_re)
 
@@ -154,9 +171,46 @@ class AClient:
         res = self.cmd('?')
         # print(len(self.e.before), len(self.e.after), len(res))
         app = self.match_line(r"open-tl866 \((.*)\)", res).group(1)
-        assert self.APP is None or app == self.APP
+        assert self.APP is None or app == self.APP, "Expected app %s, got %s" % (
+            app, self.APP)
         self.verbose and print("App type OK")
 
+    # Required
     def bootloader(self):
         '''reset to bootloader'''
         self.cmd('b', reply=False)
+
+    # Optional
+    def led(self, val):
+        '''Write LED on/off'''
+        self.cmd('L', int(bool(val)))
+
+    def result_zif(self, res):
+        '''
+        Grab CLI ZIF output and return as single integer
+
+        ZIF output is LSB first
+
+         Z
+        Result: 00 00 00 00 00
+        CMD> 
+        '''
+        hexstr_raw = self.match_line(r"Result: (.*)", res).group(1)
+        hexstr_lsb = hexstr_raw.replace(" ", "")
+        ret = 0
+        for wordi, word in enumerate(binascii.unhexlify(hexstr_lsb)):
+            ret |= word << (wordi * 8)
+        return ret
+
+    def zif_str(self, val):
+        '''
+        Make ZIF CLI input from ZIF as a single integer
+        '''
+        ret = ""
+        for _wordi in range(5):
+            ret += "%02X" % (val & 0xFF, )
+            val = val >> 8
+        return ret
+
+    def assert_zif(self, val):
+        assert 0 <= val <= 0xFFFFFFFFFF, "%10X" % val

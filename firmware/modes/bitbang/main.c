@@ -33,7 +33,7 @@ static inline void print_help(void)
     com_println("z val      I/O: set ZIF pins (ZIF_WRITE)");
     com_println("Z          I/O: get ZIF pins (ZIF_READ)");
     com_println("Misc");
-    com_println("l val      LED on/off (LED_ON/LED_OFF)");
+    com_println("L val      LED on/off (LED_ON/LED_OFF)");
     com_println("m z val    Set pullup/pulldown (MYSTERY_ON/MYSTERY_OFF}");
     com_println("s          Print misc status");
     com_println("i          Re-initialize");
@@ -194,7 +194,7 @@ static inline void eval_command(char *cmd)
     */
 
     //LED on/off
-    case 'l':
+    case 'L':
     {
         if (arg_bit()) {
             LED = last_bit;
@@ -237,7 +237,7 @@ static inline void eval_command(char *cmd)
 
     //WTF
     default:
-        printf("Error: Unknown command 0x%02X (%c)\r\n", cmd_t[0], cmd_t[0]);
+        printf("ERROR: unknown command 0x%02X (%c)\r\n", cmd_t[0], cmd_t[0]);
         break;
     }
 }
