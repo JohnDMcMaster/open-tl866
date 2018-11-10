@@ -106,12 +106,22 @@ static inline void eval_command(char *cmd)
     case 'h':
         print_help();
         break;
+
+    //LED on/off
+    case 'L':
+    {
+        if (arg_bit()) {
+            LED = last_bit;
+        }
+        break;
+    }
+
     case 'b':
         stock_reset_to_bootloader();
         break;
 
     default:
-        printf("Error: Unknown command 0x%02X (%c)\r\n", cmd_t[0], cmd_t[0]);
+        printf("ERROR: unknown command 0x%02X (%c)\r\n", cmd_t[0], cmd_t[0]);
         break;
     }
 }

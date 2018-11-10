@@ -217,7 +217,7 @@ static inline void eval_command(unsigned char * cmd)
         break;
 
     default:
-        printf("Error: Unknown command 0x%02X (%c)\r\n", cmd_t[0], cmd_t[0]);
+        printf("ERROR: unknown command 0x%02X (%c)\r\n", cmd_t[0], cmd_t[0]);
         break;
     }
     ezzif_reset();

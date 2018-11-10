@@ -21,20 +21,21 @@ static zif_bits_t vpp        = {0, 0, 0, 0x40, 0};
 
 static inline void print_help(void)
 {
-    com_println("open-tl866 (AT89)");
+    com_println("open-tl866 (at89)");
     com_println("r addr range   Read from target");
-    com_println("w addr         Write to target");
+    com_println("w addr data    Write to target");
     com_println("R addr         Read sysflash from target");
     com_println("e              Erase target");
-    com_println("l mode         Set lock bits to MODE");
+    com_println("l mode         Set lock bits to MODE (2, 3, 4)");
     com_println("s              Print signature bytes");
     com_println("B              Blank check");
     com_println("T              Run some tests");
     com_println("h              Print help");
-    com_println("v              Reset VPP");
+    com_println("v              Reset VDD");
     com_println("V              Print version(s)");
+    com_println("L val          LED on/off (LED_ON/LED_OFF)");
     com_println("b              reset to bootloader");
-    com_println("addr, range in hex:");
+    com_println("addr, range in hex");
 }
 
 // Neat trick taken from a stack overflow answer.
@@ -61,10 +62,12 @@ static inline void mask_p3_7(zif_bits_t op_base)
     op_base[2] |= 0x1;
 }
 
+/*
 static inline void mask_xtal1(zif_bits_t op_base)
 {
     op_base[2] |= 0x4;
 }
+*/
 
 static inline void mask_prog(zif_bits_t op_base)
 {
@@ -202,13 +205,12 @@ static unsigned char read_byte(unsigned int addr)
 
 static void read(unsigned int addr, unsigned int range)
 {    
-    printf("%03X ", addr);
+    printf("%03X", addr);
 
-    
-    if (!range) { range = 1; } else {com_println("");}
     for (unsigned int byte_idx = 0; byte_idx < range; byte_idx++) {
-        printf("%02X ", read_byte(addr + byte_idx));
+        printf(" %02X", read_byte(addr + byte_idx));
     }
+    printf("\r\n");
 }
 
 static void write(unsigned int addr, unsigned char data)
@@ -281,7 +283,7 @@ static void write(unsigned int addr, unsigned char data)
     zif_write(zbits_null);
     
     // The client / user is expected to verify this with a read command.
-    printf("done.");
+    printf("done.\r\n");
 }
 
 static void erase()
@@ -352,7 +354,7 @@ static void erase()
     
     // The client / user is expected to verify this with a read command
     // or a blank check command (TODO)
-    printf("done.");
+    printf("done.\r\n");
 }
 
 static void lock(unsigned char mode)
@@ -422,7 +424,7 @@ static void lock(unsigned char mode)
             mask_p3_6(lock_3);
             break;
         default:
-            printf("Invalid mode %u. Valid modes are 2, 3 or 4.", mode);
+            printf("Invalid mode %u. Valid modes are 2, 3 or 4\r\n", mode);
             return;
     }
 
@@ -501,7 +503,7 @@ static void lock(unsigned char mode)
     // The client / user is expected to verify this with a read command
     // or a blank check command. A slight timing invariance could also be used
     // to discern blank and protected chips. (TODO)
-    printf("done.");
+    printf("done.\r\n");
 }
 
 static unsigned char read_sysflash(unsigned int offset)
@@ -585,6 +587,7 @@ static void print_sysflash(unsigned int addr, unsigned int range)
     for (unsigned int byte_idx = 0; byte_idx < range; byte_idx++) {
         printf("%02X ", read_sysflash(addr + byte_idx));
     }
+    printf("\r\n");
 }
 
 static bool sig_check()
@@ -594,26 +597,28 @@ static bool sig_check()
     }
 
     printf("Could not detect an AT89C51. Ignoring command.\r\n");
-    printf("Please make sure the target is inserted in the correct");
-    printf(" orientation.");
+    printf("Please make sure the target is inserted in the correct orientation.\r\n");
     return false;
 }
 
 static bool blank_check()
 {
+    //Update address in place by using backspace
     printf("Performing a blank-check... ");
     unsigned char data = 0;
     for (unsigned int addr = 0; addr < 0xFFF; addr++) {
         printf("%03X", addr);
         data = read_byte(addr);
+        printf("\b\b\b");
         if (data != 0xFF) {
-            printf("\b\b\bdone. %03X set to byte %02X. Target is not blank.",
-                    addr, data);
+            printf("done\r\n");
+            printf("%03X set to byte %02X\r\n", addr, data);
+            printf("Result: not blank\r\n");
             return false;
         }
-        printf("\b\b\b");
     }
-    printf("done. Target is blank.");
+    printf("done\r\n");
+    printf("Result: blank\r\n");
     return true;
 }
 
@@ -627,7 +632,6 @@ static void self_test()
         com_println("");
     }
     read(0,0xFF);
-    com_println("");
     printf("Testing last 255 bytes...\r\n");
     for(unsigned int addr = 0xF00; addr <= 0xFFF; addr++) {
         write(addr, addr - 0xF00);
@@ -637,8 +641,8 @@ static void self_test()
     printf("\r\nTesting last byte...\r\n");
     write(0xFFF, 0);
     com_println("");
-    read(0xFFF, 0);
-    printf("\r\ndone.");
+    read(0xFFF, 1);
+    printf("\r\ndone.\r\n");
 }
 
 static void print_sig(void)
@@ -752,7 +756,7 @@ static inline void eval_command(char *cmd)
         vdd_dis();
         vdd_en();
         read_sig(0);
-        printf("done.");
+        printf("done.\r\n");
         break;
 
     case '?':
@@ -760,12 +764,21 @@ static inline void eval_command(char *cmd)
         print_help();
         break;
 
+    //LED on/off
+    case 'L':
+    {
+        if (arg_bit()) {
+            LED = last_bit;
+        }
+        break;
+    }
+
     case 'b':
         stock_reset_to_bootloader();
         break;
 
     default:
-        printf("Error: Unknown command 0x%02X (%c)\r\n", cmd_t[0], cmd_t[0]);
+        printf("ERROR: unknown command 0x%02X (%c)\r\n", cmd_t[0], cmd_t[0]);
         break;
     }
 }
