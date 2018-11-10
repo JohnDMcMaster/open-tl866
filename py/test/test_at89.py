@@ -8,6 +8,7 @@ import os
 class TestCase(unittest.TestCase):
     def setUp(self):
         """Call before every test case."""
+        print("")
         port = util.default_port()
         self.verbose = os.getenv("VERBOSE", "N") == "Y"
         self.tl = at89.AT89(port, verbose=self.verbose)
@@ -18,7 +19,8 @@ class TestCase(unittest.TestCase):
         self.tl.led(0)
 
     def test_sig(self):
-        self.tl.sig()
+        sig = self.tl.sig()
+        print("Device: %s" % at89.sig_str(sig))
 
     """
     def test_blank(self):
