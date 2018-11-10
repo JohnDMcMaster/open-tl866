@@ -21,6 +21,18 @@ import binascii
 from otl866 import aclient
 import binascii
 
+sig_i2s = {
+    0x0151FF: "AT89C51 (19651)",
+    0x1E51FF: "AT89C51 (19052)",
+    0x1EFF1E: "AT89C51RC",
+    0x1E52FF: "AT89C52 (19652)",
+}
+
+
+def sig_str(sig):
+    sigi = (sig[0] << 16) | (sig[1] << 8) | sig[2]
+    return sig_i2s.get(sigi, "unknown")
+
 
 class AT89(aclient.AClient):
     APP = "at89"
