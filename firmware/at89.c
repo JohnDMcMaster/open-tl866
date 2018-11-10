@@ -3,6 +3,7 @@
 #include "io.h"
 #include "system.h"
 #include "comlib.h"
+#include "at89.h"
 
 
 #define ZIFMASK_XTAL1 4;
@@ -11,10 +12,10 @@
 #define ZIFMASK_VPP 64;
 #define ZIFMASK_PROG 32;
 
-static zif_bits_t zbits_null = {0, 0, 0, 0, 0};
-static zif_bits_t gnd        = {0, 0, 0x8, 0, 0};
-static zif_bits_t vdd        = {0, 0, 0, 0, 0x80};
-static zif_bits_t vpp        = {0, 0, 0, 0x40, 0};
+zif_bits_t at89_zbits_null = {0, 0, 0, 0, 0};
+zif_bits_t at89_gnd        = {0, 0, 0x8, 0, 0};
+zif_bits_t at89_vdd        = {0, 0, 0, 0, 0x80};
+zif_bits_t at89_vpp        = {0, 0, 0, 0x40, 0};
 
 // Neat trick taken from a stack overflow answer.
 static inline unsigned char invert_bit_endianness(unsigned char byte)
@@ -74,19 +75,13 @@ static inline unsigned char zif_to_data(zif_bits_t zif_state)
     return invert_bit_endianness(byte);
 }
 
-// Flip clock pin directly from TL866
-static inline void pin_flip_clock()
-{
-    PORTE ^= 0x4;
-}
-
 static inline void clock_write(zif_bits_t op, unsigned int cycles)
 {
     zif_write(op);
     for(unsigned int i = 0; i <= cycles; i++) {
-        pin_flip_clock();
+        at89_pin_flip_clock();
         __delay_us(1);
-        pin_flip_clock();
+        at89_pin_flip_clock();
         __delay_us(1);
     }
 }
@@ -136,8 +131,8 @@ unsigned char at89_read(unsigned int addr)
     dir_write(dir);
     
     // Set Vdd / GND pinout  
-    set_vdd(vdd);
-    set_gnd(gnd);
+    set_vdd(at89_vdd);
+    set_gnd(at89_gnd);
     
     // Set voltages
     vdd_val(5); // 5.0 v - 5.2 v
@@ -164,7 +159,7 @@ unsigned char at89_read(unsigned int addr)
     zif_read(response);
 
     // We're done with the byte. Turn off all outputs.
-    zif_write(zbits_null);
+    zif_write(at89_zbits_null);
 
     return zif_to_data(response);
 }
@@ -200,9 +195,9 @@ void at89_write(unsigned int addr, unsigned char data)
     dir_write(dir);
     
     // Set pins
-    set_vdd(vdd);
-    set_vpp(vpp);
-    set_gnd(gnd);
+    set_vdd(at89_vdd);
+    set_vpp(at89_vpp);
+    set_gnd(at89_gnd);
     
     // Set voltages
     vdd_val(5); // 5.0 v - 5.2 v
@@ -236,7 +231,7 @@ void at89_write(unsigned int addr, unsigned char data)
 
     // We're done. Disable VPP and reset the ZIF state.
     vpp_dis();
-    zif_write(zbits_null);
+    zif_write(at89_zbits_null);
     
     // The client / user is expected to verify this with a read command.
     printf("done.\r\n");
@@ -271,9 +266,9 @@ void at89_erase()
     dir_write(dir);
     
     // Set pins
-    set_vdd(vdd);
-    set_vpp(vpp);
-    set_gnd(gnd);
+    set_vdd(at89_vdd);
+    set_vpp(at89_vpp);
+    set_gnd(at89_gnd);
     
     // Set voltages
     vdd_val(5); // 5.0 v - 5.2 v
@@ -306,7 +301,7 @@ void at89_erase()
     
     // We're done. Disable VPP and reset the ZIF state.
     vpp_dis();
-    zif_write(zbits_null);
+    zif_write(at89_zbits_null);
     
     // The client / user is expected to verify this with a read command
     // or a blank check command (TODO)
@@ -398,9 +393,9 @@ void at89_lock(unsigned char mode)
     dir_write(dir);
     
     // Set pins
-    set_vdd(vdd);
-    set_vpp(vpp);
-    set_gnd(gnd);
+    set_vdd(at89_vdd);
+    set_vpp(at89_vpp);
+    set_gnd(at89_gnd);
     
     // Set voltages
     vdd_val(5); // 5.0 v - 5.2 v
@@ -454,7 +449,7 @@ void at89_lock(unsigned char mode)
 
     // We're done. Disable VPP and reset the ZIF state.
     vpp_dis();
-    zif_write(zbits_null);
+    zif_write(at89_zbits_null);
     
     // The client / user is expected to verify this with a read command
     // or a blank check command. A slight timing invariance could also be used
@@ -496,8 +491,8 @@ unsigned char at89_read_sysflash(unsigned int offset)
     dir_write(dir);
     
     // Set Vdd / GND pinout  
-    set_vdd(vdd);
-    set_gnd(gnd);
+    set_vdd(at89_vdd);
+    set_gnd(at89_gnd);
     
     // Set voltages
     vdd_val(5); // 5.0 v - 5.2 v
@@ -524,7 +519,7 @@ unsigned char at89_read_sysflash(unsigned int offset)
     zif_read(response);
 
     // We're done with the byte. Turn off all outputs.
-    zif_write(zbits_null);
+    zif_write(at89_zbits_null);
     
     return zif_to_data(response);
 }

@@ -4,6 +4,7 @@
 #include "../../at89.h"
 #include "../../comlib.h"
 #include "../../stock_compat.h"
+#include "../../system.h"
 
 int checking_sig = 1;
 
