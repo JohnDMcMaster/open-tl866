@@ -1,19 +1,33 @@
 '''
-Exposes low level primitives and nothing more
+CMD> ?
+open-tl866 (bitbang)
+VPP
+E val      VPP: enable and/or disable (VPP_DISABLE/VPP_ENABLE)
+V val      VPP: set voltage enum (VPP_SET)
+p val      VPP: set active pins (VPP_WRITE)
+VDD
+e val      VDD: enable and/or disable (VDD_DISABLE/VDD_ENABLE)
+v val      VDD: set voltage enum (VDD_SET)
+d val      VDD: set active pins (VDD_WRITE)
+GND
+g val      GND: set active pins (GND_WRITE)
+I/O
+t val      I/O: set ZIF tristate setting (ZIF_DIR)
+T          I/O: get ZIF tristate setting (ZIF_DIR_READ)
+z val      I/O: set ZIF pins (ZIF_WRITE)
+Z          I/O: get ZIF pins (ZIF_READ)
+Misc
+l val      LED on/off (LED_ON/LED_OFF)
+m z val    Set pullup/pulldown (MYSTERY_ON/MYSTERY_OFF}
+s          Print misc status
+i          Re-initialize
+b          Reset to bootloader (RESET_BOOTLOADER)
 '''
 
 import binascii
 
 from otl866 import aclient
 from otl866.aclient import VPPS, VDDS
-
-
-class NoSuchLine(Exception):
-    pass
-
-
-class Timeout(Exception):
-    pass
 
 
 class Bitbang(aclient.AClient):
@@ -23,34 +37,6 @@ class Bitbang(aclient.AClient):
     C code stores LSB first
     Python formats as MSB first
     '''
-
-    def result_zif(self, res):
-        '''
-        Grab CLI ZIF output and return as single integer
-
-        ZIF output is LSB first
-
-         Z
-        Result: 00 00 00 00 00
-        CMD> 
-        '''
-        hexstr_raw = self.match_line(r"Result: (.*)", res).group(1)
-        hexstr_lsb = hexstr_raw.replace(" ", "")
-        ret = 0
-        for wordi, word in enumerate(binascii.unhexlify(hexstr_lsb)):
-            ret |= word << (wordi * 8)
-        return ret
-
-    def zif_str(self, val):
-        '''
-        Make ZIF CLI input from ZIF as a single integer
-        '''
-        ret = ""
-        for _wordi in range(5):
-            ret += "%02X" % (val & 0xFF, )
-            val = val >> 8
-        return ret
-
     '''
     VPP
     '''
@@ -66,7 +52,7 @@ class Bitbang(aclient.AClient):
 
     def vpp_pins(self, val):
         '''VPP: set active pins'''
-        assert 0 <= val <= 0xFFFFFFFFFF
+        self.assert_zif(val)
         self.cmd('p', self.zif_str(val))
 
     '''
@@ -84,7 +70,7 @@ class Bitbang(aclient.AClient):
 
     def vdd_pins(self, val):
         '''VDD: set active pins'''
-        assert 0 <= val <= 0xFFFFFFFFFF
+        self.assert_zif(val)
         self.cmd('d', self.zif_str(val))
 
     '''
@@ -93,7 +79,7 @@ class Bitbang(aclient.AClient):
 
     def gnd_pins(self, val):
         '''VDD: set active pins'''
-        assert 0 <= val <= 0xFFFFFFFFFF
+        self.assert_zif(val)
         self.cmd('g', self.zif_str(val))
 
     '''
@@ -102,7 +88,7 @@ class Bitbang(aclient.AClient):
 
     def io_tri(self, val):
         '''write ZIF tristate setting'''
-        assert 0 <= val <= 0xFFFFFFFFFF, "%10X" % val
+        self.assert_zif(val)
         self.cmd('t', self.zif_str(val))
 
     def io_trir(self):
@@ -111,7 +97,7 @@ class Bitbang(aclient.AClient):
 
     def io_w(self, val):
         '''write ZIF pins'''
-        assert 0 <= val <= 0xFFFFFFFFFF
+        self.assert_zif(val)
         self.cmd('z', self.zif_str(val))
 
     def io_r(self):
@@ -126,15 +112,6 @@ class Bitbang(aclient.AClient):
         '''Re-initialize all internal state'''
         self.cmd('i')
 
-    def led(self, val):
-        '''Write LED on/off'''
-        self.cmd('l', int(bool(val)))
-
-    def ledr(self):
-        '''Read LED state'''
-        self.cmd('L')
-        assert 0, 'FIXME: read'
-
     def pupd(self, val):
         '''pullup/pulldown'''
-        self.cmd('m')
+        self.cmd('m', int(bool(val)))

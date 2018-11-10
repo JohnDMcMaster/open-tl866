@@ -104,7 +104,9 @@ class AClient:
     # Help menu printing: open-tl866 (APP)
     APP = None
 
-    def __init__(self, device, verbose=False):
+    def __init__(self, device, verbose=None):
+        if verbose is None:
+            verbose = os.getenv("VERBOSE", "N") == "Y"
         self.verbose = verbose
         self.verbose and print("port: %s" % device)
         self.ser = ASerial(device, timeout=0, baudrate=115200, writeTimeout=0)
@@ -131,10 +133,7 @@ class AClient:
         cmd = str(cmd)
         if len(cmd) != 1:
             raise ValueError('Invalid cmd %s' % cmd)
-        # So far no commands have more than one arg
-        if len(args) > 1:
-            raise ValueError('cmd must take no more than 1 arg')
-        strout = cmd + " " + ''.join([str(arg) for arg in args]) + "\n"
+        strout = cmd + " " + ' '.join([str(arg) for arg in args]) + "\n"
         self.verbose and print("cmd out: %s" % strout.strip())
         self.ser.write(strout)
         self.ser.flush()
@@ -152,7 +151,8 @@ class AClient:
 
     def match_line(self, a_re, res):
         # print(len(self.e.before), len(self.e.after), len(res))
-        for l in res.split('\n'):
+        lines = res.split('\n')
+        for l in lines:
             l = l.strip()
             m = re.match(a_re, l)
             if m:
@@ -160,8 +160,8 @@ class AClient:
                 return m
         else:
             if self.verbose:
-                print("Failed lines")
-                for l in res.split('\n'):
+                print("Failed lines %d" % len(lines))
+                for l in lines:
                     print("  %s" % l.strip())
             raise NoSuchLine("Failed to match re: %s" % a_re)
 
@@ -171,9 +171,46 @@ class AClient:
         res = self.cmd('?')
         # print(len(self.e.before), len(self.e.after), len(res))
         app = self.match_line(r"open-tl866 \((.*)\)", res).group(1)
-        assert self.APP is None or app == self.APP
+        assert self.APP is None or app == self.APP, "Expected app %s, got %s" % (
+            app, self.APP)
         self.verbose and print("App type OK")
 
+    # Required
     def bootloader(self):
         '''reset to bootloader'''
         self.cmd('b', reply=False)
+
+    # Optional
+    def led(self, val):
+        '''Write LED on/off'''
+        self.cmd('L', int(bool(val)))
+
+    def result_zif(self, res):
+        '''
+        Grab CLI ZIF output and return as single integer
+
+        ZIF output is LSB first
+
+         Z
+        Result: 00 00 00 00 00
+        CMD> 
+        '''
+        hexstr_raw = self.match_line(r"Result: (.*)", res).group(1)
+        hexstr_lsb = hexstr_raw.replace(" ", "")
+        ret = 0
+        for wordi, word in enumerate(binascii.unhexlify(hexstr_lsb)):
+            ret |= word << (wordi * 8)
+        return ret
+
+    def zif_str(self, val):
+        '''
+        Make ZIF CLI input from ZIF as a single integer
+        '''
+        ret = ""
+        for _wordi in range(5):
+            ret += "%02X" % (val & 0xFF, )
+            val = val >> 8
+        return ret
+
+    def assert_zif(self, val):
+        assert 0 <= val <= 0xFFFFFFFFFF, "%10X" % val

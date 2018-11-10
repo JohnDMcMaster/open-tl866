@@ -5,7 +5,7 @@ import unittest
 import os
 
 
-class BitbangTestCase(unittest.TestCase):
+class TestCase(unittest.TestCase):
     def setUp(self):
         """Call before every test case."""
         port = util.default_port()
