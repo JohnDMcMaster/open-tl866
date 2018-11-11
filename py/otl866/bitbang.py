@@ -48,7 +48,7 @@ class Bitbang(aclient.AClient):
     def vpp_volt(self, val):
         '''VPP: set voltage enum'''
         assert val in VPPS
-        self.cmd('P', val)
+        self.cmd('V', val)
 
     def vpp_pins(self, val):
         '''VPP: set active pins'''
@@ -66,7 +66,7 @@ class Bitbang(aclient.AClient):
     def vdd_volt(self, val):
         '''VDD: set voltage enum'''
         assert val in VDDS
-        self.cmd('D', val)
+        self.cmd('v', val)
 
     def vdd_pins(self, val):
         '''VDD: set active pins'''
