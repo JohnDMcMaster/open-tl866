@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from otl866 import at89, util, aclient
+from otl866 import at89, util
 import unittest
 import os
 
