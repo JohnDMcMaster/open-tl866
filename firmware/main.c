@@ -14,12 +14,14 @@
 #include "mode.h"
 
 static inline void init(void) {
-        unsigned int pll_startup = 600;
+    unsigned int pll_startup = 600;
     OSCTUNEbits.PLLEN = 1;
     while (pll_startup--);
 
     INTCONbits.PEIE = 1;
     INTCONbits.GIE = 1;
+    INTCONbits.TMR0IE = 0;
+    T0CONbits.TMR0ON = 0;
 
     WDTCONbits.ADSHR = 1;
     ANCON0 |= 0x9F; // Disable analog functionality on Ports A, F, and H.
@@ -61,8 +63,8 @@ static inline void init(void) {
     TRISJ = 0x00;
 
     // Disable all pin drivers for initial "known" state.
-    nOE_VPP = 0;
-    nOE_VDD = 0;
+    vpp_dis();
+    vdd_dis();
 
     for(int i = 0; i < 2; i++)
     {
@@ -80,9 +82,13 @@ static inline void init(void) {
         write_latch(i, 0x00);
     }
 
+    //TODO: combine above logic into this
+    io_init();
+
     stock_load_serial_block();
     stock_disable_usb();
     usb_init();
+
 
     LED = 1;
 }
