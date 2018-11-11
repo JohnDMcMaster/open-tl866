@@ -21,9 +21,7 @@ static inline void print_help(void)
     com_println("B              Blank check");
     com_println("T              Run some tests");
     com_println("h              Print help");
-    com_println("v              Reset VDD");
-    com_println("V              Print version(s)");
-    com_println("L val          LED on/off (LED_ON/LED_OFF)");
+    com_println("L val          LED on/off");
     com_println("b              reset to bootloader");
     com_println("addr, range in hex");
 }
@@ -206,14 +204,6 @@ static inline void eval_command(char *cmd)
         }
         
         blank_check();
-        break;
-
-    case 'v':
-        printf("Reseting Vdd... ");
-        vdd_dis();
-        vdd_en();
-        at89_read_sig(0);
-        printf("done.\r\n");
         break;
 
     case '?':
