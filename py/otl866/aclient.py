@@ -172,7 +172,7 @@ class AClient:
         # print(len(self.e.before), len(self.e.after), len(res))
         app = self.match_line(r"open-tl866 \((.*)\)", res).group(1)
         assert self.APP is None or app == self.APP, "Expected app %s, got %s" % (
-            app, self.APP)
+            self.APP, app)
         self.verbose and print("App type OK")
 
     # Required
