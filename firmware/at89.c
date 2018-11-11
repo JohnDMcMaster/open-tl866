@@ -133,10 +133,11 @@ unsigned char at89_read(unsigned int addr)
     // Set Vdd / GND pinout  
     set_vdd(at89_vdd);
     set_gnd(at89_gnd);
-    
-    // Set voltages
-    vdd_val(5); // 5.0 v - 5.2 v
 
+    // Set voltages
+    vdd_val(VDD_51); // 5.0 v - 5.2 v
+    vdd_en();
+    
     // Allocate an empty zifbits struct for reading pin state
     zif_bits_t response    = { 0, 0, 0, 0, 0 };
 
@@ -160,6 +161,7 @@ unsigned char at89_read(unsigned int addr)
 
     // We're done with the byte. Turn off all outputs.
     zif_write(at89_zbits_null);
+    vdd_dis();
 
     return zif_to_data(response);
 }
@@ -195,13 +197,14 @@ void at89_write(unsigned int addr, unsigned char data)
     dir_write(dir);
     
     // Set pins
+    set_gnd(at89_gnd);
     set_vdd(at89_vdd);
     set_vpp(at89_vpp);
-    set_gnd(at89_gnd);
     
     // Set voltages
-    vdd_val(5); // 5.0 v - 5.2 v
-    vpp_val(1); // 12.8 v - 13.2 v
+    vdd_val(VDD_51); // 5.0 v - 5.2 v
+    vpp_val(VPP_126); // 12.8 v - 13.2 v
+    vdd_en();
 
     // Base pin setting for writing
     zif_bits_t write_base = { 0b00000000,
@@ -232,7 +235,8 @@ void at89_write(unsigned int addr, unsigned char data)
     // We're done. Disable VPP and reset the ZIF state.
     vpp_dis();
     zif_write(at89_zbits_null);
-    
+    vdd_dis();
+
     // The client / user is expected to verify this with a read command.
     printf("done.\r\n");
 }
@@ -271,8 +275,9 @@ void at89_erase()
     set_gnd(at89_gnd);
     
     // Set voltages
-    vdd_val(5); // 5.0 v - 5.2 v
-    vpp_val(1); // 12.8 - 13.2
+    vdd_val(VDD_51); // 5.0 v - 5.2 v
+    vpp_val(VPP_126); // 12.8 - 13.2
+    vdd_en();
     
     // Base pin setting for erasing
     zif_bits_t erase_base =     {       0b00000000,
@@ -302,6 +307,7 @@ void at89_erase()
     // We're done. Disable VPP and reset the ZIF state.
     vpp_dis();
     zif_write(at89_zbits_null);
+    vdd_dis();
     
     // The client / user is expected to verify this with a read command
     // or a blank check command (TODO)
@@ -398,9 +404,9 @@ void at89_lock(unsigned char mode)
     set_gnd(at89_gnd);
     
     // Set voltages
-    vdd_val(5); // 5.0 v - 5.2 v
-    vpp_val(1); // 12.8 - 13.2
-
+    vdd_val(VDD_51); // 5.0 v - 5.2 v
+    vpp_val(VPP_126); // 12.8 - 13.2
+    vdd_en();
     
     // Enable VPP right before setting the ZIF state
     vpp_en();
@@ -450,6 +456,7 @@ void at89_lock(unsigned char mode)
     // We're done. Disable VPP and reset the ZIF state.
     vpp_dis();
     zif_write(at89_zbits_null);
+    vdd_dis();
     
     // The client / user is expected to verify this with a read command
     // or a blank check command. A slight timing invariance could also be used
@@ -493,9 +500,10 @@ unsigned char at89_read_sysflash(unsigned int offset)
     // Set Vdd / GND pinout  
     set_vdd(at89_vdd);
     set_gnd(at89_gnd);
-    
+
     // Set voltages
-    vdd_val(5); // 5.0 v - 5.2 v
+    vdd_val(VDD_51); // 5.0 v - 5.2 v
+    vdd_en();
     
     // Allocate an empty zifbits struct for reading pin state
     zif_bits_t response  = { 0, 0, 0, 0, 0 };
@@ -520,6 +528,7 @@ unsigned char at89_read_sysflash(unsigned int offset)
 
     // We're done with the byte. Turn off all outputs.
     zif_write(at89_zbits_null);
+    vdd_dis();
     
     return zif_to_data(response);
 }
