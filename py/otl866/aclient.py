@@ -148,6 +148,7 @@ class AClient:
 
         ret = self.expect('CMD>')
         self.verbose and print('cmd ret: chars %u' % (len(ret), ))
+        # print(ret.strip().replace('\r', '').replace('\n', '; '))
         if "ERROR: " in ret:
             outterse = ret.strip().replace('\r', '').replace('\n', '; ')
             raise BadCommand(
