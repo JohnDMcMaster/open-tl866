@@ -52,11 +52,18 @@ static bool sig_check()
         return true;
     }
 
-    if (at89_read_sig(0) == 0x1E && at89_read_sig(1) == 0x51 && at89_read_sig(2) == 0xFF) {
+    uint8_t sig0 = at89_read_sig(0);
+    uint8_t sig1 = at89_read_sig(1);
+    uint8_t sig2 = at89_read_sig(2);
+
+    // quick power sequencing can glitch to
+    // ERROR: bad signature (02 51 FF), ignoring command.
+    if (sig0 == 0x1E && sig1 == 0x51 && sig2 == 0xFF) {
         return true;
     }
 
-    printf("Could not detect an AT89C51. Ignoring command.\r\n");
+    printf("ERROR: bad signature (%02X %02X %02X), ignoring command.\r\n",
+            sig0, sig1, sig2);
     printf("Please make sure the target is inserted in the correct orientation.\r\n");
     return false;
 }
