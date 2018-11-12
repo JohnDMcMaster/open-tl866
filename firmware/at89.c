@@ -137,6 +137,7 @@ unsigned char at89_read(unsigned int addr)
     // Set voltages
     vdd_val(VDD_51); // 5.0 v - 5.2 v
     vdd_en();
+    __delay_ms(100);
     
     // Allocate an empty zifbits struct for reading pin state
     zif_bits_t response    = { 0, 0, 0, 0, 0 };
@@ -205,6 +206,7 @@ void at89_write(unsigned int addr, unsigned char data)
     vdd_val(VDD_51); // 5.0 v - 5.2 v
     vpp_val(VPP_126); // 12.8 v - 13.2 v
     vdd_en();
+    __delay_ms(100);
 
     // Base pin setting for writing
     zif_bits_t write_base = { 0b00000000,
@@ -225,6 +227,7 @@ void at89_write(unsigned int addr, unsigned char data)
    
     // Enable VPP right before setting the ZIF state
     vpp_en();
+    __delay_ms(100);
 
     // Set PROG high before pulsing it low during programming
     zif_write(write_preclk);
@@ -278,6 +281,7 @@ void at89_erase()
     vdd_val(VDD_51); // 5.0 v - 5.2 v
     vpp_val(VPP_126); // 12.8 - 13.2
     vdd_en();
+    __delay_ms(100);
     
     // Base pin setting for erasing
     zif_bits_t erase_base =     {       0b00000000,
@@ -294,6 +298,7 @@ void at89_erase()
     
     // Enable VPP right before setting the ZIF state
     vpp_en();
+    __delay_ms(100);
     
     // Set PROG high before pulsing it low during erase
     zif_write(erase_preclk);
@@ -407,9 +412,11 @@ void at89_lock(unsigned char mode)
     vdd_val(VDD_51); // 5.0 v - 5.2 v
     vpp_val(VPP_126); // 12.8 - 13.2
     vdd_en();
+    __delay_ms(100);
     
     // Enable VPP right before setting the ZIF state
     vpp_en();
+    __delay_ms(100);
    
     // Using clock_write(...) results in some inconsistency, and being unable
     // to set pins while the clock is running makes it rather unflexible.
@@ -504,6 +511,7 @@ unsigned char at89_read_sysflash(unsigned int offset)
     // Set voltages
     vdd_val(VDD_51); // 5.0 v - 5.2 v
     vdd_en();
+    __delay_ms(100);
     
     // Allocate an empty zifbits struct for reading pin state
     zif_bits_t response  = { 0, 0, 0, 0, 0 };
