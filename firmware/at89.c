@@ -5,6 +5,19 @@
 #include "comlib.h"
 #include "at89.h"
 
+/*
+CMD> r 0 10
+Could not detect an AT89C51. Ignoring command.
+Please make sure the target is inserted in the correct orientation.
+CMD> r 0 10
+000 00 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+
+4/4 torture fail
+
+XXX: is this TL866 switching time or at89c51 power up delay?
+*/
+#define VDD_DELAY   1
+#define VPP_DELAY   1
 
 #define ZIFMASK_XTAL1 4;
 #define ZIFMASK_GND 8;
@@ -137,7 +150,7 @@ unsigned char at89_read(unsigned int addr)
     // Set voltages
     vdd_val(VDD_51); // 5.0 v - 5.2 v
     vdd_en();
-    __delay_ms(100);
+    __delay_ms(VDD_DELAY);
     
     // Allocate an empty zifbits struct for reading pin state
     zif_bits_t response    = { 0, 0, 0, 0, 0 };
@@ -160,9 +173,7 @@ unsigned char at89_read(unsigned int addr)
     // Read the current pin state (to read in the requested byte)
     zif_read(response);
 
-    // We're done with the byte. Turn off all outputs.
-    zif_write(at89_zbits_null);
-    vdd_dis();
+    at89_off();
 
     return zif_to_data(response);
 }
@@ -206,7 +217,7 @@ void at89_write(unsigned int addr, unsigned char data)
     vdd_val(VDD_51); // 5.0 v - 5.2 v
     vpp_val(VPP_126); // 12.8 v - 13.2 v
     vdd_en();
-    __delay_ms(100);
+    __delay_ms(VDD_DELAY);
 
     // Base pin setting for writing
     zif_bits_t write_base = { 0b00000000,
@@ -227,7 +238,7 @@ void at89_write(unsigned int addr, unsigned char data)
    
     // Enable VPP right before setting the ZIF state
     vpp_en();
-    __delay_ms(100);
+    __delay_ms(VPP_DELAY);
 
     // Set PROG high before pulsing it low during programming
     zif_write(write_preclk);
@@ -235,10 +246,7 @@ void at89_write(unsigned int addr, unsigned char data)
 
     clock_write(write_base, 48);
 
-    // We're done. Disable VPP and reset the ZIF state.
-    vpp_dis();
-    zif_write(at89_zbits_null);
-    vdd_dis();
+    at89_off();
 
     // The client / user is expected to verify this with a read command.
     printf("done.\r\n");
@@ -246,6 +254,15 @@ void at89_write(unsigned int addr, unsigned char data)
 
 void at89_erase()
 {
+    /*
+    VPP: ideally drive to VCC
+    However, 31 is not a supported VCC pin
+    The lowest VPP voltage is too high
+    So drive to 3.3V which is fine for VIH:
+    VIH for most is 0.2 VCC + 0.9 => 0.2 * 5 + 0.9 = 1.9 V
+    VCC: 5.0V +/- 20% => 4.0V min
+    */
+
     /* 
      * AT89C51 erase Pinout:
      * 
@@ -281,7 +298,7 @@ void at89_erase()
     vdd_val(VDD_51); // 5.0 v - 5.2 v
     vpp_val(VPP_126); // 12.8 - 13.2
     vdd_en();
-    __delay_ms(100);
+    __delay_ms(VDD_DELAY);
     
     // Base pin setting for erasing
     zif_bits_t erase_base =     {       0b00000000,
@@ -298,7 +315,7 @@ void at89_erase()
     
     // Enable VPP right before setting the ZIF state
     vpp_en();
-    __delay_ms(100);
+    __delay_ms(VPP_DELAY);
     
     // Set PROG high before pulsing it low during erase
     zif_write(erase_preclk);
@@ -309,10 +326,7 @@ void at89_erase()
     // Erase function requires 10ms prog pulse
     __delay_ms(10);
     
-    // We're done. Disable VPP and reset the ZIF state.
-    vpp_dis();
-    zif_write(at89_zbits_null);
-    vdd_dis();
+    at89_off();
     
     // The client / user is expected to verify this with a read command
     // or a blank check command (TODO)
@@ -412,11 +426,11 @@ void at89_lock(unsigned char mode)
     vdd_val(VDD_51); // 5.0 v - 5.2 v
     vpp_val(VPP_126); // 12.8 - 13.2
     vdd_en();
-    __delay_ms(100);
+    __delay_ms(VDD_DELAY);
     
     // Enable VPP right before setting the ZIF state
     vpp_en();
-    __delay_ms(100);
+    __delay_ms(VPP_DELAY);
    
     // Using clock_write(...) results in some inconsistency, and being unable
     // to set pins while the clock is running makes it rather unflexible.
@@ -460,10 +474,7 @@ void at89_lock(unsigned char mode)
 
     ///////////////////////////////////////////////////////////////////////////
 
-    // We're done. Disable VPP and reset the ZIF state.
-    vpp_dis();
-    zif_write(at89_zbits_null);
-    vdd_dis();
+    at89_off();
     
     // The client / user is expected to verify this with a read command
     // or a blank check command. A slight timing invariance could also be used
@@ -511,7 +522,7 @@ unsigned char at89_read_sysflash(unsigned int offset)
     // Set voltages
     vdd_val(VDD_51); // 5.0 v - 5.2 v
     vdd_en();
-    __delay_ms(100);
+    __delay_ms(VDD_DELAY);
     
     // Allocate an empty zifbits struct for reading pin state
     zif_bits_t response  = { 0, 0, 0, 0, 0 };
@@ -534,15 +545,39 @@ unsigned char at89_read_sysflash(unsigned int offset)
     // Read the current pin state (to read in the requested byte)
     zif_read(response);
 
-    // We're done with the byte. Turn off all outputs.
-    zif_write(at89_zbits_null);
-    vdd_dis();
-    
+    at89_off();
+
     return zif_to_data(response);
 }
 
 unsigned char at89_read_sig(unsigned int offset)
 {
     return at89_read_sysflash(0x30 + offset);
+}
+
+void at89_off(void) {
+    zif_bits_t zif_val = {0, 0, 0, 0, 0};
+
+    vpp_dis();
+    vdd_dis();
+
+    set_vpp(zif_val);
+    set_vdd(zif_val);
+
+    //All output
+    zif_write(zif_val);
+    dir_write(zif_val);
+    //Drive to ground
+    memset(zif_val, 0xFF, sizeof(zif_val));
+    set_gnd(zif_val);
+
+    /*
+    60 ms fail
+    70 ms ok
+    Add 50% margin => 105
+    */
+    __delay_ms(105);
+
+    io_init();
 }
 

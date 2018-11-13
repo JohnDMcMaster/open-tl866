@@ -13,6 +13,8 @@ unsigned char at89_read_sig(unsigned int offset);
 // Flip clock pin directly from TL866
 #define at89_pin_flip_clock() do {PORTE ^= 0x4; } while(0)
 
+void at89_off(void);
+
 extern zif_bits_t at89_zbits_null;
 extern zif_bits_t at89_gnd;
 extern zif_bits_t at89_vdd;
