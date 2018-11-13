@@ -83,7 +83,7 @@ static inline void init(void) {
     }
 
     //TODO: combine above logic into this
-    io_init();
+    io_init_0();
 
     stock_load_serial_block();
     stock_disable_usb();

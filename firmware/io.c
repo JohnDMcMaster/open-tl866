@@ -19,6 +19,10 @@ latch_bits_t latch_cache = {0};
 #define OFFS_H 7
 #define OFFS_J 8
 
+const_zif_bits_t zif_bits_0 = {0, 0, 0, 0, 0};
+const_zif_bits_t zif_bits_1 = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+
+
 /* ZIF pin assignments are scattered all over the PIC18's I/O banks.
  * This array provides a mapping from a ZIF pin to the corresponding PIC18
  * I/O location (0-based port bank addressing, and bit offset). */
@@ -255,7 +259,7 @@ const latch_info_t zif2gnd[40] = {
 static unsigned char latch_mirror[8]; /* Read mirror of the current latch state. */
 
 
-void dir_write(zif_bits_t zif_val)
+void dir_write(const_zif_bits_t zif_val)
 {
     port_bits_t port_val = {0};
 
@@ -278,7 +282,7 @@ void dir_read(zif_bits_t zif_val)
     DEBUG(print_zif_bits("  dir_read zif_bits", zif_val));
 }
 
-void zif_write(zif_bits_t zif_val)
+void zif_write(const_zif_bits_t zif_val)
 {
     port_bits_t port_val = {0};
 
@@ -302,7 +306,7 @@ void zif_read(zif_bits_t zif_val)
     DEBUG(print_zif_bits("  zif_read zif_bits", zif_val));
 }
 
-void zif_pins_to_ports(zif_bits_t zif, port_bits_t port)
+void zif_pins_to_ports(const_zif_bits_t zif, port_bits_t port)
 {
     for(unsigned int pin_no = 0; pin_no < (sizeof(zif2port)/sizeof(port_info_t)); pin_no++)
     {
@@ -656,25 +660,30 @@ void print_latch_bits(const char *prefix, latch_bits_t lb) {
             lb[4], lb[5], lb[6], lb[7]);
 }
 
-void io_init(void) {
-    zif_bits_t zif_val = {0, 0, 0, 0, 0};
-
+static void io_init_main(void) {
     //Idle power supplies
     vpp_dis();
     vdd_dis();
     vpp_val(0);
     vdd_val(0);
-    set_vpp(zif_val);
-    set_vdd(zif_val);
-    set_gnd(zif_val);
-
-    //Set default values
-    //LED?
-    zif_write(zif_val);
+    set_vpp(zif_bits_0);
+    set_vdd(zif_bits_0);
+    set_gnd(zif_bits_0);
 
     //Tristate
     pupd(1, 0);
-    memset(zif_val, 0xFF, sizeof(zif_val));
-    dir_write(zif_val);
+
+    //Set default values
+    zif_write(zif_bits_0);
+}
+
+void io_init_z(void) {
+    io_init_main();
+    dir_write(zif_bits_1);
+}
+
+void io_init_0(void) {
+    io_init_main();
+    dir_write(zif_bits_0);
 }
 

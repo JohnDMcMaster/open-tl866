@@ -221,7 +221,7 @@ static inline void eval_command(char *cmd)
 
     //Re-initialize
     case 'i':
-        io_init();
+        io_init_0();
         break;
 
     //Help

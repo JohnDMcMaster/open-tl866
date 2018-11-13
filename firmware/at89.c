@@ -25,7 +25,6 @@ XXX: is this TL866 switching time or at89c51 power up delay?
 #define ZIFMASK_VPP 64;
 #define ZIFMASK_PROG 32;
 
-zif_bits_t at89_zbits_null = {0, 0, 0, 0, 0};
 zif_bits_t at89_gnd        = {0, 0, 0x8, 0, 0};
 zif_bits_t at89_vdd        = {0, 0, 0, 0, 0x80};
 zif_bits_t at89_vpp        = {0, 0, 0, 0x40, 0};
@@ -556,28 +555,13 @@ unsigned char at89_read_sig(unsigned int offset)
 }
 
 void at89_off(void) {
-    zif_bits_t zif_val = {0, 0, 0, 0, 0};
-
-    vpp_dis();
-    vdd_dis();
-
-    set_vpp(zif_val);
-    set_vdd(zif_val);
-
-    //All output
-    zif_write(zif_val);
-    dir_write(zif_val);
-    //Drive to ground
-    memset(zif_val, 0xFF, sizeof(zif_val));
-    set_gnd(zif_val);
-
+    io_init_0();
     /*
+    When doing io_init_z
     60 ms fail
     70 ms ok
     Add 50% margin => 105
     */
     __delay_ms(105);
-
-    io_init();
 }
 

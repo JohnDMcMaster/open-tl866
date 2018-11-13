@@ -94,9 +94,9 @@ Maybe a DAC?
 Set bit to 1 to make output
 Default: all inputs
 */
-void dir_write(zif_bits_t zif_val);
+void dir_write(const_zif_bits_t zif_val);
 void dir_read(zif_bits_t zif_val);
-void zif_write(zif_bits_t zif_val);
+void zif_write(const_zif_bits_t zif_val);
 void zif_read(zif_bits_t zif_val);
 void write_latch(int latch_no, unsigned char val);
 void write_shreg(unsigned char in);
@@ -153,14 +153,21 @@ void dir_read_all(port_bits_t p_bits);
 //This should always return 0x00 (no latches enabled)
 int OEn_state(void);
 void ports_to_zif_pins(port_bits_t port, zif_bits_t zif);
-void zif_pins_to_ports(zif_bits_t zif, port_bits_t port);
+void zif_pins_to_ports(const_zif_bits_t zif, port_bits_t port);
 
 void print_port_bits(const char *prefix, port_bits_t p_bits);
 void print_zif_bits(const char *prefix, zif_bits_t zif_val);
 void print_latch_bits(const char *prefix, latch_bits_t lb);
 
 //Reset all primitives to known values
-void io_init(void);
+//All i/o tristated
+void io_init_z(void);
+//All i/o actively driving 0
+void io_init_0(void);
+
+extern const_zif_bits_t zif_bits_0;
+extern const_zif_bits_t zif_bits_1;
+
 
 #ifdef	__cplusplus
 }
