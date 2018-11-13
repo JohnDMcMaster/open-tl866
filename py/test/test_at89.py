@@ -3,6 +3,8 @@
 from otl866 import at89, util
 import unittest
 import os
+import time
+import random
 
 
 class TestCase(unittest.TestCase):
@@ -28,9 +30,6 @@ class TestCase(unittest.TestCase):
         self.tl.blank()
     """
 
-    def test_reset_vdd(self):
-        self.tl.reset_vdd()
-
     def test_read(self):
         buff = self.tl.read(0, 16)
         assert len(buff) == 16, len(buff)
@@ -46,6 +45,25 @@ class TestCase(unittest.TestCase):
         self.tl.lock(2)
         #self.tl.lock(3)
         #self.tl.lock(4)
+
+    def test_reset_torture(self):
+        '''
+        Used to troubleshoot issue where chip would sometimes
+        come out of reset improperly and fail signature
+        Root cause: rails were floated, so if you waited just right amount of time you'd glitch rail
+        Solution: code now grounds all pins on shutdown
+        '''
+
+        if os.getenv('ALL_TESTS', 'N') != 'Y':
+            return
+
+        i = 0
+        while True:
+            i += 1
+            print("Loop %u" % i)
+            #tl.sig()
+            self.tl.erase()
+            time.sleep(0.001 * random.randint(0, 1200))
 
 
 if __name__ == "__main__":
