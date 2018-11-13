@@ -16,8 +16,8 @@ CMD> r 0 10
 
 XXX: is this TL866 switching time or at89c51 power up delay?
 */
-#define VDD_DELAY   1
-#define VPP_DELAY   1
+#define VDD_DELAY   10
+#define VPP_DELAY   10
 
 #define ZIFMASK_XTAL1 4;
 #define ZIFMASK_GND 8;

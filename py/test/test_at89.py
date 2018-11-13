@@ -15,9 +15,11 @@ class TestCase(unittest.TestCase):
         self.verbose = os.getenv("VERBOSE", "N") == "Y"
         self.tl = at89.AT89(port, verbose=self.verbose)
         self.tl.led(1)
+        self.tl.sig_en(1)
 
     def tearDown(self):
         """Call after every test case."""
+        self.tl.sig_en(1)
         self.tl.led(0)
 
     def test_sig(self):
@@ -42,9 +44,30 @@ class TestCase(unittest.TestCase):
         self.tl.erase()
 
     def test_lock(self):
+        self.tl.sig_en(1)
+
+        self.tl.erase()
+        sig = self.tl.sig()
+        print("Device: %s" % at89.sig_str(sig))
+
+        self.tl.erase()
         self.tl.lock(2)
-        #self.tl.lock(3)
-        #self.tl.lock(4)
+        sig = self.tl.sig()
+        print("Device: %s" % at89.sig_str(sig))
+
+        self.tl.sig_en(0)
+
+        self.tl.erase()
+        self.tl.lock(3)
+        sig = self.tl.sig()
+        print("Device: %s" % at89.sig_str(sig))
+
+        self.tl.erase()
+        self.tl.lock(4)
+        sig = self.tl.sig()
+        print("Device: %s" % at89.sig_str(sig))
+
+        self.tl.sig_en(1)
 
     def test_reset_torture(self):
         '''
