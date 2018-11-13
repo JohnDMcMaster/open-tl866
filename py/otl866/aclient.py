@@ -129,7 +129,7 @@ class AClient:
 
         self.ser.flushInput()
 
-    def expect(self, s, timeout=0.5):
+    def expect(self, s, timeout=2.0):
         self.e.expect(s, timeout=timeout)
         return self.e.before
 
