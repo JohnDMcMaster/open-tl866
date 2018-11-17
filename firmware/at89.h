@@ -15,10 +15,10 @@ unsigned char at89_read_sig(unsigned int offset);
 
 void at89_off(void);
 
-extern zif_bits_t at89_zbits_null;
-extern zif_bits_t at89_gnd;
-extern zif_bits_t at89_vdd;
-extern zif_bits_t at89_vpp;
+//extern const_zif_bits_t at89_zbits_null;
+extern const_zif_bits_t at89_gnd;
+extern const_zif_bits_t at89_vdd;
+extern const_zif_bits_t at89_vpp;
 
 #endif
 

@@ -25,9 +25,22 @@ XXX: is this TL866 switching time or at89c51 power up delay?
 #define ZIFMASK_VPP 64;
 #define ZIFMASK_PROG 32;
 
-zif_bits_t at89_gnd        = {0, 0, 0x8, 0, 0};
-zif_bits_t at89_vdd        = {0, 0, 0, 0, 0x80};
-zif_bits_t at89_vpp        = {0, 0, 0, 0x40, 0};
+const_zif_bits_t at89_gnd        = {0, 0, 0x8, 0, 0};
+const_zif_bits_t at89_vdd        = {0, 0, 0, 0, 0x80};
+const_zif_bits_t at89_vpp        = {0, 0, 0, 0x40, 0};
+
+//Data bus tristated (data in)
+const_zif_bits_t at89_dir_din = {  0,
+                    0b00100000,   // Busy signal (14)
+                    0,
+                    0b10000000,   // p0.7 (32)
+                    0b01111111 }; // p0.{6-0} (33-39)  
+//Data out
+const_zif_bits_t at89_dir_dout = {  0,
+                    0b00100000,   // Busy signal (14)
+                    0,
+                    0,
+                    0 };
 
 // Neat trick taken from a stack overflow answer.
 static inline unsigned char invert_bit_endianness(unsigned char byte)
@@ -112,6 +125,74 @@ static inline void zif_clock_write(zif_bits_t op_template, zif_bits_t op_clk,
 }
 */
 
+void at89_ps(bool p26, bool p27, bool p36, bool p37, zif_bits_t io_out) {
+    if (p26) {
+        io_out[3] |= 0b00000100;
+    }
+    if (p27) {
+        io_out[3] |= 0b00001000;
+    }
+    if (p36) {
+        io_out[1] |= 0b10000000;
+    }
+    if (p37) {
+        io_out[2] |= 0b00000001;
+    }
+
+    zif_write(io_out);
+}
+
+void at89_idle(zif_bits_t io_out) {
+    at89_ps(0, 0, 1, 1, io_out);
+}
+
+void at89_on(bool vpp, bool dout, zif_bits_t io_out) {
+    /*
+    Table Flash Programming Modes
+
+    vpp: set VPP pins and target, but don't enable
+    dout: drive data out
+    p26: port 2, pin 6 value
+    p27: port 2, pin 7 value
+    p36: port 3, pin 6 value
+    p37: port 3, pin 7 value
+    */
+
+    io_init_z();
+
+    if (dout) {
+        dir_write(at89_dir_dout);
+    } else {
+        dir_write(at89_dir_din);
+    }
+
+    set_gnd(at89_gnd);
+
+    // Set voltages
+    vdd_val(VDD_51); // 5.0 v - 5.2 v
+    // Set Vdd / GND pinout  
+    set_vdd(at89_vdd);
+
+    if (vpp) {
+        set_vpp(at89_vpp);
+        vpp_val(VPP_126); // 12.8 v - 13.2 v
+    }
+
+    // Base pin setting
+    io_out[0] = 0b00000000;
+    io_out[1] = 0b00000001; // RST (9)
+    io_out[2] = 0b00000000;  
+    //Prog always starts high
+    io_out[3] = 0b01100000;   // VPP (31), PROG (30)
+    io_out[4] = 0b00000000;
+
+    //Default to read state?
+    at89_ps(0, 0, 1, 1, io_out);
+
+    vdd_en();
+    __delay_ms(VDD_DELAY);
+}
+
 unsigned char at89_read(unsigned int addr)
 {
     /* 
@@ -133,45 +214,26 @@ unsigned char at89_read(unsigned int addr)
      * P3.6     <-      16          RG1                     // ctrl (high)
      * P3.7     <-      17          RE0                     // ctrl (high)
      */
-    
-    // Set pin direction
-    zif_bits_t dir = {  0,
-                        0b00100000,   // Busy signal (14)
-                        0,
-                        0b10000000,   // p0.7 (32)
-                        0b01111111 }; // p0.{6-0} (33-39)  
-    dir_write(dir);
-    
-    // Set Vdd / GND pinout  
-    set_vdd(at89_vdd);
-    set_gnd(at89_gnd);
 
-    // Set voltages
-    vdd_val(VDD_51); // 5.0 v - 5.2 v
-    vdd_en();
-    __delay_ms(VDD_DELAY);
-    
+    zif_bits_t io_out;
+    at89_on(false, false, io_out);
+
+    //Default is read, but reinforce since we might remove the default
+    at89_ps(0, 0, 1, 1, io_out);
+
     // Allocate an empty zifbits struct for reading pin state
     zif_bits_t response    = { 0, 0, 0, 0, 0 };
 
-    // Base pin setting for reading
-    zif_bits_t read_base = { 0b00000000,
-                             0b10000001,   // 3.6 ctrl (16), RST (9)
-                             0b00000001,   // 3.7 ctrl (17) 
-                             0b01100000,   // VPP (31), PROG (30)
-                             0b00000000 };
-
-    zif_bits_t read_clk;
-
     // Mask in the address bits to the appropriate pins
-    mask_addr(read_base, addr);
+    mask_addr(io_out, addr);
 
     // Give the clock on/off states to zif_clock_write(..) and loop 48 cycles
-    clock_write(read_base, 48);
+    clock_write(io_out, 48);
 
     // Read the current pin state (to read in the requested byte)
     zif_read(response);
 
+    at89_idle(io_out);
     at89_off();
 
     return zif_to_data(response);
@@ -201,50 +263,24 @@ void at89_write(unsigned int addr, unsigned char data)
     
     printf("Writing %02X at %03X... ", data, addr);
 
-    // Set pin direction
-    zif_bits_t dir = {  0,
-                        0b00100000,   // Busy signal (14)
-                        0, 0, 0 };
-    dir_write(dir);
-    
-    // Set pins
-    set_gnd(at89_gnd);
-    set_vdd(at89_vdd);
-    set_vpp(at89_vpp);
-    
-    // Set voltages
-    vdd_val(VDD_51); // 5.0 v - 5.2 v
-    vpp_val(VPP_126); // 12.8 v - 13.2 v
-    vdd_en();
-    __delay_ms(VDD_DELAY);
+    zif_bits_t io_out;
+    at89_on(true, true, io_out);
+    at89_ps(0, 1, 1, 1, io_out);
 
-    // Base pin setting for writing
-    zif_bits_t write_base = { 0b00000000,
-                              0b10000001,   // 3.6 ctrl (16), RST (9)
-                              0b00000001,   // 3.7 ctrl (17) 
-                              0b01001000,   // VPP (31), 2.7 (28)
-                              0b00000000 };
-    
     // Mask in our address and data outputs to the base pin configuration
-    mask_addr(write_base, addr);
-    mask_data(write_base, data);
+    mask_addr(io_out, addr);
+    mask_data(io_out, data);
     
-    // Create a zif state to set before running the clock
-    // PROG needs to be pulsed, can't be kept low the entire time.
-    zif_bits_t write_preclk;
-    memcpy(write_preclk, write_base, 5);
-    mask_prog(write_preclk);
-   
     // Enable VPP right before setting the ZIF state
     vpp_en();
     __delay_ms(VPP_DELAY);
 
-    // Set PROG high before pulsing it low during programming
-    zif_write(write_preclk);
+    // Leave PROG high before pulsing it low during programming
     __delay_us(20); // 20us might be too generous. TODO
 
-    clock_write(write_base, 48);
+    clock_write(io_out, 48);
 
+    at89_idle(io_out);
     at89_off();
 
     // The client / user is expected to verify this with a read command.
@@ -505,7 +541,49 @@ unsigned char at89_read_sysflash(unsigned int offset)
      * P3.6     <-      16          RG1                     // ctrl (low)
      * P3.7     <-      17          RE0                     // ctrl (low)
      */
-    
+
+
+    /*
+    {
+        zif_bits_t io_out;
+        at89_on(false, false, io_out);
+        at89_ps(0, 0, 0, 0, io_out);
+    }
+
+    zif_bits_t dir = {  0,
+                        0b00100000,   // Busy signal (14)
+                        0,
+                        0b10000000,   // p0.7 (32)
+                        0b01111111 }; // p0.{6-0} (33-39)  
+    dir_write(dir);
+
+
+    // Base pin setting for reading
+    zif_bits_t io_out = { 0b00000000,
+                             0b00000001,   // RST (9)
+                             0b00000000,
+                             0b01100000,   // VPP (31), PROG (30)
+                             0b00000000 };
+
+    // Allocate an empty zifbits struct for reading pin state
+    zif_bits_t response  = { 0, 0, 0, 0, 0 };
+
+    // Mask in the address bits to the appropriate pins
+    mask_addr(io_out, offset);
+
+    // Give the clock on/off states to zif_clock_write(..) and loop 48 cycles
+    clock_write(io_out, 48);
+
+    // Read the current pin state (to read in the requested byte)
+    zif_read(response);
+
+    at89_idle(io_out);
+    at89_off();
+
+    return zif_to_data(response);
+    */
+
+
     // Set pin direction
     zif_bits_t dir = {  0,
                         0b00100000,   // Busy signal (14)
