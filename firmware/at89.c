@@ -78,6 +78,11 @@ static inline void mask_prog(zif_bits_t op_base)
     op_base[3] |= 0x20;
 }
 
+static inline void clear_prog(zif_bits_t op_base)
+{
+    op_base[3] &= 0xFF ^ 0x20;
+}
+
 static inline void mask_addr(zif_bits_t op_base, unsigned int addr)
 {
     op_base[0] = addr & 0xFF;
@@ -125,7 +130,7 @@ static inline void zif_clock_write(zif_bits_t op_template, zif_bits_t op_clk,
 }
 */
 
-void at89_ps(bool p26, bool p27, bool p36, bool p37, zif_bits_t io_out) {
+void at89_mode(bool p26, bool p27, bool p36, bool p37, zif_bits_t io_out) {
     if (p26) {
         io_out[3] |= 0b00000100;
     } else {
@@ -154,7 +159,8 @@ void at89_ps(bool p26, bool p27, bool p36, bool p37, zif_bits_t io_out) {
 }
 
 void at89_idle(zif_bits_t io_out) {
-    at89_ps(0, 0, 1, 1, io_out);
+    //Read
+    at89_mode(0, 0, 1, 1, io_out);
 }
 
 void at89_on(bool vpp, bool dout, zif_bits_t io_out) {
@@ -198,7 +204,7 @@ void at89_on(bool vpp, bool dout, zif_bits_t io_out) {
     io_out[4] = 0b00000000;
 
     //Default to read state?
-    at89_ps(0, 0, 1, 1, io_out);
+    at89_mode(0, 0, 1, 1, io_out);
 
     vdd_en();
     __delay_ms(VDD_DELAY);
@@ -206,31 +212,10 @@ void at89_on(bool vpp, bool dout, zif_bits_t io_out) {
 
 unsigned char at89_read(unsigned int addr)
 {
-    /* 
-     * AT89C51 Read Pinout:
-     * 
-     * Target   Dir     ZIF pin#    Programmer port
-     * ------------------------------------------------------------------------
-     * RST      <-      09          RJ4                     // (high)
-     * PSEN     <-      29          RD7                     // (low)
-     * PROG     <-      30          RG0                     // (high)
-     * VPP      <-      31          RJ0                     // (high)
-     * VCC      <-      40          Vdd_40
-     * P0.{0-7) ->      39-32       RB{6,5,4,3,2}, RJ{3,2,1}      // PGM Data
-     * P1.{0-7} <-      1-8         RC{5,4,3,2}, RJ{7,6}, RC{6,7} // Addr
-     * P2.{0-3} <-      21-24       RE{4,5,6,1}             // Addr (contd.)
-     * P2.6     <-      27          RD5                     // ctrl (low)
-     * P2.7     <-      28          RD6                     // ctrl (low)
-     * P3.4     ->      14          RD1                     // Busy
-     * P3.6     <-      16          RG1                     // ctrl (high)
-     * P3.7     <-      17          RE0                     // ctrl (high)
-     */
-
     zif_bits_t io_out;
-    at89_on(false, false, io_out);
 
-    //Default is read, but reinforce since we might remove the default
-    at89_ps(0, 0, 1, 1, io_out);
+    at89_on(false, false, io_out);
+    at89_mode(0, 0, 1, 1, io_out);
 
     // Allocate an empty zifbits struct for reading pin state
     zif_bits_t response    = { 0, 0, 0, 0, 0 };
@@ -250,46 +235,69 @@ unsigned char at89_read(unsigned int addr)
     return zif_to_data(response);
 }
 
+bool at89_wait_idle(void) {
+    //Wait until BSYn high to indicate done
+    //tWC => 2.0 ms
+    //16 MHz osc => should complete within 32k cycles (let alone loops)
+    for (int i = 0; i < 32000; ++i) {
+        zif_bits_t response;
+        zif_read(response);
+        //P3.4 => 14
+        if (response[1] & 0x20) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void at89_write(unsigned int addr, unsigned char data)
 {
-    /* 
-     * AT89C51 write Pinout:
-     * 
-     * Target   Dir     ZIF pin#    Programmer port
-     * ------------------------------------------------------------------------
-     * RST      <-      09          RJ4                     // (high)
-     * PSEN     <-      29          RD7                     // (low)
-     * PRO      <-      30          RG0                     // Pulsed prog.
-     * VPP      <-      31          VPP_31                  // 12v
-     * VCC      <-      40          Vdd_40
-     * P0.{0-7) <-      39-32       RB{6,5,4,3,2}, RJ{3,2,1}      // PGM Data
-     * P1.{0-7} <-      1-8         RC{5,4,3,2}, RJ{7,6}, RC{6,7} // Addr
-     * P2.{0-3} <-      21-24       RE{4,5,6,1}             // Addr (contd.)
-     * P2.6     <-      27          RD5                     // ctrl (low)
-     * P2.7     <-      28          RD6                     // ctrl (high)
-     * P3.4     ->      14          RD1                     // Busy
-     * P3.6     <-      16          RG1                     // ctrl (high)
-     * P3.7     <-      17          RE0                     // ctrl (high)
-     */
+    /*
+    PROGn should be pulsed low between 1 - 110 us
+    */
     
     printf("Writing %02X at %03X... ", data, addr);
 
     zif_bits_t io_out;
     at89_on(true, true, io_out);
-    at89_ps(0, 1, 1, 1, io_out);
+    at89_mode(0, 1, 1, 1, io_out);
+
+    //Wait tEHSH
+    clock_write(io_out, 48);
+
+    // Enable VPP right before setting the ZIF state
+    vpp_en();
 
     // Mask in our address and data outputs to the base pin configuration
     mask_addr(io_out, addr);
     mask_data(io_out, data);
-    
-    // Enable VPP right before setting the ZIF state
-    vpp_en();
-    __delay_ms(VPP_DELAY);
+    zif_write(io_out);
 
-    // Leave PROG high before pulsing it low during programming
-    __delay_us(20); // 20us might be too generous. TODO
-
+    /*
+    Wait before lowering ALE/PROGn
+    tSHGL: 10 us
+    tAVGL: 48 clocks
+    tDVGL: 48 clocks
+    */
     clock_write(io_out, 48);
+    //How long does above take? Maybe we could just skip this
+    __delay_us(10);
+
+    //Bring PROGn low to begin program
+    clear_prog(io_out);
+    zif_write(io_out);
+
+    //Wait tGLGH (1-110 us)
+    __delay_us(65);
+
+    //Bring PROGn high to stop program
+    mask_prog(io_out);
+    //Wait tGHBL, tGHDX, tGHAX
+    clock_write(io_out, 48);
+
+    if (!at89_wait_idle()) {
+        printf("ERROR: BUSYn timeout, programming failed\r\n");
+    }
 
     at89_idle(io_out);
     at89_off();
@@ -533,7 +541,7 @@ unsigned char at89_read_sysflash(unsigned int offset)
     zif_bits_t io_out;
 
     at89_on(false, false, io_out);
-    at89_ps(0, 0, 0, 0, io_out);
+    at89_mode(0, 0, 0, 0, io_out);
 
     // Allocate an empty zifbits struct for reading pin state
     zif_bits_t response  = { 0, 0, 0, 0, 0 };
