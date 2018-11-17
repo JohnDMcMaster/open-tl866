@@ -110,7 +110,12 @@ class AClient:
         self.verbose = verbose
         self.verbose and print("port: %s" % device)
         self.ser = ASerial(device, timeout=0, baudrate=115200, writeTimeout=0)
+
+        # send dummy newline to clear any commands in progress
+        self.ser.write('\n')
+        self.ser.flush()
         self.flushInput()
+
         self.e = pexpect.fdpexpect.fdspawn(self.ser.fileno(), encoding="ascii")
         self.assert_ver()
 
