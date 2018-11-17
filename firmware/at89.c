@@ -128,15 +128,26 @@ static inline void zif_clock_write(zif_bits_t op_template, zif_bits_t op_clk,
 void at89_ps(bool p26, bool p27, bool p36, bool p37, zif_bits_t io_out) {
     if (p26) {
         io_out[3] |= 0b00000100;
+    } else {
+        io_out[3] &= 0xFF ^ 0b00000100;
     }
+
     if (p27) {
         io_out[3] |= 0b00001000;
+    } else {
+        io_out[3] &= 0xFF ^ 0b00001000;
     }
+
     if (p36) {
         io_out[1] |= 0b10000000;
+    } else {
+        io_out[1] &= 0xFF ^ 0b10000000;
     }
+
     if (p37) {
         io_out[2] |= 0b00000001;
+    } else {
+        io_out[2] &= 0xFF ^ 0b00000001;
     }
 
     zif_write(io_out);
@@ -519,51 +530,10 @@ void at89_lock(unsigned char mode)
 
 unsigned char at89_read_sysflash(unsigned int offset)
 {
-   // TODO. Implements the signature reading routine as described in the
-   // datasheet. Would be a good precheck before doign read/write/erase ops.
-    
-     /* 
-     * AT89C51 Read Signature Pinout:
-     * 
-     * Target   Dir     ZIF pin#    Programmer port
-     * ------------------------------------------------------------------------
-     * RST      <-      09          RJ4                     // (high)
-     * PSEN     <-      29          RD7                     // (low)
-     * PROG     <-      30          RG0                     // (high)
-     * VPP      <-      31          RJ0                     // (high)
-     * VCC      <-      40          Vdd_40
-     * P0.{0-7) ->      39-32       RB{6,5,4,3,2}, RJ{3,2,1}      // PGM Data
-     * P1.{0-7} <-      1-8         RC{5,4,3,2}, RJ{7,6}, RC{6,7} // Addr
-     * P2.{0-3} <-      21-24       RE{4,5,6,1}             // Addr (contd.)
-     * P2.6     <-      27          RD5                     // ctrl (low)
-     * P2.7     <-      28          RD6                     // ctrl (low)
-     * P3.4     ->      14          RD1                     // Busy
-     * P3.6     <-      16          RG1                     // ctrl (low)
-     * P3.7     <-      17          RE0                     // ctrl (low)
-     */
+    zif_bits_t io_out;
 
-
-    /*
-    {
-        zif_bits_t io_out;
-        at89_on(false, false, io_out);
-        at89_ps(0, 0, 0, 0, io_out);
-    }
-
-    zif_bits_t dir = {  0,
-                        0b00100000,   // Busy signal (14)
-                        0,
-                        0b10000000,   // p0.7 (32)
-                        0b01111111 }; // p0.{6-0} (33-39)  
-    dir_write(dir);
-
-
-    // Base pin setting for reading
-    zif_bits_t io_out = { 0b00000000,
-                             0b00000001,   // RST (9)
-                             0b00000000,
-                             0b01100000,   // VPP (31), PROG (30)
-                             0b00000000 };
+    at89_on(false, false, io_out);
+    at89_ps(0, 0, 0, 0, io_out);
 
     // Allocate an empty zifbits struct for reading pin state
     zif_bits_t response  = { 0, 0, 0, 0, 0 };
@@ -578,50 +548,6 @@ unsigned char at89_read_sysflash(unsigned int offset)
     zif_read(response);
 
     at89_idle(io_out);
-    at89_off();
-
-    return zif_to_data(response);
-    */
-
-
-    // Set pin direction
-    zif_bits_t dir = {  0,
-                        0b00100000,   // Busy signal (14)
-                        0,
-                        0b10000000,   // p0.7 (32)
-                        0b01111111 }; // p0.{6-0} (33-39)  
-    dir_write(dir);
-    
-    // Set Vdd / GND pinout  
-    set_vdd(at89_vdd);
-    set_gnd(at89_gnd);
-
-    // Set voltages
-    vdd_val(VDD_51); // 5.0 v - 5.2 v
-    vdd_en();
-    __delay_ms(VDD_DELAY);
-    
-    // Allocate an empty zifbits struct for reading pin state
-    zif_bits_t response  = { 0, 0, 0, 0, 0 };
-
-    // Base pin setting for reading
-    zif_bits_t signature_base = { 0b00000000,
-                             0b00000001,   // RST (9)
-                             0b00000000,
-                             0b01100000,   // VPP (31), PROG (30)
-                             0b00000000 };
-
-    zif_bits_t signature_clk;
-    
-    // Mask in the address bits to the appropriate pins
-    mask_addr(signature_base, offset);
-
-    // Give the clock on/off states to zif_clock_write(..) and loop 48 cycles
-    clock_write(signature_base, 48);
-
-    // Read the current pin state (to read in the requested byte)
-    zif_read(response);
-
     at89_off();
 
     return zif_to_data(response);
