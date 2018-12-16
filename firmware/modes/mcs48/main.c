@@ -185,6 +185,19 @@ static void ihex_read(uint16_t addr, uint16_t length)
     dev_off();
 }
 
+
+static inline void print_help(void)
+{
+    com_println("open-tl866 (mcs48)");
+    com_println("r addr range  read from target to hex bytes");
+    com_println("i addr range  read from target to Intel HEX");
+    com_println("f             freerun (device on, no read)");
+    com_println("F             stop freerun (device off)");
+    com_println("h             show this help");
+    com_println("b             reset to bootloader");
+    com_println("(all parameters in hex)");
+}
+
 static inline void eval_command(char *cmd)
 {
     char *cmd_tok = strtok(cmd, " ");
@@ -207,6 +220,11 @@ static inline void eval_command(char *cmd)
 
     case 'F':
         dev_off();
+        break;
+
+    case '?':
+    case 'h':
+        print_help();
         break;
 
     case 'b':
