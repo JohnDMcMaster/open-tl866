@@ -44,7 +44,7 @@ corresponding target in the makefiles, so you can build just one mode
 with e.g. `make tl866-bitbang`. The currently implemented modes are:
 
 * `tl866-bitbang`
-* `tl866-at86`
+* `tl866-at89`
 
 ## Device Drivers and Configuration
 
