@@ -31,7 +31,7 @@ sig_i2s = {
 
 def sig_str(sig):
     sigi = (sig[0] << 16) | (sig[1] << 8) | sig[2]
-    return sig_i2s.get(sigi, "unknown")
+    return sig_i2s.get(sigi, "unknown (0x%06X)" % sigi)
 
 
 class AT89(aclient.AClient):
