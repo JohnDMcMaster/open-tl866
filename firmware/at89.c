@@ -131,6 +131,7 @@ static inline void zif_clock_write(zif_bits_t op_template, zif_bits_t op_clk,
 */
 
 void at89_mode(bool p26, bool p27, bool p36, bool p37, zif_bits_t io_out) {
+    //P2.6 (A14) => 27
     if (p26) {
         io_out[3] |= 0b00000100;
     } else {
@@ -337,6 +338,7 @@ void at89_erase()
 
     //Erase function requires 10ms prog pulse
     __delay_ms(10);
+    clock_write(io_out, 48);
 
     //Raise PROGn to complete erase
     mask_prog(io_out);
@@ -344,6 +346,8 @@ void at89_erase()
 
     //Wait tGHSL before bringing VPP low
     __delay_us(10);
+
+    __delay_ms(5000);
 
     at89_idle(io_out);
     at89_off();
