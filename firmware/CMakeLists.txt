@@ -89,3 +89,7 @@ add_tl866_mode(tl866-at89
 add_tl866_mode(tl866-epromv
     ${CMAKE_SOURCE_DIR}/modes/epromv/main.c
 )
+
+add_tl866_mode(tl866-mcs48
+    ${CMAKE_SOURCE_DIR}/modes/mcs48/main.c
+)
