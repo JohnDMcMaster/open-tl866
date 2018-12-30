@@ -10,6 +10,11 @@ This firmware replaces the proprietary firmware for programming EPROMs, MCUs, GA
    [Download it from Microchip's site][xc8] and install it.
    When activating, select the Free version.
 
+   **Note:** If you are installing to a 64-bit Ubuntu distribution,
+   you must first get the 32-bit libc that isn't installed by default:
+   `sudo apt-get install libc6:i386`. Then you can run Microchip's
+   installer.
+
 1. CMake is needed to generate the build configuration. On Linux you
    should install it from your distribution's package manager
    (e.g. `sudo apt-get install cmake`). For Windows, an installer is
@@ -44,7 +49,7 @@ corresponding target in the makefiles, so you can build just one mode
 with e.g. `make tl866-bitbang`. The currently implemented modes are:
 
 * `tl866-bitbang`
-* `tl866-at86`
+* `tl866-at89`
 
 ## Device Drivers and Configuration
 
