@@ -137,7 +137,6 @@ void ezzif_print_debug(void) {
     printf("  VDD ref tris %u %u %u\r\n", VID_00_TRIS, VID_01_TRIS, VID_01_TRIS);
 }
 
-
 /****************************************************************************
 DIP40
 ****************************************************************************/
@@ -270,15 +269,16 @@ void ezzif_gnd_d40(int n) {
     set_gnd(ezzif_zb_gnd);
 }
 
+
 void ezzif_bus_dir_d40(const char *ns, unsigned len, int tristate) {
     for (unsigned i = 0; i < len; ++i) {
-        ezzif_dir_d40(ns[i], tristate);
+        ezzif_dir_d40(_ezzif_dipto40(ns[i]), tristate);
     }
 }
 
 void ezzif_bus_w_d40(const char *ns, unsigned len, uint16_t val) {
     for (unsigned i = 0; i < len; ++i) {
-        ezzif_w_d40(ns[i], (val & (1 << i)) != 0);
+        ezzif_w_d40(_ezzif_dipto40(ns[i]), (val & (1 << i)) != 0);
     }
 }
 
@@ -286,7 +286,7 @@ uint16_t ezzif_bus_r_d40(const char *ns, unsigned len) {
     int ret = 0;
 
     for (unsigned i = 0; i < len; ++i) {
-        if (ezzif_r_d40(ns[i])) {
+        if (ezzif_r_d40(_ezzif_dipto40(ns[i]))) {
             ret |= 1 << i;
         }
     }
@@ -297,6 +297,22 @@ uint16_t ezzif_bus_r_d40(const char *ns, unsigned len) {
 /****************************************************************************
 Generic DIP
 ****************************************************************************/
+
+int _ezzif_pins = 40;
+int _ezzif_pins_div_2 = 20;
+
+void ezzif_set_dip_pins(int n) {
+    if (ezzif_valid_d40(n) != 1) {
+        printf("ERROR: ezzif_set_dip_pins not in 1-40 inclusive.");
+        return;
+    }
+    if ((n % 2) == 1) {
+        printf("ERROR: ezzif_set_dip_pins must be even.");
+        return;
+    }
+    _ezzif_pins = n;
+    _ezzif_pins_div_2 = n >> 1;
+}
 
 void ezzif_bus_dir(const char *ns, unsigned len, int tristate) {
     for (unsigned i = 0; i < len; ++i) {

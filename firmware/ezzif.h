@@ -9,9 +9,6 @@ You should not use low level APIs unless you know what you are doing
 #include "io.h"
 #include <stdint.h>
 
-#define EZZIF_D28
-//#include "defines.h"
-
 //High level API
 //Tristate all outputs
 //Disable all voltage rails
@@ -74,32 +71,31 @@ Generic DIP
 TODO: convert these to ni directly instead of DIP28 => d40 => ni
 ****************************************************************************/
 
-//preprocess to propagate constants
-#define ezzif_dip_40to40(n) (n)
-//Pin 1 => 1
-//Pin 28 => 40, etc
-#define ezzif_dip_28to40(n) ((n) <= 14 ? (n) : (n) + 40 - 28)
+extern int _ezzif_pins;
+extern int _ezzif_pins_div_2;
 
-#if defined(EZZIF_D40)
-    #define ezzif_dipto40 ezzif_dip_40to40
-#elif defined(EZZIF_D28)
-    #define ezzif_dipto40 ezzif_dip_28to40
-#else
-    #error "Must define EZZIF_DIPN"
-#endif
+// Pin 1 -> ZIF pin 1,
+// Last pin -> ZIF pin 40.
+#define _ezzif_dipto40(n) ((n) <= _ezzif_pins_div_2 ? (n) : 40 - _ezzif_pins + (n))
 
 //High level API
 //See d40 API for definitions
-#define ezzif_toggle(n) ezzif_toggle_d40(ezzif_dipto40(n))
-#define ezzif_w(n, val) ezzif_w_d40(ezzif_dipto40(n), val)
-#define ezzif_dir(n, tristate) ezzif_dir_d40(ezzif_dipto40(n), tristate)
-#define ezzif_io(n, tristate, val) ezzif_io_d40(ezzif_dipto40(n), tristate, val)
-#define ezzif_o(n, val) ezzif_o_d40(ezzif_dipto40(n), val)
-#define ezzif_i(n) ezzif_i_d40(ezzif_dipto40(n))
-#define ezzif_r(n) ezzif_r_d40(ezzif_dipto40(n))
-#define ezzif_vdd(n, voltset) ezzif_vdd_d40(ezzif_dipto40(n), voltset)
-#define ezzif_vpp(n, voltset) ezzif_vpp_d40(ezzif_dipto40(n), voltset)
-#define ezzif_gnd(n) ezzif_gnd_d40(ezzif_dipto40(n))
+
+// Sets the number of pins in the chip, for use by _ezzif_dipto40. n must be
+// between 2 and 40 inclusive, and must be even. By default, the number of pins
+// is 40.
+void ezzif_set_dip_pins(int n);
+
+#define ezzif_toggle(n) ezzif_toggle_d40(_ezzif_dipto40(n))
+#define ezzif_w(n, val) ezzif_w_d40(_ezzif_dipto40(n), val)
+#define ezzif_dir(n, tristate) ezzif_dir_d40(_ezzif_dipto40(n), tristate)
+#define ezzif_io(n, tristate, val) ezzif_io_d40(_ezzif_dipto40(n), tristate, val)
+#define ezzif_o(n, val) ezzif_o_d40(_ezzif_dipto40(n), val)
+#define ezzif_i(n) ezzif_i_d40(_ezzif_dipto40(n))
+#define ezzif_r(n) ezzif_r_d40(_ezzif_dipto40(n))
+#define ezzif_vdd(n, voltset) ezzif_vdd_d40(_ezzif_dipto40(n), voltset)
+#define ezzif_vpp(n, voltset) ezzif_vpp_d40(_ezzif_dipto40(n), voltset)
+#define ezzif_gnd(n) ezzif_gnd_d40(_ezzif_dipto40(n))
 
 /*
 Bus functions

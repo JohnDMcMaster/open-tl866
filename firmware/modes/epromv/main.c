@@ -9,8 +9,6 @@
 #include "../../comlib.h"
 #include "../../arglib.h"
 #include "../../stock_compat.h"
-
-#define EZZIF_DIP28
 #include "ezzif.h"
 
 int main_debug = 0;
@@ -116,6 +114,7 @@ static inline void eval_command(char *cmd)
 }
 
 void mode_main(void) {
+    ezzif_set_dip_pins(28);
     ezzif_reset();
     
     while(1) {
