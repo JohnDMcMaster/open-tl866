@@ -272,13 +272,13 @@ void ezzif_gnd_d40(int n) {
 
 void ezzif_bus_dir_d40(const char *ns, unsigned len, int tristate) {
     for (unsigned i = 0; i < len; ++i) {
-        ezzif_dir_d40(_ezzif_dipto40(ns[i]), tristate);
+        ezzif_dir_d40(ns[i], tristate);
     }
 }
 
 void ezzif_bus_w_d40(const char *ns, unsigned len, uint16_t val) {
     for (unsigned i = 0; i < len; ++i) {
-        ezzif_w_d40(_ezzif_dipto40(ns[i]), (val & (1 << i)) != 0);
+        ezzif_w_d40(ns[i], (val & (1 << i)) != 0);
     }
 }
 
@@ -286,7 +286,7 @@ uint16_t ezzif_bus_r_d40(const char *ns, unsigned len) {
     int ret = 0;
 
     for (unsigned i = 0; i < len; ++i) {
-        if (ezzif_r_d40(_ezzif_dipto40(ns[i]))) {
+        if (ezzif_r_d40(ns[i])) {
             ret |= 1 << i;
         }
     }
