@@ -213,11 +213,11 @@ void ezzif_io_d40(int n, int tristate, int val) {
 }
 
 void ezzif_o_d40(int n, int val) {
-    ezzif_io_d40(n, 1, val);
+    ezzif_io_d40(n, 0, val);
 }
 
 void ezzif_i_d40(int n) {
-    ezzif_io_d40(n, 0, 0);
+    ezzif_io_d40(n, 1, 0);
 }
 
 
