@@ -12,9 +12,9 @@
 extern "C" {
 #endif
 
-// Needed for delay intrinsics
-#define _XTAL_FREQ 16000000
-
+//16 MHz osc, but normally through PLL (96 MHz) divided by 2
+//See https://github.com/ProgHQ/open-tl866/issues/74
+#define _XTAL_FREQ 48000000
 
 #ifdef	__cplusplus
 }
