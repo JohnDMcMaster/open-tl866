@@ -12,6 +12,7 @@ setup(
     packages=["otl866", "otl866/bootloader"],
     install_requires=[
         "intelhex",
+        "pexpect",
         "pyserial",
         "pyusb",
     ],

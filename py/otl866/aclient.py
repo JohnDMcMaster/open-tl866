@@ -5,8 +5,7 @@ Exposes low level primitives and nothing more
 import re
 import serial
 from time import sleep
-import pexpect
-import pexpect.fdpexpect
+import pexpect.spawnbase
 import os
 import sys
 import errno
@@ -33,44 +32,6 @@ VDD_PINS = set([
 # 0 indexed
 VPP_PINS0 = set([x - 1 for x in VPP_PINS])
 VDD_PINS0 = set([x - 1 for x in VDD_PINS])
-'''
-icky workaround
-read_nonblocking() is treating empty read as EOF for some reason
-"BSD-style EOF"
-'''
-
-
-def my_read_nonblocking(self, size=1, timeout=None):
-    """This reads data from the file descriptor.
-
-    This is a simple implementation suitable for a regular file. Subclasses using ptys or pipes should override it.
-
-    The timeout parameter is ignored.
-    """
-
-    try:
-        s = os.read(self.child_fd, size)
-    except OSError as err:
-        if err.args[0] == errno.EIO:
-            # Linux-style EOF
-            self.flag_eof = True
-            raise pexpect.exceptions.EOF(
-                'End Of File (EOF). Exception style platform.')
-        raise
-    # FIXME: file pexpect issue?
-    """
-    if s == b'':
-        # BSD-style EOF
-        self.flag_eof = True
-        raise EOF('End Of File (EOF). Empty string style platform.')
-    """
-
-    s = self._decoder.decode(s, final=False)
-    self._log(s, 'read')
-    return s
-
-
-pexpect.spawnbase.SpawnBase.read_nonblocking = my_read_nonblocking
 
 
 class NoSuchLine(Exception):
@@ -85,17 +46,78 @@ class Timeout(Exception):
     pass
 
 
-# ASCII serial port to be compatible with expect
-class ASerial(serial.Serial):
-    def __init__(self, *args, **kwargs):
-        serial.Serial.__init__(self, *args, **kwargs)
+class SerialExpect(pexpect.spawnbase.SpawnBase):
+    '''A pexpect class that works through a serial.Serial instance.
+       This is necessary for compatibility with Windows. It is basically
+       a pexpect.fdpexpect, except for serial.Serial, not file descriptors.
+    '''
+    def __init__(self,
+                 ser,
+                 args=None,
+                 timeout=30,
+                 maxread=2000,
+                 searchwindowsize=None,
+                 logfile=None,
+                 encoding=None,
+                 codec_errors='strict',
+                 use_poll=False):
+        self.ser = ser
+        if not isinstance(ser, serial.Serial):
+            raise Exception(
+                'The ser argument is not a serial.Serial instance.')
+        self.args = None
+        self.command = None
+        pexpect.spawnbase.SpawnBase.__init__(
+            self,
+            timeout,
+            maxread,
+            searchwindowsize,
+            logfile,
+            encoding=encoding,
+            codec_errors=codec_errors)
+        self.child_fd = None
+        self.own_fd = False
+        self.closed = False
+        self.name = ser.name
+        self.use_poll = use_poll
 
-    def read(self, n):
-        ret = serial.Serial.read(self, n)
-        return ret.decode('ascii', 'ignore')
+    def close(self):
+        self.flush()
+        self.ser.close()
+        self.closed = True
 
-    def write(self, data):
-        serial.Serial.write(self, data.encode('ascii', 'ignore'))
+    def flush(self):
+        self.ser.flush()
+
+    def isalive(self):
+        return not self.closed
+
+    def terminate(self, force=False):
+        raise Exception('This method is not valid for serial objects')
+
+    def send(self, s):
+        s = self._coerce_send_string(s)
+        self._log(s, 'send')
+        b = self._encoder.encode(s, final=False)
+        self.ser.write(b)
+
+    def sendline(self, s):
+        s = self._coerce_send_string(s)
+        return self.send(s + self.linesep)
+
+    def write(self, s):
+        b = self._encoder.encode(s, final=False)
+        self.ser.write(b)
+
+    def writelines(self, sequence):
+        for s in sequence:
+            self.write(s)
+
+    def read_nonblocking(self, size=1, timeout=None):
+        s = self.ser.read(size)
+        s = self._decoder.decode(s, final=False)
+        self._log(s, 'read')
+        return s
 
 
 class AClient:
@@ -109,14 +131,15 @@ class AClient:
             verbose = os.getenv("VERBOSE", "N") == "Y"
         self.verbose = verbose
         self.verbose and print("port: %s" % device)
-        self.ser = ASerial(device, timeout=0, baudrate=115200, writeTimeout=0)
+        self.ser = serial.Serial(
+            device, timeout=0, baudrate=115200, writeTimeout=0)
+        self.e = SerialExpect(self.ser, encoding="ascii")
 
         # send dummy newline to clear any commands in progress
-        self.ser.write('\n')
-        self.ser.flush()
+        self.e.write('\n')
+        self.e.flush()
         self.flushInput()
 
-        self.e = pexpect.fdpexpect.fdspawn(self.ser.fileno(), encoding="ascii")
         self.assert_ver()
 
     def flushInput(self):
@@ -140,8 +163,8 @@ class AClient:
             raise ValueError('Invalid cmd %s' % cmd)
         strout = cmd + " " + ' '.join([str(arg) for arg in args]) + "\n"
         self.verbose and print("cmd out: %s" % strout.strip())
-        self.ser.write(strout)
-        self.ser.flush()
+        self.e.write(strout)
+        self.e.flush()
 
         if not reply:
             return None
