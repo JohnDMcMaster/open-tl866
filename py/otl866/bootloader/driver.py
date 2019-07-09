@@ -27,20 +27,22 @@ VIDS_PIDS = [(AE_USB_VENDOR, AE_USB_PRODUCT), (O_USB_VENDOR, O_USB_PRODUCT)]
 def list_devices():
     devices = list()
 
-    for (vid, pid) in VIDS_PIDS:
-        try:
-            devices.extend([
-                UsbDevice(d) for d in usb.core.find(
-                    idVendor=vid,
-                    idProduct=pid,
-                    find_all=True,
-                )
-            ])
-        except usb.core.NoBackendError as caught:
-            if sys.platform != 'win32':
+    # PyUSB may function and be present on Windows, but many calls, including
+    # writes, raise NotImplementedError. Prefer the Windows API wrapper for
+    # the time being.
+    if sys.platform != 'win32':
+        for (vid, pid) in VIDS_PIDS:
+            try:
+                devices.extend([
+                    UsbDevice(d) for d in usb.core.find(
+                        idVendor=vid,
+                        idProduct=pid,
+                        find_all=True,
+                    )
+                ])
+            except usb.core.NoBackendError as caught:
                 raise caught
-
-    if sys.platform == 'win32':
+    else:
         devices.extend(windows.list_devices())
 
     return devices
