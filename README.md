@@ -95,10 +95,11 @@ a reset into the bootloader: `otl866 self update firmware/dist/tl866-epromv.hex`
 On Windows or if you multiple serial ports you may need to add
 `--reset-tty`(ex: `--reset-tty COM6` on Windows)
 
-If you flashed the open firmware using an ICSP programmer the bootloader
-has been erased from your TL866. In order to use the update tool you'll
-need to flash the stock firmware via ICSP to restore the bootloader.
-You can find ICSP-ready images of the stock firmware in
+If you flashed the open firmware onto the TL866 using _a separate_ ICSP
+programmer the bootloader has been erased from your TL866. Do not reprogram a
+TL866's firmware using the ICSP connector on the same TL866. In order to use
+the update tool you'll need to flash the stock firmware via ICSP to restore
+the bootloader. You can find ICSP-ready images of the stock firmware in
 [Radioman's repository][stock-img].
 
 [stock-img]: https://github.com/radiomanV/TL866/tree/67487e2cd60fa8f755e977c9fc656559452f5092/TL866_Updater/C%23/firmware
