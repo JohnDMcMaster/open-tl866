@@ -30,6 +30,42 @@ class TestCase(unittest.TestCase):
             self.verbose and print("%010X" % mask, "%010X" % readback)
             self.assertEqual(mask, readback)
 
+    def test_io_loop(self):
+        """
+        Loopback adapter required
+        Short pins 1-2, 3-4, 5-6, etc
+        """
+        return
+
+        print("")
+        # low pins out, high pin in
+        self.tl.io_tri(0xAAAAAAAAAA)
+        for pini in range(0, 40, 2):
+            for val in range(2):
+                masko = 1 << pini
+                maski = 1 << (pini + 1)
+                self.tl.io_w(masko if val else 0)
+                readback = self.tl.io_r()
+                readbackm = readback & (masko | maski)
+                expect = (masko | maski) if val else 0
+                print("%010X" % expect, "%010X" % readbackm)
+                self.assertEqual(expect, readbackm)
+
+        print("")
+        # high pins out, low pin in
+        self.tl.io_tri(0x5555555555)
+        for pini in range(0, 40, 2):
+            for val in range(2):
+                maski = 1 << pini
+                masko = 1 << (pini + 1)
+                self.tl.io_w(masko if val else 0)
+                readback = self.tl.io_r()
+                readbackm = readback & (masko | maski)
+                expect = (masko | maski) if val else 0
+                print("%010X" % expect, "%010X" % readbackm)
+                self.assertEqual(expect, readbackm)
+
+
     def test_vpp(self):
         """Set VPP out and verify its set via digital I/O"""
         self.tl.vpp_en()
@@ -82,3 +118,4 @@ class TestCase(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()  # run all tests
+

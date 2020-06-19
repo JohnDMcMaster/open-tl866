@@ -87,7 +87,10 @@ class Bitbang(aclient.AClient):
     '''
 
     def io_tri(self, val):
-        '''write ZIF tristate setting'''
+        '''
+        write ZIF tristate setting
+        Bit set => tristate
+        '''
         self.assert_zif(val)
         self.cmd('t', self.zif_str(val))
 
