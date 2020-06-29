@@ -40,7 +40,6 @@ class Bitbang(aclient.AClient):
     '''
     VPP
     '''
-
     def vpp_en(self, enable=True):
         '''VPP: enable and/or disable'''
         self.cmd('E', int(bool(enable)))
@@ -118,3 +117,67 @@ class Bitbang(aclient.AClient):
     def pupd(self, val):
         '''pullup/pulldown'''
         self.cmd('m', int(bool(val)))
+
+
+class EzBang:
+    def __init__(self, bb, zero=True):
+        self.bb = bb
+
+        self.vdd_en_cache = None
+        self.vpp_en_cache = None
+        self.io_tri_cache = None
+        self.io_w_cache = None
+        self.gnd_pins_cache = None
+
+        if zero:
+            self.vdd_en(False)
+            self.vpp_en(False)
+            self.io_tri(0xFFFFFFFFFF)
+            self.io_w(0)
+            self.gnd_pins(0)
+
+    def vdd_en(self, enable=True):
+        self.bb.vdd_en(enable)
+        self.vdd_en_cache = enable
+
+    def vpp_en(self, enable=True):
+        self.bb.vpp_en(enable)
+        self.vpp_en_cache = enable
+
+    def mask_pin(self, val, pin, isset):
+        assert 0 <= pin <= 39
+        mask = 1 << pin
+        if isset:
+            return val | mask
+        else:
+            return val & (0xFFFFFFFFFF ^ mask)
+
+    def io_tri(self, val):
+        self.bb.io_tri(val)
+        self.io_tri_cache = val
+
+    def io_tri_pin(self, pin, val):
+        out = self.mask_pin(self.io_tri_cache, pin, val)
+        if out == self.io_tri_cache:
+            return
+        self.io_tri(out)
+
+    def io_w(self, val):
+        self.bb.io_w(val)
+        self.io_w_cache = val
+
+    def io_w_pin(self, pin, val):
+        out = self.mask_pin(self.io_w_cache, pin, val)
+        if out == self.io_w_cache:
+            return
+        self.io_w(out)
+
+    def gnd_pins(self, val):
+        self.bb.gnd_pins(val)
+        self.gnd_pins_cache = val
+
+    def gnd_pin(self, pin, val=True):
+        out = self.mask_pin(self.gnd_pins_cache, pin, val)
+        if out == self.gnd_pins_cache:
+            return
+        self.gnd_pins(out)
