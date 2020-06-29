@@ -120,7 +120,9 @@ class Bitbang(aclient.AClient):
 
 
 class EzBang:
-    def __init__(self, bb, zero=True):
+    def __init__(self, bb=None, zero=True):
+        if bb is None:
+            bb = Bitbang()
         self.bb = bb
 
         self.vdd_en_cache = None
