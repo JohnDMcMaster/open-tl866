@@ -135,7 +135,7 @@ static inline void eval_command(char *cmd)
     */
 
     //Set GND pins
-    case 'G':
+    case 'g':
         if (arg_zif()) {
             set_gnd(last_zif);
         }
