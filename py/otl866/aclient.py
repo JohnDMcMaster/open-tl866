@@ -130,6 +130,8 @@ class AClient:
     def __init__(self, device=None, verbose=None):
         if device is None:
             device = util.default_port()
+            if device is None:
+                raise Exception("Failed to find an open-tl866 serial port")
         if verbose is None:
             verbose = os.getenv("VERBOSE", "N") == "Y"
         self.verbose = verbose
