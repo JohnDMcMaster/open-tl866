@@ -17,8 +17,9 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description='Blink the LED')
-    parser.add_argument(
-        '--port', default=util.default_port(), help='Device serial port')
+    parser.add_argument('--port',
+                        default=util.default_port(),
+                        help='Device serial port')
     parser.add_argument("--verbose", action="store_true")
     args = parser.parse_args()
 

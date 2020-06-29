@@ -13,6 +13,8 @@ import time
 import binascii
 import struct
 
+from otl866 import util
+
 VPPS = (VPP_98, VPP_126, VPP_140, VPP_166, VPP_144, VPP_171, VPP_185,
         VPP_212) = range(8)
 # My measurements: 9.83, 12.57, 14.00, 16.68, 14.46, 17.17, 18.56, 21.2
@@ -67,14 +69,13 @@ class SerialExpect(pexpect.spawnbase.SpawnBase):
                 'The ser argument is not a serial.Serial instance.')
         self.args = None
         self.command = None
-        pexpect.spawnbase.SpawnBase.__init__(
-            self,
-            timeout,
-            maxread,
-            searchwindowsize,
-            logfile,
-            encoding=encoding,
-            codec_errors=codec_errors)
+        pexpect.spawnbase.SpawnBase.__init__(self,
+                                             timeout,
+                                             maxread,
+                                             searchwindowsize,
+                                             logfile,
+                                             encoding=encoding,
+                                             codec_errors=codec_errors)
         self.child_fd = None
         self.own_fd = False
         self.closed = False
@@ -126,13 +127,17 @@ class AClient:
     # Help menu printing: open-tl866 (APP)
     APP = None
 
-    def __init__(self, device, verbose=None):
+    def __init__(self, device=None, verbose=None):
+        if device is None:
+            device = util.default_port()
         if verbose is None:
             verbose = os.getenv("VERBOSE", "N") == "Y"
         self.verbose = verbose
         self.verbose and print("port: %s" % device)
-        self.ser = serial.Serial(
-            device, timeout=0, baudrate=115200, writeTimeout=0)
+        self.ser = serial.Serial(device,
+                                 timeout=0,
+                                 baudrate=115200,
+                                 writeTimeout=0)
         self.e = SerialExpect(self.ser, encoding="ascii")
 
         # send dummy newline to clear any commands in progress
@@ -173,8 +178,8 @@ class AClient:
         self.verbose and print('cmd ret: chars %u' % (len(ret), ))
         if "ERROR: " in ret:
             outterse = ret.strip().replace('\r', '').replace('\n', '; ')
-            raise BadCommand(
-                "Failed command: %s, got: %s" % (strout.strip(), outterse))
+            raise BadCommand("Failed command: %s, got: %s" %
+                             (strout.strip(), outterse))
         return ret
 
     def match_line(self, a_re, res):

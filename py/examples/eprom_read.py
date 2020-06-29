@@ -149,8 +149,9 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description='Read 27C256 EPROM')
-    parser.add_argument(
-        '--port', default=util.default_port(), help='Device serial port')
+    parser.add_argument('--port',
+                        default=util.default_port(),
+                        help='Device serial port')
     parser.add_argument("--verbose", action="store_true")
     parser.add_argument("addr", default="0", help="Address")
     parser.add_argument("size", default=str(SIZE), help="Size")

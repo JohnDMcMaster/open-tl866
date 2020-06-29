@@ -65,7 +65,6 @@ class TestCase(unittest.TestCase):
                 print("%010X" % expect, "%010X" % readbackm)
                 self.assertEqual(expect, readbackm)
 
-
     def test_vpp(self):
         """Set VPP out and verify its set via digital I/O"""
         self.tl.vpp_en()
@@ -118,4 +117,3 @@ class TestCase(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()  # run all tests
-

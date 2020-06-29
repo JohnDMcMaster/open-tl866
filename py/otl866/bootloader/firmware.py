@@ -163,14 +163,17 @@ class UpdateFile():
             ('< 4s' + 'I x B xx' * 2 + 'I 256s 1024s' * 2 + '154880s' * 2),
             source)
 
-        self.a_firmware = bytes([(b ^ self.a_short_key[(i // 80) & 0xFF] ^
-                                  self.a_long_key[(i + self.a_index) & 0x3FF])
-                                 for i, b in enumerate(self.a_ciphertext)])
+        self.a_firmware = bytes([
+            (b ^ self.a_short_key[(i // 80) & 0xFF]
+             ^ self.a_long_key[(i + self.a_index) & 0x3FF])
+            for i, b in enumerate(self.a_ciphertext)
+        ])
 
-        self.cs_firmware = bytes(
-            [(b ^ self.cs_short_key[(i // 80) & 0xFF] ^
-              self.cs_long_key[(i + self.cs_index) & 0x3FF])
-             for i, b in enumerate(self.cs_ciphertext)])
+        self.cs_firmware = bytes([
+            (b ^ self.cs_short_key[(i // 80) & 0xFF]
+             ^ self.cs_long_key[(i + self.cs_index) & 0x3FF])
+            for i, b in enumerate(self.cs_ciphertext)
+        ])
 
         self.valid = (self.a_checksum == binascii.crc32(self.a_firmware)
                       and self.cs_checksum == binascii.crc32(self.cs_firmware))

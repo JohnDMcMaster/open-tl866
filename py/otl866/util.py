@@ -6,7 +6,8 @@ import sys
 def default_port():
     '''Try to guess the serial port, if we can find a reasonable guess'''
     if platform.system() == "Linux":
-        acms = glob.glob('/dev/serial/by-id/usb-ProgHQ_Open-TL866_Programmer_*')
+        acms = glob.glob(
+            '/dev/serial/by-id/usb-ProgHQ_Open-TL866_Programmer_*')
         if len(acms) == 0:
             return None
         return acms[0]

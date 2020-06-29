@@ -26,8 +26,9 @@ def main():
 
     parser = argparse.ArgumentParser(
         description='Write pins and read back value')
-    parser.add_argument(
-        '--port', default=util.default_port(), help='Device serial port')
+    parser.add_argument('--port',
+                        default=util.default_port(),
+                        help='Device serial port')
     args = parser.parse_args()
 
     run(args.port)
