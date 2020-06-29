@@ -7,8 +7,7 @@ Pin 0 is the upper left pin (closest to lever), pin 1 is the pin below it
 from otl866 import bitbang
 import time
 
-# Open ezbang
-# TODO: simplify API here to auto open Bitbang()
+# Open tl866 via ezbang API
 eb = bitbang.EzBang()
 # Enable power transistor on pin 0, shorting it to ground
 eb.gnd_pin(0, True)
