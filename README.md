@@ -149,3 +149,56 @@ want to flash the stock firmware, and you'll also need to use the
 
 The TL866 with the open firmware will identify itself as a serial port (USB CDC).
 A Python library is provided which makes it easy to drive the bitbang mode.
+
+## Bitbang CLI examples
+
+```
+CMD> ?
+open-tl866 (bitbang)
+VPP
+E val      VPP: enable and/or disable (VPP_DISABLE/VPP_ENABLE)
+V val      VPP: set voltage enum (VPP_SET)
+p val      VPP: set active pins (VPP_WRITE)
+VDD
+e val      VDD: enable and/or disable (VDD_DISABLE/VDD_ENABLE)
+v val      VDD: set voltage enum (VDD_SET)
+d val      VDD: set active pins (VDD_WRITE)
+GND
+g val      GND: set active pins (GND_WRITE)
+I/O
+t val      I/O: set ZIF tristate setting (ZIF_DIR)
+T          I/O: get ZIF tristate setting (ZIF_DIR_READ)
+z val      I/O: set ZIF pins (ZIF_WRITE)
+Z          I/O: get ZIF pins (ZIF_READ)
+Misc
+L val      LED on/off (LED_ON/LED_OFF)
+m z val    Set pullup/pulldown (MYSTERY_ON/MYSTERY_OFF}
+s          Print misc status
+i          Re-initialize
+b          Reset to bootloader (RESET_BOOTLOADER)
+```
+
+With that in mind...
+
+Blink the yellow LED:
+```
+CMD> L 1
+CMD> L 0
+```
+
+Set pin 1 to 5.1V via VDD:
+
+```
+# Enable all (possible) VDD outputs
+d 0100000000
+# Voltage enum 3 => 5.1V (see aclient.py)
+v 3
+# Enable VDD
+e 1
+```
+
+Set all pins logic low using I/O except 1) pin 1 is tristated 2) pin 2 to logic high:
+```
+z 0200000000
+t 0100000000
+```
