@@ -127,7 +127,7 @@ class AClient:
     # Help menu printing: open-tl866 (APP)
     APP = None
 
-    def __init__(self, device=None, verbose=None):
+    def __init__(self, device=None, verbose_cmd=None, verbose=None):
         if device is None:
             device = util.default_port()
             if device is None:
@@ -136,6 +136,7 @@ class AClient:
             verbose = os.getenv("VERBOSE", "N") == "Y"
         self.verbose = verbose
         self.verbose and print("port: %s" % device)
+        self.verbose_cmd = verbose_cmd
         self.ser = serial.Serial(device,
                                  timeout=0,
                                  baudrate=115200,
@@ -169,7 +170,8 @@ class AClient:
         if len(cmd) != 1:
             raise ValueError('Invalid cmd %s' % cmd)
         strout = cmd + " " + ' '.join([str(arg) for arg in args]) + "\n"
-        self.verbose and print("cmd out: %s" % strout.strip())
+        (self.verbose or self.verbose_cmd) and print(
+            "cmd out: %s" % strout.strip())
         self.e.write(strout)
         self.e.flush()
 

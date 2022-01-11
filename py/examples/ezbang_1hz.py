@@ -23,4 +23,3 @@ while True:
     # Drive IO to low logic level (0V)
     eb.io_w_pin(1, False)
     time.sleep(0.5)
-
