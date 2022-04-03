@@ -16,10 +16,21 @@ def run(device, fn_out, verbose=False):
     lo_pins = []
     vdd_volt = aclient.VDD_51
 
-    if device == "63S281N":
-        """
-        63S281N
-        """
+    # Slightly different conventions but exact same pinout
+    if device == "82S129" or device == "74S287":
+        npins = 16
+        addr_pins = [5, 6, 7, 4, 3, 2, 1, 15]
+        data_pins = [12, 11, 10, 9]
+        vdd_pins = [16]
+        gnd_pins = [8]
+        # These feed a 2NAND into a tristate buffer
+        PIN_CE1n = 13
+        PIN_CE2n = 14
+        # Keep pins lo to remove tristate
+        lo_pins = [PIN_CE1n, PIN_CE2n]
+        output_pins = addr_pins + lo_pins
+    # Slightly different conventions but exact same pinout
+    elif device == "63S281" or device == "74LS471":
         npins = 20
         addr_pins = [1, 2, 3, 4, 5, 17, 18, 19]
         data_pins = [6, 7, 8, 9, 11, 12, 13, 14]
@@ -31,11 +42,8 @@ def run(device, fn_out, verbose=False):
         # Keep pins lo to remove tristate
         lo_pins = [PIN_E1n, PIN_E2n]
         output_pins = addr_pins + lo_pins
-    elif device == "74S287":
-        npins=16
-        assert 0
     else:
-        assert 0
+        assert 0, "Unknown device %s" % (device,)
 
     pack = mem.DIPPackage(ez, npins=npins,
                           output_pins=output_pins,
