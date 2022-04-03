@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 """
 Allows issuing USB serial port commands from the bash command line
 Ex: "./command.py '?'" will return the help menu
@@ -21,7 +20,8 @@ def run(port, cmd, args, reply=True, check=True, verbose=False):
 def main():
     import argparse
 
-    parser = argparse.ArgumentParser(description='Issue a raw command and read response (try command "?"))')
+    parser = argparse.ArgumentParser(
+        description='Issue a raw command and read response (try command "?"))')
     parser.add_argument('--port',
                         default=util.default_port(),
                         help='Device serial port')

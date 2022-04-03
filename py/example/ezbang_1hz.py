@@ -15,7 +15,7 @@ if __name__ == "__main__":
     # IOs are tristated by default
     # Disable tristate to enable IO to drive pin
     eb.io_tri_pin(1, False)
-    
+
     # Loop at 1 Hz
     while True:
         # Drive IO to high logic level (3.3V)

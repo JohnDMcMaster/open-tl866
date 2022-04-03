@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 """
 Relatively simple example showing how to use a Bitbang object
 For more streamlined applications, consider using a DataBus object instead

@@ -4,27 +4,31 @@ Bitbang memory utilities
 """
 
 from . import aclient
-
 """
 DIP package at the top most part of the socket
 Provides a HAL for setting pins by number and some basic tristate and power setup
 """
+
+
 class DIPPackage:
-    def __init__(self,
-                 # EzBang object
-                 ez,
-                 # Number of pins (say 40 for DIP40)
-                 npins,
-                 # As DIP pin numbers
-                 output_pins,
-                 # Set pins to logic 0 and 1 at reset
-                 lo_pins=[], hi_pins=[],
-                 # Optionally do power control
-                 pwr=True,
-                 # Define optional power control pins
-                 vdd_pins=[], gnd_pins=[],
-                 vdd_volt = aclient.VDD_51,
-                 verbose=False):
+    def __init__(
+        self,
+        # EzBang object
+        ez,
+        # Number of pins (say 40 for DIP40)
+        npins,
+        # As DIP pin numbers
+        output_pins,
+        # Set pins to logic 0 and 1 at reset
+        lo_pins=[],
+        hi_pins=[],
+        # Optionally do power control
+        pwr=True,
+        # Define optional power control pins
+        vdd_pins=[],
+        gnd_pins=[],
+        vdd_volt=aclient.VDD_51,
+        verbose=False):
         self.verbose = verbose
         self.ez = ez
 
@@ -53,7 +57,8 @@ class DIPPackage:
         else:
             assert 0, "FIXME"
 
-        self.pin_pack2zif = dict([(i + 1, x - 1) for i, x in enumerate(to_zif_)])
+        self.pin_pack2zif = dict([(i + 1, x - 1)
+                                  for i, x in enumerate(to_zif_)])
         assert self.pin_pack2zif[npins] == 39, self.pin_pack2zif[npins]
 
     def setup_pins(self):
@@ -68,7 +73,7 @@ class DIPPackage:
                 gnd = self.pins_to_zif(self.gnd_pins)
                 self.verbose and print("  reset gnd: 0x%010X" % gnd)
                 self.ez.gnd_pins(gnd)
-    
+
             if self.vdd_pins:
                 vcc = self.pins_to_zif(self.vdd_pins)
                 self.verbose and print("  reset vdd: 0x%010X" % vcc)
@@ -99,7 +104,8 @@ class DIPPackage:
         for pin in self.output_pins:
             tzif = self.pin_pack2zif[pin]
             mask = 1 << tzif
-            self.verbose and print("  Z %u => %u => 0x%010X" % (pin, tzif, mask))
+            self.verbose and print("  Z %u => %u => 0x%010X" %
+                                   (pin, tzif, mask))
             tristate ^= mask
         self.verbose and print("  reset tristate: 0x%010X" % tristate)
         self.ez.io_tri(tristate)
@@ -122,22 +128,28 @@ class DIPPackage:
         self.verbose and print("i/o O: ", self.data_pins)
     """
 
+
 """
 Utility to treat a large number of pins as an address/data bus
 Requires a Package object to do pin translation
 LSB first
 """
+
+
 class DataBus:
-    def __init__(self, pack,
-                 # LSB first
-                 data_pins, addr_pins,
-                 verbose=False):
+    def __init__(
+        self,
+        pack,
+        # LSB first
+        data_pins,
+        addr_pins,
+        verbose=False):
         self.verbose = verbose
         self.data_pins = data_pins
         self.addr_pins = addr_pins
         self.pack = pack
-        self.verbose and print("Bus data: %s" % (self.data_pins,))
-        self.verbose and print("Bus addr: %s" % (self.addr_pins,))
+        self.verbose and print("Bus data: %s" % (self.data_pins, ))
+        self.verbose and print("Bus addr: %s" % (self.addr_pins, ))
 
     def words(self):
         return 1 << len(self.addr_pins)
@@ -154,14 +166,14 @@ class DataBus:
         """
         Return pins that should be set high
         """
-    
+
         ret = []
         for biti, pin in enumerate(self.addr_pins):
             if addr & (1 << biti):
                 ret.append(pin)
-    
+
         return ret
-        
+
     def ez2data(self, zif_val):
         '''
         Given socket state as integer mask, return the current data byte on data bus
@@ -172,7 +184,7 @@ class DataBus:
             # print("check d", zif_val, biti, pin20)
             if (1 << self.pack.pin_pack2zif[pinp]) & zif_val:
                 ret |= 1 << biti
-    
+
         # print("ez2data: 0x%010X => 0x%02X" % (zif_val, ret))
         return ret
 
@@ -184,7 +196,6 @@ class DataBus:
         """Read val from bus"""
         return self.ez2data(self.pack.ez.io_r())
 
-
     def read_all(self, verbose=None):
         if verbose is None:
             verbose = self.verbose
@@ -192,7 +203,7 @@ class DataBus:
         verbose and print("Reading %u words" % self.words())
         for addr in range(self.words()):
             if addr % (self.words() // 100) == 0:
-                verbose and print("%0.1f%%" % (addr / self.words() * 100.0,))
+                verbose and print("%0.1f%%" % (addr / self.words() * 100.0, ))
             self.addr(addr)
             ret.append(self.read())
         return ret

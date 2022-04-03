@@ -43,16 +43,22 @@ def run(device, fn_out, verbose=False):
         lo_pins = [PIN_E1n, PIN_E2n]
         output_pins = addr_pins + lo_pins
     else:
-        assert 0, "Unknown device %s" % (device,)
+        assert 0, "Unknown device %s" % (device, )
 
-    pack = mem.DIPPackage(ez, npins=npins,
+    pack = mem.DIPPackage(ez,
+                          npins=npins,
                           output_pins=output_pins,
                           vdd_volt=vdd_volt,
-                          vdd_pins=vdd_pins, gnd_pins=gnd_pins,
-                          lo_pins=lo_pins, hi_pins=hi_pins,
+                          vdd_pins=vdd_pins,
+                          gnd_pins=gnd_pins,
+                          lo_pins=lo_pins,
+                          hi_pins=hi_pins,
                           verbose=verbose)
     pack.setup_pins()
-    db = mem.DataBus(pack, addr_pins=addr_pins, data_pins=data_pins, verbose=verbose)
+    db = mem.DataBus(pack,
+                     addr_pins=addr_pins,
+                     data_pins=data_pins,
+                     verbose=verbose)
     rom = db.read_all()
     if fn_out:
         open(fn_out, "wb").write(rom)
@@ -63,7 +69,8 @@ def run(device, fn_out, verbose=False):
 def main():
     import argparse
 
-    parser = argparse.ArgumentParser(description='Issue a raw command and read response (try command "?"))')
+    parser = argparse.ArgumentParser(
+        description='Issue a raw command and read response (try command "?"))')
     parser.add_argument('--port',
                         default=util.default_port(),
                         help='Device serial port')
