@@ -24,8 +24,6 @@ i          Re-initialize
 b          Reset to bootloader (RESET_BOOTLOADER)
 '''
 
-import binascii
-
 from otl866 import aclient
 from otl866.aclient import VPPS, VDDS
 
@@ -191,16 +189,11 @@ Less efficient but easier to use
 
 
 class EzBang:
-    def __init__(self, bb=None, zero=True, cache=True):
-        if bb is None:
-            bb = Bitbang()
-        self.bb = bb
-
-        self.vdd_en_cache = None
-        self.vpp_en_cache = None
-        self.gnd_pins_cache = None
-        self.io_tri_cache = None
-        self.io_w_cache = None
+    def __init__(self, ez=None, zero=True, cache=True, verbose=False):
+        if ez is None:
+            ez = Bitbang(verbose=verbose)
+        self.ez = ez
+        # Cache values are in ez, but whether to use them is enforced here
         self.cache = cache
 
         if zero:
@@ -211,11 +204,11 @@ class EzBang:
             self.gnd_pins(0)
 
     def vdd_en(self, enable=True):
-        self.bb.vdd_en(enable)
+        self.ez.vdd_en(enable)
         self.vdd_en_cache = enable
 
     def vpp_en(self, enable=True):
-        self.bb.vpp_en(enable)
+        self.ez.vpp_en(enable)
         self.vpp_en_cache = enable
 
     def mask_pin(self, val, pin, isset):
@@ -227,35 +220,54 @@ class EzBang:
             return val & (0xFFFFFFFFFF ^ mask)
 
     def io_tri(self, val=0xFFFFFFFFFF):
-        if self.cache and val == self.io_tri_cache:
+        if self.cache and val == self.ez.io_tri_cache:
             return
-        self.bb.io_tri(val)
-        self.io_tri_cache = val
+        self.ez.io_tri(val)
 
     def io_tri_pin(self, pin, val):
-        self.io_tri(self.mask_pin(self.io_tri_cache, pin, val))
+        self.io_tri(self.mask_pin(self.ez.io_tri_cache, pin, val))
 
     def io_w(self, val):
-        if self.cache and val == self.io_w_cache:
+        if self.cache and val == self.ez.io_w_cache:
             return
-        self.bb.io_w(val)
-        self.io_w_cache = val
+        self.ez.io_w(val)
 
     def io_w_pin(self, pin, val):
-        self.io_w(self.mask_pin(self.io_w_cache, pin, val))
+        self.io_w(self.mask_pin(self.ez.io_w_cache, pin, val))
+
+    def io_r(self):
+        return self.ez.io_r()
+
+    def vdd_volt(self, val):
+        self.ez.vdd_volt(val=val)
+
+    def vdd_pins(self, val):
+        if self.cache and val == self.ez.vdd_pins_cache:
+            return
+        self.ez.vdd_pins(val)
+
+    def vpp_pins(self, val):
+        if self.cache and val == self.ez.vpp_pins_cache:
+            return
+        self.ez.vpp_pins(val)
+
+    def vpp_pin(self, pin, val=True):
+        self.vpp_pins(self.mask_pin(self.ez.vpp_pins_cache, pin, val))
+
+    def vpp_volt(self, val):
+        self.ez.vpp_volt(val=val)
 
     def gnd_pins(self, val):
-        if self.cache and val == self.gnd_pins_cache:
+        if self.cache and val == self.ez.gnd_pins_cache:
             return
-        self.bb.gnd_pins(val)
-        self.gnd_pins_cache = val
+        self.ez.gnd_pins(val)
 
     def gnd_pin(self, pin, val=True):
-        self.gnd_pins(self.mask_pin(self.gnd_pins_cache, pin, val))
+        self.gnd_pins(self.mask_pin(self.ez.gnd_pins_cache, pin, val))
 
     def print_debug(self):
         # Result nVPP_EN:1 nVDD_EN:1 LED:0 PUPD:Z1V1
-        self.bb.print_debug()
+        self.ez.print_debug()
         print("ezbang cache")
         print("  vdd_en:", self.vdd_en_cache)
         print("  vpp_en:", self.vpp_en_cache)

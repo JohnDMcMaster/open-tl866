@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 
-from otl866 import bitbang, util
+"""
+Relatively simple example showing how to use a Bitbang object
+For more streamlined applications, consider using a DataBus object instead
+"""
+
+from otl866 import bitbang, util, aclient
 from timeit import default_timer as timer
-import binascii
 
 # 0 index ZIF28 pin to 1 index ZIF40 pin
 ZIF_28TO40 = [1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, \
@@ -98,7 +102,7 @@ def eprom_r_init(tl):
     tl.vpp_pins(0)  # none
     tl.gnd_pins(1 << (14 - 1))  # DIP28-14 => DIP40-14
     tl.vdd_pins(1 << (40 - 1))  # DIP28-28 => DIP40-40
-    tl.vdd_volt(bitbang.VDD_51)
+    tl.vdd_volt(aclient.VDD_51)
     tl.vpp_en()
     tl.vdd_en()
 

@@ -179,7 +179,9 @@ class AClient:
             return None
 
         ret = self.expect('CMD>')
-        self.verbose and print('cmd ret: chars %u' % (len(ret), ))
+        # most verbose => low level command trace
+        # too verbose for that
+        self.verbose_cmd and print('cmd ret: chars %u' % (len(ret), ))
         if "ERROR: " in ret:
             outterse = ret.strip().replace('\r', '').replace('\n', '; ')
             raise BadCommand("Failed command: %s, got: %s" %
