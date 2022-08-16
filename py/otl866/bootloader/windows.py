@@ -377,6 +377,7 @@ class WindowsDevice():
 
         in_buffer = create_string_buffer(bytes(data))
         out_buffer = create_string_buffer(4096)
+        bytes_written = c_ulong()
         call_DeviceIoControl(
             self._file,
             TL866_IOCTL_WRITE,
@@ -384,6 +385,6 @@ class WindowsDevice():
             sizeof(in_buffer),
             out_buffer,
             sizeof(out_buffer),
-            None,  # lpBytesReturned
+            bytes_written,
             None  # lpOverlapped
         )
