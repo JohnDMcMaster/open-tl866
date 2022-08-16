@@ -14,12 +14,14 @@
 extern "C" {
 #endif
 
-/*
-40 pins represented as 5 bytes => 40 bits
-first byte, LSB is pin 1?
-*/
+/// Type for specifying ZIF pins. The LSB of index 0 is pin 1,
+/// the LSB of index 1 is pin 8, and so on.
 typedef unsigned char zif_bits_t[5];
+
+/// Const yype for specifying ZIF pins. The LSB of index 0 is pin 1,
+/// the LSB of index 1 is pin 8, and so on.
 typedef const unsigned char const_zif_bits_t[5];
+
 //PIC MCU pins grouped by access register A-J
 typedef unsigned char port_bits_t[9]; /* PORTs A B C D E F G H J */
 //Actual latch bits
@@ -89,19 +91,28 @@ Maybe a DAC?
 #define MYSTERY PUPD_PORT
 
 
-// Prototypes
-/*
-Set bit to 1 to make output
-Default: all inputs
-*/
+/// Sets all ZIF pin directions. All '1' bits set the direction to
+/// write to the ZIF socket, all '0' bits set the direction to read
+/// from the ZIF socket. By default, all pins are inputs.
 void dir_write(zif_bits_t zif_val);
+
+/// Reads all ZIF pin directions. All '1' bits have their direction set to
+/// write to the ZIF socket, all '0' bits have their direction set to read
+/// from the ZIF socket.
 void dir_read(zif_bits_t zif_val);
+
+/// Writes all ZIF pins whose directions are set for write.
 void zif_write(zif_bits_t zif_val);
+
+/// Reads all ZIF pins.
 void zif_read(zif_bits_t zif_val);
+
 void write_latch(int latch_no, unsigned char val);
 void write_shreg(unsigned char in);
 
 
+// Voltage levels for VPP, used when calling vpp_val().
+//
 //(VPP_98, VPP_126, VPP_140, VPP_166, VPP_144, VPP_171, VPP_185, VPP_212) = range(8)
 //# My measurements: 9.83, 12.57, 14.00, 16.68, 14.46, 17.17, 18.56, 21.2
 #define VPP_98 0
@@ -112,12 +123,28 @@ void write_shreg(unsigned char in);
 #define VPP_171 5
 #define VPP_185 6
 #define VPP_212 7
+
+/// Sets the voltage level for VPP. Only the least significant 3 bits are used.
+/// The default setting is 0.
 void vpp_val(unsigned char setting);
+
+/// Sets the given ZIF pins to output VPP. Pins that cannot support
+/// VPP are ignored. VPP is not output until vpp_en() is called.
+/// By default, no pins are assigned to VPP.
 void set_vpp(const_zif_bits_t zif);
+
+/// Enables all VPP output. By default, VPP output is disabled.
 void vpp_en(void);
+
+/// Disables all VPP output (pins are tristated).
 void vpp_dis(void);
+
+/// Returns the enable/disable state of VPP output, 1 is
+/// enabled, 0 is disabled.
 int vpp_state(void);
 
+// Voltage levels for VDD, used when calling vdd_val().
+//
 //(VDD_30, VDD_35, VDD_46, VDD_51, VDD_43, VDD_48, VDD_60, VDD_65) = range(8)
 //# My measurements: 2.99, 3.50, 4.64, 5.15, 4.36, 4.86, 6.01, 6.52
 #define VDD_30 0
@@ -128,14 +155,35 @@ int vpp_state(void);
 #define VDD_48 5
 #define VDD_60 6
 #define VDD_65 7
+
+/// Sets the voltage level for VDD. Only the least significant 3 bits are used.
+/// The default setting is 0.
 void vdd_val(unsigned char setting);
+
+/// Sets the given ZIF pins to output VDD. Pins that cannot support
+/// VDD are ignored. VDD is not output until vdd_en() is called.
+/// By default, no pins are assigned to VDD.
 void set_vdd(const_zif_bits_t zif);
+
+/// Enables all VDD output. By default, VDD output is disabled.
 void vdd_en(void);
+
+/// Disables all VDD output (pins are tristated).
 void vdd_dis(void);
+
+/// Returns the enable/disable state of VDD output, 1 is
+/// enabled, 0 is disabled.
 int vdd_state(void);
 
+/// Sets the given ZIF pins to output GND, immediately connecting
+/// them to GND. Pins that cannot support GND are ignored.
+/// By default, no pins are assigned to GND.
 void set_gnd(const_zif_bits_t zif);
 
+/// Sets the state of the pull resistors. If `tristate` is 1,
+/// then the pull resistors are disabled and `val` is ignored.
+/// If `tristate` is 0 then setting `val` to 0 connects the
+/// pull resistors to ground, and 1 connects them to 3.3 volts.
 void pupd(int tristate, int val);
 
 
@@ -159,7 +207,14 @@ void print_port_bits(const char *prefix, port_bits_t p_bits);
 void print_zif_bits(const char *prefix, zif_bits_t zif_val);
 void print_latch_bits(const char *prefix, latch_bits_t lb);
 
-//Reset all primitives to known values
+/// Initializes/resets all settings.
+///
+/// * VPP and VDD are disabled.
+/// * VPP and VDD are set to their minimum values.
+/// * All pins are disconnected from VPP, VDD, and GND.
+/// * All pins are set to output 0.
+/// * Pull resistors are disconnected.
+/// * All pins are set to write.
 void io_init(void);
 
 #ifdef	__cplusplus
