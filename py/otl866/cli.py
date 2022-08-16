@@ -13,4 +13,8 @@ def main():
     otl866.bootloader.cli.build_argparse(subgroup)
 
     args = parser.parse_args()
-    args.func(args)
+
+    if "func" in vars(args):
+        args.func(args)
+    else:
+        parser.print_usage()
