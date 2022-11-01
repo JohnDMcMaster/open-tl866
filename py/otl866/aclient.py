@@ -30,10 +30,12 @@ VDD_PINS = set([
     1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 21, 30, 32, 33, 34, 35, 36, 37,
     38, 39, 40
 ])
+GND_PINS = set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 20, 30, 31, 32, 34, 35, 36, 37, 38, 39, 40])
 
 # 0 indexed
 VPP_PINS0 = set([x - 1 for x in VPP_PINS])
 VDD_PINS0 = set([x - 1 for x in VDD_PINS])
+GND_PINS0 = set([x - 1 for x in GND_PINS])
 
 
 class NoSuchLine(Exception):
