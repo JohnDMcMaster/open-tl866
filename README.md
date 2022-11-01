@@ -3,6 +3,22 @@ Open-TL866 is open-source firmware for the TL866-series of chip programmers.
 This firmware replaces the proprietary firmware for programming EPROMs, MCUs, GALs, etc.
 **Caution: This is alpha software. Use at your own risk.**
 
+## Python bitbang quick start
+
+Do you just want to send low level tl866 commands from Python?
+This is useful if you have loose timing requirements
+
+Linux instructions:
+1. git clone https://github.com/JohnDMcMaster/open-tl866.git
+1. cd open-tl866/py
+1. sudo python3 setup.py install
+1. wget https://github.com/JohnDMcMaster/open-tl866/releases/download/v0.0/tl866-bitbang.hex
+1. otl866 self update tl866-bitbang.hex
+
+Now teset it:
+1. python3 example/blinky.py
+
+
 ## Prerequisites
 
 1. The XC8 compiler from Microchip is used to compile our C code.
