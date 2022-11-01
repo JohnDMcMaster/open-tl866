@@ -5,18 +5,20 @@ This firmware replaces the proprietary firmware for programming EPROMs, MCUs, GA
 
 ## Python bitbang quick start
 
-Do you just want to send low level tl866 commands from Python?
+Do you just want to send low level TL866 commands from Python?
 This is useful if you have loose timing requirements
 
 Linux instructions:
-1. git clone https://github.com/JohnDMcMaster/open-tl866.git
-1. cd open-tl866/py
-1. sudo python3 setup.py install
-1. wget https://github.com/JohnDMcMaster/open-tl866/releases/download/v0.0/tl866-bitbang.hex
-1. otl866 self update tl866-bitbang.hex
+```bash
+git clone https://github.com/JohnDMcMaster/open-tl866.git && \
+cd open-tl866 && \
+( cd py && python3 setup.py install --user ) && \
+wget https://github.com/JohnDMcMaster/open-tl866/releases/download/v0.0/tl866-bitbang.hex && \
+otl866 self update tl866-bitbang.hex
+```
 
-Now teset it:
-1. python3 example/blinky.py
+Now test it:
+`python3 py/example/blinky.py`
 
 
 ## Prerequisites
@@ -46,11 +48,13 @@ Now teset it:
 [cmake]: https://cmake.org/download/
 
 ## Building
-
-1. `cd` to the `firmware` directory.
-1. Generate the build configuration by running `cmake .`
-1. Build the project by running `make`
-1. Flashable images are in `dist/tl866-*.hex`
+```bash
+git submodule update --init && \
+mkdir -p firmware/build && \
+cmake -B firmware/build -S firmware && \
+make -j$(nproc) -C firmware/build
+```
+Flashable images are in `firmware/build/dist/tl866-*.hex`
 
 The build configuration is maintained with CMake in `CMakeLists.txt`.
 Calling `cmake .` interprets the CMake configuration and produces a set
@@ -64,8 +68,10 @@ separate firmware image under `firmware/dist`. Each mode has a
 corresponding target in the makefiles, so you can build just one mode
 with e.g. `make tl866-bitbang`. The currently implemented modes are:
 
-* `tl866-bitbang`
-* `tl866-at89`
+| Mode | Description |
+| ---- | ----------- |
+| `tl866-bitbang` | This mode is for generic pin control from Python via a serial interface |
+| `tl866-at89` | This mode is for reading and writing the AT-Atmel AT89S |
 
 ## Device Drivers and Configuration
 
@@ -73,7 +79,7 @@ On Linux systems, the udev rules file `contrib/96-opentl866.rules`
 should be copied into `/etc/udev/rules.d/`. Doing so will allow non-root
 users who are members of the `plugdev` group to access the devices. Once
 the rules file is installed udev needs to be reloaded. On modern Linux
-systems that use systemd that can be done by running:
+systems that use systemd, that can be done by running:
 
 ```sudo systemctl restart systemd-udevd```
 
@@ -83,9 +89,9 @@ The Python client library provides a command-line client for the stock
 bootloader which can be used to flash any firmware to the TL866.
 To install the CLI tool, run:
 
-```cd py && python3 setup.py install```
+```( cd py && python3 setup.py install --user )```
 
-And then TLDR: `otl866 self update firmware/dist/tl866-epromv.hex`
+And then TLDR: `otl866 self update firmware/build/dist/tl866-bitbang.hex`
 
 If that doesn't work, read on.
 
@@ -144,7 +150,7 @@ the path to the Intel Hex file. If your TL866 is already running the
 stock firmware you'll also need the `--reset-tty` option (see above).
 
 
-```tl866 self update --reset-tty COM6 dist/default/production/firmware.production.hex```
+```otl866 self update --reset-tty COM6 dist/default/production/firmware.production.hex```
 
 
 ### Flashing the Stock Firmware
@@ -157,11 +163,11 @@ want to flash the stock firmware, and you'll also need to use the
 `--reset-tty` option if your TL866 is running the open firmware.
 
 
-```tl866 self update --reset-tty COM6 --stock C:\MiniPro\update.dat```
+```otl866 self update --reset-tty COM6 --stock C:\MiniPro\update.dat```
 
 ## Flashing During Development
 
-The above programming instructions apply to _users only_ of the 
+The above programming instructions apply to _users only_ of the
 firmware and assume the code protection bit of the TL866 PIC is enabled.
 
 For doing development of `open-tl866`, an external ICSP programmer such as PICkit

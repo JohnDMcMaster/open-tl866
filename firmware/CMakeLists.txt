@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 
 # set up the Microchip cross toolchain
-set(CMAKE_TOOLCHAIN_FILE external/cmake-microchip/toolchain.cmake)
+set(CMAKE_TOOLCHAIN_FILE ${CMAKE_SOURCE_DIR}/external/cmake-microchip/toolchain.cmake)
 
 # set the default MCU model
 set(MICROCHIP_MCU PIC18F87J50)
