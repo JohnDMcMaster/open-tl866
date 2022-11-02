@@ -1,9 +1,12 @@
 # Open-TL866
-Open-TL866 is open-source firmware for the TL866-series of chip programmers.
+Open-TL866 is open-source firmware for the original TL866 (ie not II / PLUS).
 This firmware replaces the proprietary firmware for programming EPROMs, MCUs, GALs, etc.
 **Caution: This is alpha software. Use at your own risk.**
 
 ## Python bitbang quick start
+
+**FIXME 2022-11-02: we've made a breaking change. You'll need a new firmware release**.
+In the meantime use git
 
 Do you just want to send low level TL866 commands from Python?
 This is useful if you have loose timing requirements
@@ -24,7 +27,7 @@ Now test it:
 ## Prerequisites
 
 1. The XC8 compiler from Microchip is used to compile our C code.
-   Currently version 1.x is required.
+   **Currently version 1.x is required**.
    [Download it from Microchip's site][xc8] and install it.
    When activating, select the Free version.
 
@@ -238,7 +241,7 @@ Set pin 1 to 5.1V via VDD:
 
 ```
 # Enable all (possible) VDD outputs
-d 0100000000
+d 0000000001
 # Voltage enum 3 => 5.1V (see aclient.py)
 v 3
 # Enable VDD
@@ -247,6 +250,17 @@ e 1
 
 Set all pins logic low using I/O except 1) pin 1 is tristated 2) pin 2 to logic high:
 ```
-z 0200000000
-t 0100000000
+z 0000000002
+t 0000000001
 ```
+
+## Version history
+
+
+v0.0
+  * I believe this is where the 0.0 release .hex comes from, but TBH it was just random file "known to work"
+
+v0.1 (future)
+  * bitbang: zif format string endianess changed. Pin 1 went from 0100000000 to 0000000001
+  * read_rom added (82S129, 74S287, 63S281, 74LS471)
+  * In support of mega866 (https://github.com/JohnDMcMaster/mega866-src)  * Small bug fixes
