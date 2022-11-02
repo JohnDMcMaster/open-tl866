@@ -1,5 +1,7 @@
 #include "comlib.h"
 
+#define MIN(X,Y) ((X)<(Y)?(X):(Y))
+
 int echo = 1;
 unsigned comblib_drops = 0;
 
@@ -14,31 +16,22 @@ inline void disable_echo()
 }
 
 // Copy to the USB buffer once it's ready.
-//
-// This comes from the m-stack demo here:
-// https://github.com/signal11/m-stack/blob/master/apps/cdc_acm/main.c
+// str may be of any length, but it must be null-terminated
 static inline void send_string_sync(uint8_t endpoint, const char *str)
 {
     unsigned int len = strlen(str);
+    unsigned num_bytes_to_send;
     char *in_buf = NULL;
 
-    if (len > 64) {
-        comblib_drops += len - 64;
-        len = 64;
+    while (len > 0) {
+        while (usb_in_endpoint_busy(endpoint));
+        in_buf = (char*) usb_get_in_buffer(endpoint);
+        num_bytes_to_send = MIN(len, 64);
+        memcpy(in_buf, str, num_bytes_to_send);
+        usb_send_in_buffer(endpoint, num_bytes_to_send);
+        len -= num_bytes_to_send;
+        str += num_bytes_to_send;
     }
-
-    while (usb_in_endpoint_busy(endpoint));
-
-    in_buf = (char*) usb_get_in_buffer(endpoint);
-    strncpy(in_buf, str, len);
-
-    // TODO: get deterministic lens at compile time. Add len argument to
-    // this function, so non-deterministic lengths are calculated before
-    // entry.
-
-    /* Hack: Get the length from strlen(). This is inefficient, but it's
-     * just a demo. strlen()'s return excludes the terminating NULL. */
-    usb_send_in_buffer(endpoint, len);
 }
 
 static inline void send_char_sync(uint8_t endpoint, char c)
@@ -68,13 +61,13 @@ unsigned char * com_readline()
     static unsigned char cmd_buf[64];
     memset(cmd_buf, 0, sizeof(cmd_buf));
     int cmd_ptr = 0;
-    
+
     while(1) {
         /* Handle data received from the host */
         if (usb_ready()) {
 
             const unsigned char * out_buf;
-            
+
             uint8_t out_buf_len;
             int newline_found = 0;
 
@@ -105,7 +98,7 @@ unsigned char * com_readline()
 
             if(echo) {
                 printf(out_buf);
-                
+
                 // Temporary workaround buffer printing out previous char of
                 // previous input characters after a certain length.
                 // Real fix is to make sure all strings are properly null
@@ -119,9 +112,9 @@ unsigned char * com_readline()
             }
 
             cmd_ptr = 0;
-            
+
             usb_arm_out_endpoint(COM_ENDPOINT);
-            
+
             return cmd_buf;
 
             // Jump here when encountering empty string
@@ -132,8 +125,6 @@ unsigned char * com_readline()
     return NULL;
 }
 
-// TODO: Add logic to ensure string fits in EP_2_OUT_LEN and split string
-// into multiple USB packets if exceeded
 void com_print(const char * str)
 {
     send_string_sync(COM_ENDPOINT, str);
@@ -141,8 +132,6 @@ void com_print(const char * str)
 
 void com_println(const char * str)
 {
-    // TODO: Append to string instead, and split into multiple packets
-    // if necessary as per previous TODO
     send_string_sync(COM_ENDPOINT, str);
     send_string_sync(COM_ENDPOINT, "\r\n");
 }
