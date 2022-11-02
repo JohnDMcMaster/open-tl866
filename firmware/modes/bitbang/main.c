@@ -15,15 +15,19 @@ static inline void print_help(void)
 {
     com_println("open-tl866 (bitbang)");
     com_println("VPP");
-    com_println("E val      VPP: enable and/or disable (VPP_DISABLE/VPP_ENABLE)");
-    com_println("V val      VPP: set voltage enum (VPP_SET)");
+    com_println("E val      VPP: enable or disable");
+    com_println("           1 = enable, 0 = disable");
+    com_println("V val      VPP: set voltage enum");
+    com_println("           val in range [0,7]");
     com_println("p val      VPP: set active pins");
     com_println("           val must be 10 hex digits");
     com_println("           LSB is ZIF pin 1");
     //com_println("P val      VPP: get active pins (VPP_READ)");
     com_println("VDD");
-    com_println("e val      VDD: enable and/or disable (VDD_DISABLE/VDD_ENABLE)");
-    com_println("v val      VDD: set voltage enum (VDD_SET)");
+    com_println("e val      VDD: enable or disable");
+    com_println("           1 = enable, 0 = disable");
+    com_println("v val      VDD: set voltage enum");
+    com_println("           val in range [0,7]");
     com_println("d val      VDD: set active pins");
     com_println("           val must be 10 hex digits");
     com_println("           LSB is ZIF pin 1");
@@ -32,21 +36,25 @@ static inline void print_help(void)
     com_println("g val      GND: set active pins (GND_WRITE)");
     com_println("           val must be 10 hex digits");
     com_println("           LSB is ZIF pin 1");
+    com_println("           NOTE: VDD must be enabled for GND to work");
     //com_println("G val      GND: get active pins (GND_READ)");
     com_println("I/O");
-    com_println("t val      I/O: set ZIF tristate setting (ZIF_DIR)");
-    com_println("T          I/O: get ZIF tristate setting (ZIF_DIR_READ)");
+    com_println("t val      I/O: set ZIF tristate setting");
+    com_println("           1 = pin is driven, 0 = High Z");
+    com_println("T          I/O: get ZIF tristate setting");
+    com_println("           1 = pin is driven, 0 = High Z");
     com_println("z val      I/O: set ZIF pins (ZIF_WRITE)");
     com_println("           val must be 10 hex digits");
     com_println("           LSB is ZIF pin 1");
     com_println("Z          I/O: get ZIF pins (ZIF_READ)");
     com_println("           LSB is ZIF pin 1");
     com_println("Misc");
-    com_println("L val      LED on/off (LED_ON/LED_OFF)");
-    com_println("m z val    Set pullup/pulldown (MYSTERY_ON/MYSTERY_OFF}");
+    com_println("L val      LED on/off");
+    com_println("           1 = on, 0 = off");
+    com_println("m z val    Set pullup/pulldown");
     com_println("s          Print misc status");
     com_println("i          Re-initialize");
-    com_println("b          Reset to bootloader (RESET_BOOTLOADER)");
+    com_println("b          Reset to bootloader");
 }
 
 static inline void eval_command(char *cmd)

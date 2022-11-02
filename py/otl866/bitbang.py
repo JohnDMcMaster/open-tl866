@@ -2,26 +2,43 @@
 CMD> ?
 open-tl866 (bitbang)
 VPP
-E val      VPP: enable and/or disable (VPP_DISABLE/VPP_ENABLE)
-V val      VPP: set voltage enum (VPP_SET)
-p val      VPP: set active pins (VPP_WRITE)
+E val      VPP: enable or disable
+           1 = enable, 0 = disable
+V val      VPP: set voltage enum
+           val in range [0,7]
+p val      VPP: set active pins
+           val must be 10 hex digits
+           LSB is ZIF pin 1
 VDD
-e val      VDD: enable and/or disable (VDD_DISABLE/VDD_ENABLE)
-v val      VDD: set voltage enum (VDD_SET)
-d val      VDD: set active pins (VDD_WRITE)
+e val      VDD: enable or disable
+           1 = enable, 0 = disable
+v val      VDD: set voltage enum
+           val in range [0,7]
+d val      VDD: set active pins
+           val must be 10 hex digits
+           LSB is ZIF pin 1
 GND
 g val      GND: set active pins (GND_WRITE)
+           val must be 10 hex digits
+           LSB is ZIF pin 1
+           NOTE: VDD must be enabled for GND to work
 I/O
-t val      I/O: set ZIF tristate setting (ZIF_DIR)
-T          I/O: get ZIF tristate setting (ZIF_DIR_READ)
+t val      I/O: set ZIF tristate setting
+           1 = pin is driven, 0 = High Z
+T          I/O: get ZIF tristate setting
+           1 = pin is driven, 0 = High Z
 z val      I/O: set ZIF pins (ZIF_WRITE)
+           val must be 10 hex digits
+           LSB is ZIF pin 1
 Z          I/O: get ZIF pins (ZIF_READ)
+           LSB is ZIF pin 1
 Misc
-l val      LED on/off (LED_ON/LED_OFF)
-m z val    Set pullup/pulldown (MYSTERY_ON/MYSTERY_OFF}
+L val      LED on/off
+           1 = on, 0 = off
+m z val    Set pullup/pulldown
 s          Print misc status
 i          Re-initialize
-b          Reset to bootloader (RESET_BOOTLOADER)
+b          Reset to bootloader
 '''
 
 from otl866 import aclient
