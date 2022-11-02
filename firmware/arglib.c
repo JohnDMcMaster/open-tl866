@@ -56,7 +56,7 @@ int arg_zif(void) {
             printf("ERROR: invalid hex digit\r\n");
             return 0;
         }
-        last_zif[i] = (hi << 4) | lo;
+        last_zif[4 - i] = (hi << 4) | lo;
     }
     return 1;
 }
