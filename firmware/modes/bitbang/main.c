@@ -13,48 +13,46 @@
 
 static inline void print_help(void)
 {
-    com_println("open-tl866 (bitbang)");
-    com_println("VPP");
-    com_println("E val      VPP: enable or disable");
-    com_println("           1 = enable, 0 = disable");
-    com_println("V val      VPP: set voltage enum");
-    com_println("           val in range [0,7]");
-    com_println("p val      VPP: set active pins");
-    com_println("           val must be 10 hex digits");
-    com_println("           LSB is ZIF pin 1");
-    //com_println("P val      VPP: get active pins (VPP_READ)");
-    com_println("VDD");
-    com_println("e val      VDD: enable or disable");
-    com_println("           1 = enable, 0 = disable");
-    com_println("v val      VDD: set voltage enum");
-    com_println("           val in range [0,7]");
-    com_println("d val      VDD: set active pins");
-    com_println("           val must be 10 hex digits");
-    com_println("           LSB is ZIF pin 1");
-    //com_println("D val      VDD: get active pins (VDD_READ)");
-    com_println("GND");
-    com_println("g val      GND: set active pins (GND_WRITE)");
-    com_println("           val must be 10 hex digits");
-    com_println("           LSB is ZIF pin 1");
-    com_println("           NOTE: VDD must be enabled for GND to work");
-    //com_println("G val      GND: get active pins (GND_READ)");
-    com_println("I/O");
-    com_println("t val      I/O: set ZIF tristate setting");
-    com_println("           1 = pin is driven, 0 = High Z");
-    com_println("T          I/O: get ZIF tristate setting");
-    com_println("           1 = pin is driven, 0 = High Z");
-    com_println("z val      I/O: set ZIF pins (ZIF_WRITE)");
-    com_println("           val must be 10 hex digits");
-    com_println("           LSB is ZIF pin 1");
-    com_println("Z          I/O: get ZIF pins (ZIF_READ)");
-    com_println("           LSB is ZIF pin 1");
-    com_println("Misc");
-    com_println("L val      LED on/off");
-    com_println("           1 = on, 0 = off");
-    com_println("m z val    Set pullup/pulldown");
-    com_println("s          Print misc status");
-    com_println("i          Re-initialize");
-    com_println("b          Reset to bootloader");
+    com_println(
+    "open-tl866 (bitbang)\r\n"
+    "VPP\r\n"
+    "E val      VPP: enable or disable\r\n"
+    "           1 = enable, 0 = disable\r\n"
+    "V val      VPP: set voltage enum\r\n"
+    "           val in range [0,7]\r\n"
+    "p val      VPP: set active pins\r\n"
+    "           val must be 10 hex digits\r\n"
+    "           LSB is ZIF pin 1\r\n"
+    "VDD\r\n"
+    "e val      VDD: enable or disable\r\n"
+    "           1 = enable, 0 = disable\r\n"
+    "v val      VDD: set voltage enum\r\n"
+    "           val in range [0,7]\r\n"
+    "d val      VDD: set active pins\r\n"
+    "           val must be 10 hex digits\r\n"
+    "           LSB is ZIF pin 1\r\n"
+    "GND\r\n"
+    "g val      GND: set active pins (GND_WRITE)\r\n"
+    "           val must be 10 hex digits\r\n"
+    "           LSB is ZIF pin 1\r\n"
+    "           NOTE: VDD must be enabled for GND to work\r\n"
+    "I/O\r\n"
+    "t val      I/O: set ZIF tristate setting\r\n"
+    "           1 = pin is driven, 0 = High Z\r\n"
+    "T          I/O: get ZIF tristate setting\r\n"
+    "           1 = pin is driven, 0 = High Z\r\n"
+    "z val      I/O: set ZIF pins (ZIF_WRITE)\r\n"
+    "           val must be 10 hex digits\r\n"
+    "           LSB is ZIF pin 1\r\n"
+    "Z          I/O: get ZIF pins (ZIF_READ)\r\n"
+    "           LSB is ZIF pin 1\r\n"
+    "Misc\r\n"
+    "L val      LED on/off\r\n"
+    "           1 = on, 0 = off\r\n"
+    "m z val    Set pullup/pulldown\r\n"
+    "s          Print misc status\r\n"
+    "i          Re-initialize\r\n"
+    "b          Reset to bootloader\r\n");
 }
 
 static inline void eval_command(char *cmd)
