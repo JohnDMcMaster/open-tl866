@@ -247,11 +247,7 @@ class AClient:
         '''
         Make ZIF CLI input from ZIF as a single integer
         '''
-        ret = ""
-        for _wordi in range(5):
-            ret += "%02X" % (val & 0xFF, )
-            val = val >> 8
-        return ret
+        return f"{val:010X}"
 
     def assert_zif(self, val):
         assert 0 <= val <= 0xFFFFFFFFFF, "%10X" % val

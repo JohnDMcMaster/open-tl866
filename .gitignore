@@ -4,3 +4,7 @@
 __pycache__/
 *.egg-info/
 extern
+cscope.files
+cscope.in.out
+cscope.out
+cscope.po.out
