@@ -1,9 +1,9 @@
 #ifndef ARGLIB_H
 #define ARGLIB_H
 
+#include "io.h"
 #include <stdio.h>
 #include <string.h>
-#include "io.h"
 
 /*
 use strtok() to parse the next argument as int16_t

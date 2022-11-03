@@ -1,13 +1,13 @@
-//27C256
+// 27C256
 
 #include <xc.h>
 
 #include "system.h"
 
-//#include "epromv.h"
-#include "../../mode.h"
-#include "../../comlib.h"
+// #include "epromv.h"
 #include "../../arglib.h"
+#include "../../comlib.h"
+#include "../../mode.h"
 #include "../../stock_compat.h"
 
 #define EZZIF_DIP28
@@ -16,10 +16,23 @@
 int main_debug = 0;
 
 static const char ADDR_BUS[] = {
-    //LSB (A0-A7)
-    10, 9, 8, 7, 6, 5, 4, 3,
-    //MSB (A8-A14)
-    25, 24, 21, 23, 2, 26, 27,
+    // LSB (A0-A7)
+    10,
+    9,
+    8,
+    7,
+    6,
+    5,
+    4,
+    3,
+    // MSB (A8-A14)
+    25,
+    24,
+    21,
+    23,
+    2,
+    26,
+    27,
 };
 static const char DATA_BUS[] = {11, 12, 13, 15, 16, 17, 18, 19};
 
@@ -32,21 +45,23 @@ static inline void print_help(void)
     com_println("b              reset to bootloader");
 }
 
-static void dev_addr(int n) {
+static void dev_addr(int n)
+{
     ezzif_bus_w(ADDR_BUS, sizeof(ADDR_BUS), n);
 }
 
-static void dev_init(void) {
+static void dev_init(void)
+{
     ezzif_reset();
 
-    ezzif_vdd(28, VDD_51);  //VCC
-    ezzif_vdd(1, VDD_51);   //VPP = VCC
-    ezzif_gnd(14);          //VSS
+    ezzif_vdd(28, VDD_51); // VCC
+    ezzif_vdd(1, VDD_51);  // VPP = VCC
+    ezzif_gnd(14);         // VSS
 
-    ezzif_io(20, 0, 0);     // CEn
-    ezzif_io(22, 0, 0);     // OEn
+    ezzif_io(20, 0, 0); // CEn
+    ezzif_io(22, 0, 0); // OEn
 
-    //Address bus output to 0
+    // Address bus output to 0
     dev_addr(0);
     ezzif_bus_dir(ADDR_BUS, sizeof(ADDR_BUS), 0);
 }
@@ -62,8 +77,12 @@ static void eprom_read(unsigned int addr, unsigned int range)
 {
     printf("%03X ", addr);
     dev_init();
-    
-    if (!range) { range = 1; } else {com_println("");}
+
+    if (!range) {
+        range = 1;
+    } else {
+        com_println("");
+    }
     for (unsigned int byte_idx = 0; byte_idx < range; byte_idx++) {
         printf("%02X ", read_byte(addr + byte_idx));
     }
@@ -81,11 +100,10 @@ static inline void eval_command(char *cmd)
     }
 
     switch (cmd_t[0]) {
-    case 'r':
-    {
-        //unsigned int addr  = xtoi(strtok(NULL, " "));
-        //unsigned int range = xtoi(strtok(NULL, " "));
-        unsigned int addr  = 0;
+    case 'r': {
+        // unsigned int addr  = xtoi(strtok(NULL, " "));
+        // unsigned int range = xtoi(strtok(NULL, " "));
+        unsigned int addr = 0;
         unsigned int range = 0x20;
         eprom_read(addr, range);
         break;
@@ -96,9 +114,8 @@ static inline void eval_command(char *cmd)
         print_help();
         break;
 
-    //LED on/off
-    case 'L':
-    {
+    // LED on/off
+    case 'L': {
         if (arg_bit()) {
             LED = last_bit;
         }
@@ -115,10 +132,11 @@ static inline void eval_command(char *cmd)
     }
 }
 
-void mode_main(void) {
+void mode_main(void)
+{
     ezzif_reset();
-    
-    while(1) {
+
+    while (1) {
         eval_command(com_cmd_prompt());
     }
 }

@@ -1,6 +1,6 @@
 #include "comlib.h"
 
-#define MIN(X,Y) ((X)<(Y)?(X):(Y))
+#define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
 
 int echo = 1;
 unsigned comblib_drops = 0;
@@ -24,8 +24,9 @@ static inline void send_string_sync(uint8_t endpoint, const char *str)
     char *in_buf = NULL;
 
     while (len > 0) {
-        while (usb_in_endpoint_busy(endpoint));
-        in_buf = (char*) usb_get_in_buffer(endpoint);
+        while (usb_in_endpoint_busy(endpoint))
+            ;
+        in_buf = (char *)usb_get_in_buffer(endpoint);
         num_bytes_to_send = MIN(len, 64);
         memcpy(in_buf, str, num_bytes_to_send);
         usb_send_in_buffer(endpoint, num_bytes_to_send);
@@ -38,35 +39,34 @@ static inline void send_char_sync(uint8_t endpoint, char c)
 {
     char *in_buf = NULL;
 
-    while (usb_in_endpoint_busy(endpoint));
+    while (usb_in_endpoint_busy(endpoint))
+        ;
 
-    in_buf = (char*) usb_get_in_buffer(endpoint);
+    in_buf = (char *)usb_get_in_buffer(endpoint);
     in_buf[0] = c;
 
     usb_send_in_buffer(endpoint, 1);
 }
 
-
 static inline bool usb_ready()
 {
-    return usb_is_configured() &&
-          !usb_out_endpoint_halted(COM_ENDPOINT) &&
+    return usb_is_configured() && !usb_out_endpoint_halted(COM_ENDPOINT) &&
            usb_out_endpoint_has_data(COM_ENDPOINT);
 }
 
 // Read a line from USB input. Blocking.
-unsigned char * com_readline()
+unsigned char *com_readline()
 {
     // TODO: Might be good to make a global struct to handle the command buffer
     static unsigned char cmd_buf[64];
     memset(cmd_buf, 0, sizeof(cmd_buf));
     int cmd_ptr = 0;
 
-    while(1) {
+    while (1) {
         /* Handle data received from the host */
         if (usb_ready()) {
 
-            const unsigned char * out_buf;
+            const unsigned char *out_buf;
 
             uint8_t out_buf_len;
             int newline_found = 0;
@@ -96,7 +96,7 @@ unsigned char * com_readline()
                 }
             }
 
-            if(echo) {
+            if (echo) {
                 printf(out_buf);
 
                 // Temporary workaround buffer printing out previous char of
@@ -106,7 +106,7 @@ unsigned char * com_readline()
                 memset(out_buf, 0, 64);
             }
 
-            if(!newline_found) {
+            if (!newline_found) {
                 cmd_ptr += out_buf_len;
                 goto empty;
             }
@@ -117,26 +117,26 @@ unsigned char * com_readline()
 
             return cmd_buf;
 
-            // Jump here when encountering empty string
-            empty:
-                usb_arm_out_endpoint(COM_ENDPOINT);
+        // Jump here when encountering empty string
+        empty:
+            usb_arm_out_endpoint(COM_ENDPOINT);
         }
     }
     return NULL;
 }
 
-void com_print(const char * str)
+void com_print(const char *str)
 {
     send_string_sync(COM_ENDPOINT, str);
 }
 
-void com_println(const char * str)
+void com_println(const char *str)
 {
     send_string_sync(COM_ENDPOINT, str);
     send_string_sync(COM_ENDPOINT, "\r\n");
 }
 
-//used by printf type functions
+// used by printf type functions
 void putch(const unsigned char c)
 {
     // TODO: Make a buffer and flush function to avoid sending one character
@@ -144,7 +144,8 @@ void putch(const unsigned char c)
     send_char_sync(COM_ENDPOINT, c);
 }
 
-char *com_cmd_prompt(void) {
+char *com_cmd_prompt(void)
+{
     char *cmd;
 
     printf("CMD> ");
@@ -152,4 +153,3 @@ char *com_cmd_prompt(void) {
     com_println("");
     return cmd;
 }
-

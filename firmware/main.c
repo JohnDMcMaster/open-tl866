@@ -6,17 +6,19 @@
 #include "usb.h"
 #include "usb/usb_callbacks.c"
 
-#include <xc.h>
 #include <string.h>
+#include <xc.h>
 
 #include "io.h"
-#include "stock_compat.h"
 #include "mode.h"
+#include "stock_compat.h"
 
-static inline void init(void) {
+static inline void init(void)
+{
     unsigned int pll_startup = 600;
     OSCTUNEbits.PLLEN = 1;
-    while (pll_startup--);
+    while (pll_startup--)
+        ;
 
     INTCONbits.PEIE = 1;
     INTCONbits.GIE = 1;
@@ -32,8 +34,9 @@ static inline void init(void) {
     TRISA = 0x00; // RA5-RA0: LE4, nOE_VDD, LE5, LE2, LE7, LE3
 
     PORTB = 0x00;
-    TRISB = 0x01; // RB1: Controls resistors on P15-P24. P16/P21 act especially weird.
-                  // RB0: Input that detects that Vpp/Vdd voltage is okay.
+    TRISB =
+        0x01; // RB1: Controls resistors on P15-P24. P16/P21 act especially
+              // weird. RB0: Input that detects that Vpp/Vdd voltage is okay.
 
     PORTC = 0x00;
     TRISC = 0x00; // RC1-RC0: ZIF Pin 20 GND driver enable, LED
@@ -66,29 +69,25 @@ static inline void init(void) {
     vpp_dis();
     vdd_dis();
 
-    for(int i = 0; i < 2; i++)
-    {
+    for (int i = 0; i < 2; i++) {
         write_latch(i, 0x00);
     }
 
     // PNPs- Logic 1 is off state.
-    for(int i = 2; i < 5; i++)
-    {
+    for (int i = 2; i < 5; i++) {
         write_latch(i, 0xff);
     }
 
-    for(int i = 5; i < 8; i++)
-    {
+    for (int i = 5; i < 8; i++) {
         write_latch(i, 0x00);
     }
 
-    //TODO: combine above logic into this
+    // TODO: combine above logic into this
     io_init();
 
     stock_load_serial_block();
     stock_disable_usb();
     usb_init();
-
 
     LED = 1;
 }
@@ -99,4 +98,3 @@ int main(void)
     mode_main();
     return 0;
 }
-

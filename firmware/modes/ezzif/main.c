@@ -1,8 +1,8 @@
-//27C256
+// 27C256
 
-//#include "epromv.h"
-#include "../../mode.h"
+// #include "epromv.h"
 #include "../../comlib.h"
+#include "../../mode.h"
 #include "../../stock_compat.h"
 
 #include "ezzif.h"
@@ -22,7 +22,8 @@ static inline void print_help(void)
     com_println("b      reset to bootloader");
 }
 
-static void prompt_msg(const char *msg) {
+static void prompt_msg(const char *msg)
+{
     if (main_debug) {
         ezzif_print_debug();
     }
@@ -30,11 +31,13 @@ static void prompt_msg(const char *msg) {
     com_readline();
 }
 
-static void prompt_enter(void) {
+static void prompt_enter(void)
+{
     prompt_msg("Press enter to continue");
 }
 
-static void test_io(void) {
+static void test_io(void)
+{
     com_println("Digital I/O test");
     com_println("1: 1, 2: 0, 3: 1, 4: 0, 5: Z, 6: Z");
     ezzif_gnd_d40(40);
@@ -48,7 +51,8 @@ static void test_io(void) {
     prompt_enter();
 }
 
-static void test_bus(void) {
+static void test_bus(void)
+{
     static const char BUS[] = {1, 2};
 
     com_println("Bus test");
@@ -64,10 +68,13 @@ static void test_bus(void) {
     prompt_enter();
 }
 
-static void test_vpp(void) {
-    static const char VPPS[] = {VPP_98, VPP_126, VPP_140, VPP_166, VPP_144, VPP_171, VPP_185, VPP_212};
+static void test_vpp(void)
+{
+    static const char VPPS[] = {VPP_98,  VPP_126, VPP_140, VPP_166,
+                                VPP_144, VPP_171, VPP_185, VPP_212};
     com_println("Sweeping VPP pin 1, gnd 40");
-    com_println("Reference: 9.83, 12.57, 14.00, 16.68, 14.46, 17.17, 18.56, 21.2");
+    com_println(
+        "Reference: 9.83, 12.57, 14.00, 16.68, 14.46, 17.17, 18.56, 21.2");
     ezzif_gnd_d40(40);
     for (unsigned i = 0; i < sizeof(VPPS); ++i) {
         ezzif_vpp_d40(1, VPPS[i]);
@@ -77,8 +84,10 @@ static void test_vpp(void) {
     printf("Done, error: %i\r\n", ezzif_error());
 }
 
-static void test_vdd(void) {
-    static const char VDDS[] = {VDD_30, VDD_35, VDD_46, VDD_51, VDD_43, VDD_48, VDD_60, VDD_65};
+static void test_vdd(void)
+{
+    static const char VDDS[] = {VDD_30, VDD_35, VDD_46, VDD_51,
+                                VDD_43, VDD_48, VDD_60, VDD_65};
     com_println("Sweeping VDD pin 1, gnd 40");
     com_println("Reference: 2.99, 3.50, 4.64, 5.15, 4.36, 4.86, 6.01, 6.52");
     ezzif_gnd_d40(40);
@@ -90,14 +99,14 @@ static void test_vdd(void) {
     printf("Done, error: %i\r\n", ezzif_error());
 }
 
-void test_rails(void) {
+void test_rails(void)
+{
     com_println("Voltage rail test");
     com_println("1: VPP 10V");
     com_println("2: VDD 5V");
     com_println("40: GND");
 
     com_println("");
-
 
     /*
     Test rails operate normally
@@ -114,7 +123,6 @@ void test_rails(void) {
     prompt_msg("11 Check 5V: 2 to 40 (VDD to GND)");
     prompt_msg("12 Check 5V: 1 to 2 (VPP to VDD)");
 
-
     /*
     Turn off rails
     Verify no voltage
@@ -130,7 +138,6 @@ void test_rails(void) {
     ezzif_reset_vdd();
     prompt_msg("22 Check 0V: 2 to 40 (VDD off)");
 
-    
     /*
     Turn off ground
     Verify no voltage
@@ -156,15 +163,16 @@ void test_rails(void) {
     printf("Done, error: %i\r\n", ezzif_error());
 }
 
-static void test_gnd(void) {
+static void test_gnd(void)
+{
     ezzif_vpp_d40(1, VPP_98);
     ezzif_vdd_d40(2, VDD_48);
     prompt_msg("10 Check 10V: 1 to 40 (VPP to GND)");
 }
 
-static inline void eval_command(unsigned char * cmd)
+static inline void eval_command(unsigned char *cmd)
 {
-    unsigned char * cmd_t = strtok(cmd, " ");
+    unsigned char *cmd_t = strtok(cmd, " ");
 
     if (cmd_t == NULL) {
         return;
@@ -223,10 +231,11 @@ static inline void eval_command(unsigned char * cmd)
     ezzif_reset();
 }
 
-void mode_main(void) {
+void mode_main(void)
+{
     ezzif_reset();
 
-    while(1) {
+    while (1) {
         eval_command(com_cmd_prompt());
     }
 }

@@ -6,11 +6,11 @@
  */
 
 #ifndef IO_H
-#define	IO_H
+#define IO_H
 
 #include <xc.h>
 
-#ifdef	__cplusplus
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -22,13 +22,12 @@ typedef unsigned char zif_bits_t[5];
 /// the LSB of index 1 is pin 8, and so on.
 typedef const unsigned char const_zif_bits_t[5];
 
-//PIC MCU pins grouped by access register A-J
+// PIC MCU pins grouped by access register A-J
 typedef unsigned char port_bits_t[9]; /* PORTs A B C D E F G H J */
-//Actual latch bits
+// Actual latch bits
 typedef unsigned char latch_bits_t[8];
-//For debugging only
+// For debugging only
 extern latch_bits_t latch_cache;
-
 
 typedef struct port_info {
     unsigned char bank;
@@ -36,9 +35,10 @@ typedef struct port_info {
 } port_info_t;
 
 typedef struct latch_info {
-    unsigned char number; /* Translates to LE signal write within case statement in write_latch() */
-    signed char offset; /* Offset within the latch of the current bit.
-                         *  -1 reserved for "no connection". */
+    unsigned char number; /* Translates to LE signal write within case statement
+                             in write_latch() */
+    signed char offset;   /* Offset within the latch of the current bit.
+                           *  -1 reserved for "no connection". */
 } latch_info_t;
 
 #define PORT_ADDR_TO_ARRAY_INDEX(_x)
@@ -73,10 +73,8 @@ typedef struct latch_info {
 #define VID_11_TRIS TRISHbits.TRISH7
 #define VID_12_TRIS TRISFbits.TRISF2
 
-
-
 #define GND20 PORTCbits.RC1
-#define OVC PORTBbits.RB0
+#define OVC   PORTBbits.RB0
 
 #define LED PORTCbits.RC0
 
@@ -88,8 +86,7 @@ Maybe a DAC?
 */
 #define PUPD_PORT PORTBbits.RB1
 #define PUPD_TRIS TRISBbits.TRISB1
-#define MYSTERY PUPD_PORT
-
+#define MYSTERY   PUPD_PORT
 
 /// Sets all ZIF pin directions. All '1' bits set the direction to
 /// write to the ZIF socket, all '0' bits set the direction to read
@@ -110,12 +107,12 @@ void zif_read(zif_bits_t zif_val);
 void write_latch(int latch_no, unsigned char val);
 void write_shreg(unsigned char in);
 
-
 // Voltage levels for VPP, used when calling vpp_val().
 //
-//(VPP_98, VPP_126, VPP_140, VPP_166, VPP_144, VPP_171, VPP_185, VPP_212) = range(8)
-//# My measurements: 9.83, 12.57, 14.00, 16.68, 14.46, 17.17, 18.56, 21.2
-#define VPP_98 0
+//(VPP_98, VPP_126, VPP_140, VPP_166, VPP_144, VPP_171, VPP_185, VPP_212) =
+// range(8) # My
+// measurements: 9.83, 12.57, 14.00, 16.68, 14.46, 17.17, 18.56, 21.2
+#define VPP_98  0
 #define VPP_126 1
 #define VPP_140 2
 #define VPP_166 3
@@ -146,7 +143,7 @@ int vpp_state(void);
 // Voltage levels for VDD, used when calling vdd_val().
 //
 //(VDD_30, VDD_35, VDD_46, VDD_51, VDD_43, VDD_48, VDD_60, VDD_65) = range(8)
-//# My measurements: 2.99, 3.50, 4.64, 5.15, 4.36, 4.86, 6.01, 6.52
+// # My measurements: 2.99, 3.50, 4.64, 5.15, 4.36, 4.86, 6.01, 6.52
 #define VDD_30 0
 #define VDD_35 1
 #define VDD_46 2
@@ -186,19 +183,19 @@ void set_gnd(const_zif_bits_t zif);
 /// pull resistors to ground, and 1 connects them to 3.3 volts.
 void pupd(int tristate, int val);
 
-
-//Low level API
-//MCU
-//Write MCU pin output values
-//You must also clear tristate (dir_write_all()) if you want to actually drive out
+// Low level API
+// MCU
+// Write MCU pin output values
+// You must also clear tristate (dir_write_all()) if you want to actually drive
+// out
 void port_write_all(port_bits_t p_bits);
-//Read MCU pins
+// Read MCU pins
 void port_read_all(port_bits_t p_bits);
-//Set MCU tristate. 1 => output
+// Set MCU tristate. 1 => output
 void dir_write_all(port_bits_t p_bits);
-//Read tristate setting
+// Read tristate setting
 void dir_read_all(port_bits_t p_bits);
-//This should always return 0x00 (no latches enabled)
+// This should always return 0x00 (no latches enabled)
 int OEn_state(void);
 void ports_to_zif_pins(port_bits_t port, zif_bits_t zif);
 void zif_pins_to_ports(zif_bits_t zif, port_bits_t port);
@@ -217,8 +214,8 @@ void print_latch_bits(const char *prefix, latch_bits_t lb);
 /// * All pins are set to write.
 void io_init(void);
 
-#ifdef	__cplusplus
+#ifdef __cplusplus
 }
 #endif
 
-#endif	/* IO_H */
+#endif /* IO_H */

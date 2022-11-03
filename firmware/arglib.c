@@ -5,7 +5,8 @@ int last_i = 0;
 int last_bit = 0;
 zif_bits_t last_zif;
 
-int arg_i(void) {
+int arg_i(void)
+{
     const char *buff = strtok(NULL, " ");
 
     if (!buff) {
@@ -17,7 +18,8 @@ int arg_i(void) {
     return 1;
 }
 
-int arg_bit(void) {
+int arg_bit(void)
+{
     if (!arg_i()) {
         return 0;
     }
@@ -25,7 +27,8 @@ int arg_bit(void) {
     return 1;
 }
 
-int hex_c2i(char c) {
+int hex_c2i(char c)
+{
     if ('0' <= c && c <= '9') {
         return c - '0';
     } else if ('a' <= c && c <= 'f') {
@@ -37,19 +40,21 @@ int hex_c2i(char c) {
     }
 }
 
-int arg_zif(void) {
+int arg_zif(void)
+{
     const char *buff = strtok(NULL, " ");
     if (!buff) {
         printf("ERROR: missing argument\r\n");
         return 0;
     }
+
     if (strlen(buff) != 10) {
         printf("ERROR: expecting 10 hex digits\r\n");
         return 0;
     }
     for (int i = 0; i < 5; ++i) {
-        //No error checking right now
-        //Bad nibbles become 0
+        // No error checking right now
+        // Bad nibbles become 0
         int hi = hex_c2i(buff[i << 1]);
         int lo = hex_c2i(buff[(i << 1) + 1]);
         if (hi < 0 || lo < 0) {
@@ -60,4 +65,3 @@ int arg_zif(void) {
     }
     return 1;
 }
-

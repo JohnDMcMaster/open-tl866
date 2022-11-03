@@ -7,7 +7,6 @@
 #include "../../stock_compat.h"
 #include "../../system.h"
 
-
 /*
  * Pin map:
  *   DUT   DUT  DUT  ZIF Prog
@@ -36,33 +35,26 @@
  *         ALE  11    3  RC3
  */
 
-
 #define PIN_RESET PORTJbits.RJ7
 #define PIN_T0    PORTJbits.RJ6
 
-
 // Vcc = P40
 // Vdd = P39
-zif_bits_t pins_vdd = {
-    0x00, 0x00, 0x00, 0x00, 0xC0
-};
+zif_bits_t pins_vdd = {0x00, 0x00, 0x00, 0x00, 0xC0};
 
 // EA = P37
-zif_bits_t pins_vpp = {
-    0x00, 0x00, 0x00, 0x00, 0x10
-};
+zif_bits_t pins_vpp = {0x00, 0x00, 0x00, 0x00, 0x10};
 
 // Vss = P01
-zif_bits_t pins_gnd = {
-    0x01, 0x00, 0x00, 0x00, 0x00
-};
+zif_bits_t pins_gnd = {0x01, 0x00, 0x00, 0x00, 0x00};
 
 // delays by the given number of target clock cycles
 static inline void delay_clock(int cycles)
 {
     for (; cycles > 0; cycles--) {
         PIR1bits.TMR2IF = 0;
-        while (!PIR1bits.TMR2IF) NOP();
+        while (!PIR1bits.TMR2IF)
+            NOP();
     }
 }
 
@@ -86,9 +78,9 @@ static void dev_init()
     set_vdd(pins_vdd);
     set_vpp(pins_vpp);
 
-    TRISE = 0x00; // E0-E7 output
-    TRISD = 0xF8; // D0-D2 output, D3-D7 input
-    TRISJ = 0x3F; // J6-J7 output, J0-J5 input
+    TRISE = 0x00;          // E0-E7 output
+    TRISD = 0xF8;          // D0-D2 output, D3-D7 input
+    TRISJ = 0x3F;          // J6-J7 output, J0-J5 input
     TRISC = TRISC & ~0x04; // C2 output
 
     PIN_RESET = 0;
@@ -139,7 +131,6 @@ static uint8_t read_byte(uint16_t addr)
     return value;
 }
 
-
 static void print_read(uint16_t addr, uint16_t length)
 {
     dev_init();
@@ -185,7 +176,6 @@ static void ihex_read(uint16_t addr, uint16_t length)
     dev_off();
 }
 
-
 static inline void print_help(void)
 {
     com_println("open-tl866 (mcs48)");
@@ -203,13 +193,13 @@ static inline void eval_command(char *cmd)
     char *cmd_tok = strtok(cmd, " ");
     switch (cmd_tok[0]) {
     case 'r':;
-        uint16_t addr   = xtoi(strtok(NULL, " "));
+        uint16_t addr = xtoi(strtok(NULL, " "));
         uint16_t length = xtoi(strtok(NULL, " "));
         print_read(addr, length);
         break;
 
     case 'i':;
-        uint16_t addr   = xtoi(strtok(NULL, " "));
+        uint16_t addr = xtoi(strtok(NULL, " "));
         uint16_t length = xtoi(strtok(NULL, " "));
         ihex_read(addr, length);
         break;
