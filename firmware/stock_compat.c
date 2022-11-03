@@ -1,19 +1,14 @@
 
-#include <xc.h>
 #include <usb.h>
 #include <usb_ch9.h>
+#include <xc.h>
 
-#include "stock_compat.h"
 #include "comlib.h"
-
-
+#include "stock_compat.h"
 
 struct serial_block_t serial_block = {
-    {0}, // dev_code
-    {    sizeof(((struct serial_block_t *)0)->serial),
-        DESC_STRING,
-        {0}
-    } // serial
+    {0},                                                             // dev_code
+    {sizeof(((struct serial_block_t *)0)->serial), DESC_STRING, {0}} // serial
 };
 
 void stock_load_serial_block()
@@ -51,7 +46,6 @@ void stock_load_serial_block()
         block[carry] = hold;
     }
 
-
     // copy out device code field
     for (idx = 0; idx < 8; idx++) {
         serial_block.dev_code[idx] = block[idx];
@@ -63,8 +57,6 @@ void stock_load_serial_block()
         serial_block.serial.chars[idx] = block[idx + 8];
     }
 }
-
-
 
 void stock_disable_usb()
 {
@@ -80,7 +72,8 @@ void stock_disable_usb()
     for (cycles = 0x0F; cycles > 0; cycles--) {
         TMR0 = 0;
         INTCONbits.TMR0IF = 0;
-        while (!INTCONbits.TMR0IF);
+        while (!INTCONbits.TMR0IF)
+            ;
     }
     T0CON = 0;
 }
@@ -90,6 +83,6 @@ void stock_reset_to_bootloader()
     stock_disable_usb();
 
     // set the bootloader signature and reboot
-    *((uint32_t*)0x0700) = 0x55AA55AA;
+    *((uint32_t *)0x0700) = 0x55AA55AA;
     RESET();
 }

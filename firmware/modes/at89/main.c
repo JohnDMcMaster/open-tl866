@@ -27,7 +27,7 @@ static inline void print_help(void)
 }
 
 static void print_read(unsigned int addr, unsigned int range)
-{    
+{
     printf("%03X", addr);
 
     for (unsigned int byte_idx = 0; byte_idx < range; byte_idx++) {
@@ -37,7 +37,7 @@ static void print_read(unsigned int addr, unsigned int range)
 }
 
 static void print_sysflash(unsigned int addr, unsigned int range)
-{    
+{
     printf("%03X ", addr);
 
     for (unsigned int byte_idx = 0; byte_idx < range; byte_idx++) {
@@ -62,15 +62,16 @@ static bool sig_check()
         return true;
     }
 
-    printf("ERROR: bad signature (%02X %02X %02X), ignoring command.\r\n",
-            sig0, sig1, sig2);
-    printf("Please make sure the target is inserted in the correct orientation.\r\n");
+    printf("ERROR: bad signature (%02X %02X %02X), ignoring command.\r\n", sig0,
+           sig1, sig2);
+    printf("Please make sure the target is inserted in the correct "
+           "orientation.\r\n");
     return false;
 }
 
 static bool blank_check()
 {
-    //Update address in place by using backspace
+    // Update address in place by using backspace
     printf("Performing a blank-check... ");
     unsigned char data = 0;
     for (unsigned int addr = 0; addr < 0xFFF; addr++) {
@@ -94,13 +95,13 @@ static void self_test()
     printf("Testing first 255 bytes...\r\n");
     at89_erase();
     com_println("");
-    for(unsigned int addr = 0; addr < 0xff; addr++) {
+    for (unsigned int addr = 0; addr < 0xff; addr++) {
         at89_write(addr, addr);
         com_println("");
     }
-    print_read(0,0xFF);
+    print_read(0, 0xFF);
     printf("Testing last 255 bytes...\r\n");
-    for(unsigned int addr = 0xF00; addr <= 0xFFF; addr++) {
+    for (unsigned int addr = 0xF00; addr <= 0xFFF; addr++) {
         at89_write(addr, addr - 0xF00);
         com_println("");
     }
@@ -132,58 +133,54 @@ static inline void eval_command(char *cmd)
     }
 
     switch (cmd_t[0]) {
-    case 'r':
-    {
+    case 'r': {
         if (!sig_check()) {
             break;
         }
-        
-        unsigned int addr  = xtoi(strtok(NULL, " "));
+
+        unsigned int addr = xtoi(strtok(NULL, " "));
         unsigned int range = xtoi(strtok(NULL, " "));
         print_read(addr, range);
         break;
     }
-        
-    case 'w':
-    {
+
+    case 'w': {
         if (!sig_check()) {
             break;
         }
-        
-        unsigned int addr  = xtoi(strtok(NULL, " "));
+
+        unsigned int addr = xtoi(strtok(NULL, " "));
         unsigned char data = xtoi(strtok(NULL, " "));
         at89_write(addr, data);
         break;
     }
 
-    case 'R':
-    {
+    case 'R': {
         if (!sig_check()) {
             break;
         }
-        
-        unsigned int addr  = xtoi(strtok(NULL, " "));
+
+        unsigned int addr = xtoi(strtok(NULL, " "));
         unsigned int range = xtoi(strtok(NULL, " "));
         print_sysflash(addr, range);
         break;
     }
 
-    case 'l':
-    {
+    case 'l': {
         if (!sig_check()) {
             break;
         }
-        
+
         unsigned char mode = atoi(strtok(NULL, " "));
         at89_lock(mode);
         break;
     }
-        
+
     case 'e':
         if (!sig_check()) {
             break;
         }
-        
+
         at89_erase();
         break;
 
@@ -201,15 +198,15 @@ static inline void eval_command(char *cmd)
         if (!sig_check()) {
             break;
         }
-        
+
         self_test();
         break;
-        
+
     case 'B':
         if (!sig_check()) {
             break;
         }
-        
+
         blank_check();
         break;
 
@@ -218,9 +215,8 @@ static inline void eval_command(char *cmd)
         print_help();
         break;
 
-    //LED on/off
-    case 'L':
-    {
+    // LED on/off
+    case 'L': {
         if (arg_bit()) {
             LED = last_bit;
         }
@@ -237,10 +233,11 @@ static inline void eval_command(char *cmd)
     }
 }
 
-void mode_main(void) {
+void mode_main(void)
+{
     vpp_dis();
-    
-     while(1) {
+
+    while (1) {
         eval_command(com_cmd_prompt());
     }
 }

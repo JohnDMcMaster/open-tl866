@@ -1,11 +1,13 @@
-//#define DEBUG(x) x
-#define DEBUG(x) do {} while(0)
+// #define DEBUG(x) x
+#define DEBUG(x)                                                               \
+    do {                                                                       \
+    } while (0)
 
 #include <xc.h>
 
-#include "system.h"
-#include "io.h"
 #include "comlib.h"
+#include "io.h"
+#include "system.h"
 
 latch_bits_t latch_cache = {0};
 
@@ -23,7 +25,7 @@ latch_bits_t latch_cache = {0};
  * This array provides a mapping from a ZIF pin to the corresponding PIC18
  * I/O location (0-based port bank addressing, and bit offset). */
 const port_info_t zif2port[40] = {
-    //1-8
+    // 1-8
     {OFFS_C, 5},
     {OFFS_C, 4},
     {OFFS_C, 3},
@@ -33,7 +35,7 @@ const port_info_t zif2port[40] = {
     {OFFS_C, 6},
     {OFFS_C, 7},
 
-    //9-16
+    // 9-16
     {OFFS_J, 4},
     {OFFS_J, 5},
     {OFFS_G, 3},
@@ -43,7 +45,7 @@ const port_info_t zif2port[40] = {
     {OFFS_D, 2},
     {OFFS_G, 1},
 
-    //17-24
+    // 17-24
     {OFFS_E, 0},
     {OFFS_E, 7},
     {OFFS_E, 2},
@@ -53,7 +55,7 @@ const port_info_t zif2port[40] = {
     {OFFS_E, 6},
     {OFFS_E, 1},
 
-    //25-32
+    // 25-32
     {OFFS_D, 3},
     {OFFS_D, 4},
     {OFFS_D, 5},
@@ -63,7 +65,7 @@ const port_info_t zif2port[40] = {
     {OFFS_J, 0},
     {OFFS_J, 1},
 
-    //33-40
+    // 33-40
     {OFFS_J, 2},
     {OFFS_J, 3},
     {OFFS_B, 2},
@@ -77,61 +79,61 @@ const port_info_t zif2port[40] = {
 /* LE signal number is based off radioman schematic. They are scattered
  * between banks unfortunately. */
 const latch_info_t zif2vdd[40] = {
-    //1
+    // 1
     {3, 7},
     {3, 4},
     {3, 5},
     {4, 0},
 
-    //5
+    // 5
     {3, 2},
     {4, 2},
     {2, 6},
     {2, 1},
 
-    //9
+    // 9
     {2, 2},
     {2, 3},
     {2, 0},
     {2, 7},
 
-    //13
+    // 13
     {2, 4},
     {0, -1},
     {0, -1},
     {0, -1},
 
-    //17
+    // 17
     {0, -1},
     {0, -1},
     {0, -1},
     {0, -1},
 
-    //21
+    // 21
     {2, 5},
     {0, -1},
     {0, -1},
     {0, -1},
 
-    //25
+    // 25
     {0, -1},
     {0, -1},
     {0, -1},
     {0, -1},
 
-    //29
+    // 29
     {0, -1},
     {4, 6},
     {0, -1},
     {4, 1},
 
-    //33
+    // 33
     {4, 5},
     {4, 3},
     {4, 4},
     {4, 7},
 
-    //37
+    // 37
     {3, 3},
     {3, 6},
     {3, 0},
@@ -139,61 +141,61 @@ const latch_info_t zif2vdd[40] = {
 };
 
 const latch_info_t zif2vpp[40] = {
-    //1
+    // 1
     {0, 2},
     {0, 3},
     {1, 2},
     {1, 3},
 
-    //5
+    // 5
     {0, -1},
     {0, -1},
     {0, -1},
     {0, -1},
 
-    //9
+    // 9
     {1, 5},
     {1, 4},
     {0, -1},
     {0, -1},
 
-    //13
+    // 13
     {0, -1},
     {0, -1},
     {0, -1},
     {0, -1},
 
-    //17
+    // 17
     {0, -1},
     {0, -1},
     {0, -1},
     {0, -1},
 
-    //21
+    // 21
     {0, -1},
     {0, -1},
     {0, -1},
     {0, -1},
 
-    //25
+    // 25
     {0, -1},
     {0, -1},
     {0, -1},
     {0, -1},
 
-    //29
+    // 29
     {0, -1},
     {0, 0},
     {1, 0},
     {0, 7},
 
-    //33
+    // 33
     {1, 6},
     {1, 1},
     {0, -1},
     {0, 1},
 
-    //37
+    // 37
     {1, 7},
     {0, 6},
     {0, 5},
@@ -201,59 +203,29 @@ const latch_info_t zif2vpp[40] = {
 };
 
 const latch_info_t zif2gnd[40] = {
-    {6, 2},
-    {6, 3},
-    {6, 6},
-    {6, 1},
+    {6, 2},  {6, 3},  {6, 6},  {6, 1},
 
-    {7, 2},
-    {7, 3},
-    {7, 6},
-    {7, 1},
+    {7, 2},  {7, 3},  {7, 6},  {7, 1},
 
-    {7, 0},
-    {7, 7},
-    {7, 4},
-    {7, 5},
+    {7, 0},  {7, 7},  {7, 4},  {7, 5},
 
-    {0, -1},
-    {5, 3},
-    {0, -1},
-    {5, 6},
+    {0, -1}, {5, 3},  {0, -1}, {5, 6},
 
-    {0, -1},
-    {0, -1},
-    {0, -1},
-    {0, -1},
+    {0, -1}, {0, -1}, {0, -1}, {0, -1},
 
-    {0, -1},
-    {0, -1},
-    {0, -1},
-    {0, -1},
+    {0, -1}, {0, -1}, {0, -1}, {0, -1},
 
-    {0, -1},
-    {0, -1},
-    {0, -1},
-    {0, -1},
+    {0, -1}, {0, -1}, {0, -1}, {0, -1},
 
-    {0, -1},
-    {5, 2},
-    {6, 0},
-    {6, 7},
+    {0, -1}, {5, 2},  {6, 0},  {6, 7},
 
-    {0, -1},
-    {6, 4},
-    {6, 5},
-    {5, 5},
+    {0, -1}, {6, 4},  {6, 5},  {5, 5},
 
-    {5, 4},
-    {5, 1},
-    {5, 7},
-    {5, 0},
+    {5, 4},  {5, 1},  {5, 7},  {5, 0},
 };
 
-static unsigned char latch_mirror[8]; /* Read mirror of the current latch state. */
-
+static unsigned char
+    latch_mirror[8]; /* Read mirror of the current latch state. */
 
 void dir_write(zif_bits_t zif_val)
 {
@@ -261,7 +233,7 @@ void dir_write(zif_bits_t zif_val)
 
     DEBUG(print_zif_bits("  dir_write zif_bits", zif_val));
 
-    //Read control signals
+    // Read control signals
     dir_read_all(port_val);
     zif_pins_to_ports(zif_val, port_val);
     DEBUG(print_port_bits("  dir_write port_bits", port_val));
@@ -284,7 +256,7 @@ void zif_write(zif_bits_t zif_val)
 
     DEBUG(print_zif_bits("  zif_write zif_bits", zif_val));
 
-    //Read control signals
+    // Read control signals
     port_read_all(port_val);
     zif_pins_to_ports(zif_val, port_val);
     DEBUG(print_port_bits("  zif_write port_bits", port_val));
@@ -304,8 +276,8 @@ void zif_read(zif_bits_t zif_val)
 
 void zif_pins_to_ports(zif_bits_t zif, port_bits_t port)
 {
-    for(unsigned int pin_no = 0; pin_no < (sizeof(zif2port)/sizeof(port_info_t)); pin_no++)
-    {
+    for (unsigned int pin_no = 0;
+         pin_no < (sizeof(zif2port) / sizeof(port_info_t)); pin_no++) {
         /* It would be nice to assume the compiler can divide by 8 using
         shifts, but XC8 is broken in free mode. */
         unsigned char set_of_8 = (pin_no >> 3);
@@ -320,11 +292,10 @@ void zif_pins_to_ports(zif_bits_t zif, port_bits_t port)
     }
 }
 
-
 void ports_to_zif_pins(port_bits_t port, zif_bits_t zif)
 {
-    for(unsigned int pin_no = 0; pin_no < (sizeof(zif2port)/sizeof(port_info_t)); pin_no++)
-    {
+    for (unsigned int pin_no = 0;
+         pin_no < (sizeof(zif2port) / sizeof(port_info_t)); pin_no++) {
         port_info_t curr = zif2port[pin_no];
 
         unsigned char set_of_8 = (pin_no >> 3);
@@ -336,7 +307,6 @@ void ports_to_zif_pins(port_bits_t port, zif_bits_t zif)
         zif[set_of_8] |= (pin_val << bit_offset);
     }
 }
-
 
 /* Internal functions- we read/write all I/O ports at once. */
 void port_read_all(port_bits_t p_bits)
@@ -391,7 +361,6 @@ void dir_write_all(port_bits_t p_bits)
     TRISJ = p_bits[8];
 }
 
-
 /* Read mask of I/O pin dir (TRIS) into array in ZIF order. */
 /*
 void zifdir_mask(unsigned char (*)[5])
@@ -400,68 +369,65 @@ void zifdir_mask(unsigned char (*)[5])
 }
 */
 
-
 /* Write one of the 8 pin driver latches */
 void write_latch(int latch_no, unsigned char val)
 {
     write_shreg(val);
 
-    //74hc373's setup time: 15ns hold time: 5ns
-    //LE == 0 to preserve output, 1 is "transparent mode".
+    // 74hc373's setup time: 15ns hold time: 5ns
+    // LE == 0 to preserve output, 1 is "transparent mode".
 
-    switch(latch_no)
-    {
-        case 0:
-            LE0 = 1;
-            __delay_us(1);
-            LE0 = 0;
-            __delay_us(1);
-            break;
-        case 1:
-            LE1 = 1;
-            __delay_us(1);
-            LE1 = 0;
-            __delay_us(1);
-            break;
-        case 2:
-            LE2 = 1;
-            __delay_us(1);
-            LE2 = 0;
-            __delay_us(1);
-            break;
-        case 3:
-            LE3 = 1;
-            __delay_us(1);
-            LE3 = 0;
-            __delay_us(1);
-            break;
-        case 4:
-            LE4 = 1;
-            __delay_us(1);
-            LE4 = 0;
-            __delay_us(1);
-            break;
-        case 5:
-            LE5 = 1;
-            __delay_us(1);
-            LE5 = 0;
-            __delay_us(1);
-            break;
-        case 6:
-            LE6 = 1;
-            __delay_us(1);
-            LE6 = 0;
-            __delay_us(1);
-            break;
-        case 7:
-            LE7 = 1;
-            __delay_us(1);
-            LE7 = 0;
-            __delay_us(1);
-            break;
-        default:
-            break;
-
+    switch (latch_no) {
+    case 0:
+        LE0 = 1;
+        __delay_us(1);
+        LE0 = 0;
+        __delay_us(1);
+        break;
+    case 1:
+        LE1 = 1;
+        __delay_us(1);
+        LE1 = 0;
+        __delay_us(1);
+        break;
+    case 2:
+        LE2 = 1;
+        __delay_us(1);
+        LE2 = 0;
+        __delay_us(1);
+        break;
+    case 3:
+        LE3 = 1;
+        __delay_us(1);
+        LE3 = 0;
+        __delay_us(1);
+        break;
+    case 4:
+        LE4 = 1;
+        __delay_us(1);
+        LE4 = 0;
+        __delay_us(1);
+        break;
+    case 5:
+        LE5 = 1;
+        __delay_us(1);
+        LE5 = 0;
+        __delay_us(1);
+        break;
+    case 6:
+        LE6 = 1;
+        __delay_us(1);
+        LE6 = 0;
+        __delay_us(1);
+        break;
+    case 7:
+        LE7 = 1;
+        __delay_us(1);
+        LE7 = 0;
+        __delay_us(1);
+        break;
+    default:
+        break;
     }
 
     latch_cache[latch_no] = val;
@@ -470,8 +436,7 @@ void write_latch(int latch_no, unsigned char val)
 /* Write the shift reg which connects to pin driver latches */
 void write_shreg(unsigned char in)
 {
-    for(int i = 0; i < 8; i++)
-    {
+    for (int i = 0; i < 8; i++) {
         unsigned char curr_bit = (in & 0x80) ? 1 : 0;
 
         SR_DAT = curr_bit;
@@ -521,33 +486,32 @@ int vdd_state(void)
     return nOE_VDD;
 }
 
-
-int OEn_state(void) {
-    return (LE7 << 7) | (LE6 << 6) | (LE5 << 5) | (LE4 << 4) | (LE3 << 3) | (LE2 << 2) | (LE1 << 1) | (LE0 << 0);
+int OEn_state(void)
+{
+    return (LE7 << 7) | (LE6 << 6) | (LE5 << 5) | (LE4 << 4) | (LE3 << 3) |
+           (LE2 << 2) | (LE1 << 1) | (LE0 << 0);
 }
 
 void set_vpp(const_zif_bits_t zif)
 {
-    unsigned char latch_vpp_masks[2] = { 0 };
+    unsigned char latch_vpp_masks[2] = {0};
 
-    for(unsigned int pin_no = 0; pin_no < (sizeof(zif2vpp)/sizeof(latch_info_t)); pin_no++)
-    {
+    for (unsigned int pin_no = 0;
+         pin_no < (sizeof(zif2vpp) / sizeof(latch_info_t)); pin_no++) {
         latch_info_t curr = zif2vpp[pin_no];
 
         // Commands are zif-based; don't bother assigning a voltage to a zif
         // pin which doesn't have any (offset == -1 or less).
-        if(curr.offset < 0)
-        {
+        if (curr.offset < 0) {
             continue;
-        }
-        else
-        {
+        } else {
             unsigned char set_of_8 = (pin_no >> 3);
             unsigned char bit_offset = 1 << (pin_no & 0x07);
 
             unsigned char mask = (zif[set_of_8] & bit_offset) ? 1 : 0;
 
-            latch_vpp_masks[curr.number] |= (mask << (unsigned char) curr.offset);
+            latch_vpp_masks[curr.number] |=
+                (mask << (unsigned char)curr.offset);
         }
     }
 
@@ -557,25 +521,23 @@ void set_vpp(const_zif_bits_t zif)
 
 void set_vdd(const_zif_bits_t zif)
 {
-    unsigned char latch_vdd_masks[3] = { 0 };
+    unsigned char latch_vdd_masks[3] = {0};
 
-    for(unsigned int pin_no = 0; pin_no < (sizeof(zif2vdd)/sizeof(latch_info_t)); pin_no++)
-    {
+    for (unsigned int pin_no = 0;
+         pin_no < (sizeof(zif2vdd) / sizeof(latch_info_t)); pin_no++) {
         latch_info_t curr = zif2vdd[pin_no];
 
-        if(curr.offset < 0)
-        {
+        if (curr.offset < 0) {
             continue;
-        }
-        else
-        {
+        } else {
             unsigned char set_of_8 = (pin_no >> 3);
             unsigned char bit_offset = 1 << (pin_no & 0x07);
 
             // Drivers are PNPs, so a logic 0 enables Vdd line for I/O pin.
             unsigned char mask = (zif[set_of_8] & bit_offset) ? 1 : 0;
 
-            latch_vdd_masks[curr.number - 2] |= (mask << (unsigned char) curr.offset);
+            latch_vdd_masks[curr.number - 2] |=
+                (mask << (unsigned char)curr.offset);
         }
     }
 
@@ -586,25 +548,23 @@ void set_vdd(const_zif_bits_t zif)
 
 void set_gnd(const_zif_bits_t zif)
 {
-    unsigned char latch_gnd_masks[3] = { 0 };
+    unsigned char latch_gnd_masks[3] = {0};
 
-    for(unsigned int pin_no = 0; pin_no < (sizeof(zif2gnd)/sizeof(latch_info_t)); pin_no++)
-    {
+    for (unsigned int pin_no = 0;
+         pin_no < (sizeof(zif2gnd) / sizeof(latch_info_t)); pin_no++) {
         latch_info_t curr = zif2gnd[pin_no];
 
-        if(curr.offset < 0)
-        {
+        if (curr.offset < 0) {
             continue;
-        }
-        else
-        {
+        } else {
             unsigned char set_of_8 = (pin_no >> 3);
             unsigned char bit_offset = 1 << (pin_no & 0x07);
 
             // Drivers are PNPs, so a logic 0 enables Vdd line for I/O pin.
             unsigned char mask = (zif[set_of_8] & bit_offset) ? 1 : 0;
 
-            latch_gnd_masks[curr.number - 5] |= (mask << (unsigned char) curr.offset);
+            latch_gnd_masks[curr.number - 5] |=
+                (mask << (unsigned char)curr.offset);
         }
     }
 
@@ -631,35 +591,39 @@ void vdd_val(unsigned char setting)
     __delay_ms(2);
 }
 
-void pupd(int tristate, int val) {
+void pupd(int tristate, int val)
+{
     PUPD_TRIS = tristate;
     PUPD_PORT = val;
 }
 
-void print_port_bits(const char *prefix, port_bits_t p_bits) {
-    printf("%s: A:%02X B:%02X C:%02X D:%02X E:%02X F:%02X G:%02X H:%02X J:%02X\r\n",
-            prefix,
-            p_bits[0], p_bits[1], p_bits[2], p_bits[3], p_bits[4],
-            p_bits[5], p_bits[6], p_bits[7], p_bits[8]);
+void print_port_bits(const char *prefix, port_bits_t p_bits)
+{
+    printf(
+
+        "%s: A:%02X B:%02X C:%02X D:%02X E:%02X F:%02X G:%02X H:%02X "
+        "J:%02X\r\n",
+        prefix, p_bits[0], p_bits[1], p_bits[2], p_bits[3], p_bits[4],
+        p_bits[5], p_bits[6], p_bits[7], p_bits[8]);
 }
 
-void print_zif_bits(const char *prefix, zif_bits_t zif_val) {
-    printf("%s: %02X %02X %02X %02X %02X\r\n",
-            prefix,
-            zif_val[0], zif_val[1], zif_val[2], zif_val[3], zif_val[4]);
+void print_zif_bits(const char *prefix, zif_bits_t zif_val)
+{
+    printf("%s: %02X %02X %02X %02X %02X\r\n", prefix, zif_val[0], zif_val[1],
+           zif_val[2], zif_val[3], zif_val[4]);
 }
 
-void print_latch_bits(const char *prefix, latch_bits_t lb) {
+void print_latch_bits(const char *prefix, latch_bits_t lb)
+{
     printf("%s: 0:%02X 1:%02X 2:%02X 3:%02X 4:%02X 5:%02X 6:%02X 7:%02X\r\n",
-            prefix,
-            lb[0], lb[1], lb[2], lb[3],
-            lb[4], lb[5], lb[6], lb[7]);
+           prefix, lb[0], lb[1], lb[2], lb[3], lb[4], lb[5], lb[6], lb[7]);
 }
 
-void io_init(void) {
+void io_init(void)
+{
     zif_bits_t zif_val = {0, 0, 0, 0, 0};
 
-    //Idle power supplies
+    // Idle power supplies
     vpp_dis();
     vdd_dis();
     vpp_val(0);
@@ -668,13 +632,12 @@ void io_init(void) {
     set_vdd(zif_val);
     set_gnd(zif_val);
 
-    //Set default values
-    //LED?
+    // Set default values
+    // LED?
     zif_write(zif_val);
 
-    //Tristate
+    // Tristate
     pupd(1, 0);
     memset(zif_val, 0xFF, sizeof(zif_val));
     dir_write(zif_val);
 }
-
