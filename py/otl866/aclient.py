@@ -233,15 +233,13 @@ class AClient:
         ZIF output is LSB first
 
          Z
-        Result: 00 00 00 00 00
-        CMD> 
+        0000000000
+        CMD>
         '''
-        hexstr_raw = self.match_line(r"Result: (.*)", res).group(1)
-        hexstr_lsb = hexstr_raw.replace(" ", "")
-        ret = 0
-        for wordi, word in enumerate(binascii.unhexlify(hexstr_lsb)):
-            ret |= word << (wordi * 8)
-        return ret
+        # skip space Z \r \n
+        i = 0
+        while res[i] != '\n': i += 1
+        return int(res[i:], base=16)
 
     def zif_str(self, val):
         '''
