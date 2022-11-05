@@ -609,14 +609,19 @@ void print_port_bits(const char *prefix, port_bits_t p_bits)
 
 void print_zif_bits(const char *prefix, zif_bits_t zif_val)
 {
-    printf("%s: %02X %02X %02X %02X %02X\r\n", prefix, zif_val[0], zif_val[1],
-           zif_val[2], zif_val[3], zif_val[4]);
+    if (*prefix != '\0') {
+        printf("%s: ", prefix);
+    }
+    printf("%02X%02X%02X%02X%02X\r\n", zif_val[4], zif_val[3],
+           zif_val[2], zif_val[1], zif_val[0]);
 }
 
 void print_latch_bits(const char *prefix, latch_bits_t lb)
 {
-    printf("%s: 0:%02X 1:%02X 2:%02X 3:%02X 4:%02X 5:%02X 6:%02X 7:%02X\r\n",
-           prefix, lb[0], lb[1], lb[2], lb[3], lb[4], lb[5], lb[6], lb[7]);
+    if (*prefix != '\0') {
+        printf("%s: ", prefix);
+    }
+    printf("%02X%02X%02X%02X%02X%02X%02X%02X\r\n", lb[7], lb[6], lb[5], lb[4], lb[3], lb[2], lb[1], lb[0]);
 }
 
 void io_init(void)
