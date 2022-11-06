@@ -24,9 +24,9 @@ g val      GND: set active pins (GND_WRITE)
            NOTE: VDD must be enabled for GND to work
 I/O
 t val      I/O: set ZIF tristate setting
-           1 = pin is driven, 0 = High Z
+           1 = high Z, 0 = pin is driven
 T          I/O: get ZIF tristate setting
-           1 = pin is driven, 0 = High Z
+           1 = high Z, 0 = pin is driven
 z val      I/O: set ZIF pins (ZIF_WRITE)
            val must be 10 hex digits
            LSB is ZIF pin 1
