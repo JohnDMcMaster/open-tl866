@@ -571,6 +571,14 @@ void set_gnd(const_zif_bits_t zif)
     write_latch(5, latch_gnd_masks[0]);
     write_latch(6, latch_gnd_masks[1]);
     write_latch(7, latch_gnd_masks[2]);
+
+    // GND_20 is special; it is controlled directly via GPIO rather than
+    // through a latch.
+    unsigned char pin_no = 19;
+    unsigned char set_of_8 = (pin_no >> 3);
+    unsigned char bit_offset = 1 << (pin_no & 0x07);
+    unsigned char gnd_20_en = (zif[set_of_8] & bit_offset) ? 1 : 0;
+    GND20 = gnd_20_en;
 }
 
 void vpp_val(unsigned char setting)
