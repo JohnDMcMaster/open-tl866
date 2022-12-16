@@ -1,15 +1,20 @@
 # Open-TL866
-Open-TL866 is open-source firmware for the original TL866 (ie not II / PLUS).
+Open-TL866 is open-source firmware for the original TL866 (i.e., not II / PLUS).
 This firmware replaces the proprietary firmware for programming EPROMs, MCUs, GALs, etc.
+Note that this firmware is not meant to be a replacement for the original firmware, it is totally different with a different purpose. You can't use a TL866 programmed with this firmware with the original TL866 host software. This firmware exposes a simple ASCII-based interface over USB serial.
+This repository contains two primary components.
+1. An open-source firmware for the TL866 (Located in the `firmware` directory).
+2. A Python library for interacting with open-source firmware (Located in the `py` directory).
+
 **Caution: This is alpha software. Use at your own risk.**
 
-## Python bitbang quick start
+## Python Bitbang Quick Start
 
 **FIXME 2022-11-02: we've made a breaking change. You'll need a new firmware release**.
-In the meantime use git
+In the meantime use git.
 
 Do you just want to send low level TL866 commands from Python?
-This is useful if you have loose timing requirements
+This is useful if you have loose timing requirements.
 
 Linux instructions:
 ```bash
@@ -22,7 +27,6 @@ otl866 self update tl866-bitbang.hex
 
 Now test it:
 `python3 py/example/blinky.py`
-
 
 ## Prerequisites
 
