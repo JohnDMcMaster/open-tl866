@@ -28,8 +28,14 @@ otl866 self update tl866-bitbang.hex
 Now test it:
 `python3 py/example/blinky.py`
 
-## Prerequisites
+## Building the Firmware
+Building may be performed natively or via Docker. Regardless, there is a single common prerequisite: downloading Git submodules.
+Install them with `git submodule update --init`.
+* [our copy](https://github.com/ProgHQ/m-stack)
+ of [m-stack](http://www.signal11.us/oss/m-stack/)
+* [cmake-microchip](https://github.com/Elemecca/cmake-microchip)
 
+If one wishes to build natively, then install the following prerequisites:
 1. The XC8 compiler from Microchip is used to compile our C code.
    **Currently version 1.x is required**.
    [Download it from Microchip's site][xc8] and install it.
@@ -45,22 +51,20 @@ Now test it:
    (e.g. `sudo apt-get install cmake`). For Windows, an installer is
    available [from the CMake website][cmake].
 
-1. Certain dependencies are managed as git submodules.
-   Install them with `git submodule update --init`.
-   * [our copy](https://github.com/ProgHQ/m-stack)
-     of [m-stack](http://www.signal11.us/oss/m-stack/)
-   * [cmake-microchip](https://github.com/Elemecca/cmake-microchip)
-
 [xc8]: http://www.microchip.com/development-tools/pic-and-dspic-downloads-archive
 [cmake]: https://cmake.org/download/
 
 ## Building
 ```bash
-git submodule update --init && \
-mkdir -p firmware/build && \
-cmake -B firmware/build -S firmware && \
-make -j$(nproc) -C firmware/build
+make build
 ```
+To make any Make target with docker, prefix it with `docker-`.
+For instance, to build with Docker:
+```bash
+make docker-build
+```
+
+
 Flashable images are in `firmware/build/dist/tl866-*.hex`
 
 The build configuration is maintained with CMake in `CMakeLists.txt`.
