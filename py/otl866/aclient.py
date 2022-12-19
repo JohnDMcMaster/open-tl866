@@ -233,13 +233,11 @@ class AClient:
         ZIF output is LSB first
 
          Z
-        0000000000
+        Result: 0000000000
         CMD>
         '''
-        # skip space Z \r \n
-        i = 0
-        while res[i] != '\n': i += 1
-        return int(res[i:], base=16)
+        hexstr = self.match_line(r"Result: ([0-9a-fA-F]{10})", res).group(1)
+        return int(hexstr, base=16)
 
     def zif_str(self, val):
         '''

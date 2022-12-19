@@ -180,7 +180,7 @@ static inline void eval_command(char *cmd)
     case 'T': {
         zif_bits_t zif = {0x00};
         dir_read(zif);
-        print_zif_bits("", zif);
+        print_zif_bits("Result", zif);
         break;
     }
 
@@ -195,7 +195,7 @@ static inline void eval_command(char *cmd)
     case 'Z': {
         zif_bits_t zif = {0x00};
         zif_read(zif);
-        print_zif_bits("", zif);
+        print_zif_bits("Result", zif);
         break;
     }
 
